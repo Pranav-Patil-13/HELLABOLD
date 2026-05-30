@@ -1,0 +1,908 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  getProducts, 
+  saveProduct, 
+  deleteProduct, 
+  getReviews, 
+  addReview, 
+  deleteReview, 
+  getOrders, 
+  updateOrderStatusInDB 
+} from '../utils/supabase';
+
+const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userProfile }) => {
+  const [products, setProducts] = useState([]);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  // Form Fields
+  const [title, setTitle] = useState('');
+  const [price, setPrice] = useState('');
+  const [description, setDescription] = useState('');
+  const [details, setDetails] = useState('');
+  const [sizes, setSizes] = useState([]);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [category, setCategory] = useState('Outerwear');
+  const [label, setLabel] = useState('');
+
+  // Upload state
+  const [uploading, setUploading] = useState(false);
+
+  // Tab Selection
+  const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
+  const [orders, setOrders] = useState([]);
+
+  // Reviews Form Fields
+  const [reviewProductId, setReviewProductId] = useState('');
+  const [reviewAuthor, setReviewAuthor] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewVerified, setReviewVerified] = useState(true);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSelectedImage, setReviewSelectedImage] = useState('');
+
+  const [feedbackImages, setFeedbackImages] = useState([]);
+
+  // Load products, images, and orders on mount
+  useEffect(() => {
+    fetchProducts();
+    fetchImages();
+    fetchFeedbackImages();
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    if (activeAdminTab === 'orders' || activeAdminTab === 'dashboard') {
+      fetchOrders();
+    }
+  }, [activeAdminTab]);
+
+  const fetchOrders = async () => {
+    try {
+      const dbOrders = await getOrders();
+      setOrders(dbOrders);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await updateOrderStatusInDB(orderId, newStatus);
+    } catch (err) {
+      console.error('Error updating order status in DB:', err);
+    }
+    // Update local state
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+
+    // Fallback sync to localStorage
+    const savedOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
+    const updated = savedOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+    localStorage.setItem('hellabold_orders', JSON.stringify(updated));
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const data = await getProducts();
+      setProducts(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setLoading(false);
+    }
+  };
+
+  const fetchImages = async () => {
+    try {
+      const res = await fetch('/api/images');
+      const data = await res.json();
+      setImages(data);
+    } catch (err) {
+      console.error('Error fetching images:', err);
+    }
+  };
+
+  const fetchFeedbackImages = async () => {
+    try {
+      const res = await fetch('/api/feedback-images');
+      const data = await res.json();
+      setFeedbackImages(data);
+    } catch (err) {
+      console.error('Error fetching feedback images:', err);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchImages();
+      } else {
+        alert(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Error uploading:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const productData = {
+      title,
+      price,
+      description,
+      details: details.split('\n').filter(line => line.trim() !== ''),
+      sizes,
+      images: selectedImages,
+      category,
+      label
+    };
+
+    try {
+      await saveProduct(productData, isEditing ? editingId : null);
+      const allProducts = await getProducts();
+      onProductsUpdated(allProducts);
+      setProducts(allProducts);
+      resetForm();
+    } catch (err) {
+      console.error('Error saving product:', err);
+    }
+  };
+
+  const handleEdit = (product) => {
+    setIsEditing(true);
+    setEditingId(product.id);
+    setTitle(product.title);
+    setPrice(product.price);
+    setDescription(product.description || '');
+    setDetails(product.details?.join('\n') || '');
+    setSizes(product.sizes || []);
+    setSelectedImages(product.images || []);
+    setCategory(product.category || 'Outerwear');
+    setLabel(product.label || '');
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await deleteProduct(id);
+      const allProducts = await getProducts();
+      onProductsUpdated(allProducts);
+      setProducts(allProducts);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+    }
+  };
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditingId(null);
+    setTitle('');
+    setPrice('');
+    setDescription('');
+    setDetails('');
+    setSizes([]);
+    setSelectedImages([]);
+    setCategory('Outerwear');
+    setLabel('');
+  };
+
+  const toggleSize = (size) => {
+    if (sizes.includes(size)) {
+      setSizes(sizes.filter(s => s !== size));
+    } else {
+      setSizes([...sizes, size]);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewProductId) {
+      alert('Please select a product');
+      return;
+    }
+
+    const reviewData = {
+      productId: reviewProductId,
+      author: reviewAuthor,
+      rating: parseInt(reviewRating),
+      verified: reviewVerified,
+      comment: reviewComment,
+      images: reviewSelectedImage ? [reviewSelectedImage] : [],
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    };
+
+    try {
+      await addReview(reviewData);
+      const allReviews = await getReviews();
+      onReviewsUpdated(allReviews);
+      setReviewProductId('');
+      setReviewAuthor('');
+      setReviewComment('');
+      setReviewSelectedImage('');
+      alert('Review published successfully!');
+    } catch (err) {
+      console.error('Error publishing review:', err);
+    }
+  };
+
+  const handleReviewDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    try {
+      await deleteReview(id);
+      const allReviews = await getReviews();
+      onReviewsUpdated(allReviews);
+    } catch (err) {
+      console.error('Error deleting review:', err);
+    }
+  };
+
+  const toggleImageSelect = (imgUrl) => {
+    if (selectedImages.includes(imgUrl)) {
+      setSelectedImages(selectedImages.filter(url => url !== imgUrl));
+    } else {
+      setSelectedImages([...selectedImages, imgUrl]);
+    }
+  };
+
+  const commonSizes = ['S', 'M', 'L', 'XL'];
+
+  // =========================================
+  // Dashboard Calculations
+  // =========================================
+  const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  const totalOrders = orders.length;
+  const aov = totalOrders > 0 ? totalSales / totalOrders : 0;
+  const activeShipments = orders.filter(order => order.status !== 'Delivered').length;
+
+  // Best Sellers Calculations
+  const productSalesMap = {};
+  orders.forEach(order => {
+    if (order.items) {
+      order.items.forEach(item => {
+        if (!productSalesMap[item.id]) {
+          productSalesMap[item.id] = {
+            title: item.title,
+            qty: 0,
+            revenue: 0,
+            image: item.images?.[0] || '/assets/favicon.png'
+          };
+        }
+        productSalesMap[item.id].qty += (item.quantity || 0);
+        let priceNum = 0;
+        if (typeof item.price === 'string') {
+          priceNum = parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0;
+        } else {
+          priceNum = parseFloat(item.price) || 0;
+        }
+        productSalesMap[item.id].revenue += priceNum * (item.quantity || 0);
+      });
+    }
+  });
+
+  const bestSellers = Object.values(productSalesMap)
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, 5);
+
+  // Promo Codes Usage
+  const promoMap = {};
+  orders.forEach(order => {
+    if (order.appliedPromo) {
+      const code = order.appliedPromo.toUpperCase();
+      if (!promoMap[code]) {
+        promoMap[code] = {
+          code: code,
+          count: 0,
+          discountTotal: 0
+        };
+      }
+      promoMap[code].count += 1;
+      promoMap[code].discountTotal += (order.discount || 0);
+    }
+  });
+  const promoStats = Object.values(promoMap).sort((a, b) => b.count - a.count).slice(0, 5);
+
+
+  // Shipment Milestone breakdown
+  const statusCounts = {
+    'Order Received': 0,
+    'Manifested & Picked Up': 0,
+    'In Transit': 0,
+    'Out for Delivery': 0,
+    'Delivered': 0
+  };
+  orders.forEach(order => {
+    if (statusCounts[order.status] !== undefined) {
+      statusCounts[order.status] += 1;
+    } else {
+      statusCounts['Order Received'] += 1;
+    }
+  });
+
+  // Sales Timeline Chart parsing (last 7 days)
+  const salesByDate = {};
+  orders.forEach(order => {
+    let dateStr = 'Today';
+    if (order.timestamp) {
+      try {
+        const d = new Date(order.timestamp);
+        if (!isNaN(d.getTime())) {
+          dateStr = d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        } else {
+          dateStr = order.timestamp.split(',')[0];
+        }
+      } catch (e) {
+        dateStr = 'Today';
+      }
+    }
+    salesByDate[dateStr] = (salesByDate[dateStr] || 0) + (order.total || 0);
+  });
+
+  const timelineData = Object.entries(salesByDate).slice(0, 7).reverse();
+  const displayTimeline = timelineData.length > 0 ? timelineData : [
+    ['Mon', 12000],
+    ['Tue', 18500],
+    ['Wed', 9000],
+    ['Thu', 24000],
+    ['Fri', 31000],
+    ['Sat', 15000],
+    ['Sun', 42000]
+  ];
+  
+  const maxSaleValue = Math.max(...displayTimeline.map(item => item[1]), 1000);
+
+  if (!userProfile || userProfile.role !== 'admin') {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        fontFamily: 'Montserrat, sans-serif', 
+        textTransform: 'uppercase', 
+        letterSpacing: '2px', 
+        fontSize: '0.9rem',
+        gap: '1.5rem',
+        color: 'var(--text-primary)'
+      }}>
+        <h2 style={{ fontWeight: 900 }}>Access Denied</h2>
+        <p style={{ color: 'var(--text-secondary)', textTransform: 'none' }}>
+          This administrative panel is restricted to authorized credentials only.
+        </p>
+        <a href="/" className="btn btn--primary" style={{ padding: '0.8rem 1.5rem' }}>Return to Storefront</a>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="admin-loading">Loading Admin Dashboard...</div>;
+  }
+
+  return (
+    <div className="admin-container">
+      <div className="admin-header">
+        <h1>HELLABOLD Administrative Panel</h1>
+        <a href="/" className="btn btn--outline">View Storefront</a>
+      </div>
+
+      <div className="admin-tabs-nav" style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', borderBottom: '1px solid var(--border-color)' }}>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('dashboard')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'dashboard' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'dashboard' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Dashboard
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'products' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('products')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'products' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'products' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Manage Products
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'reviews' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('reviews')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'reviews' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'reviews' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Manage Reviews
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('orders')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'orders' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Manage Shipments
+        </button>
+      </div>
+
+      {activeAdminTab === 'dashboard' && (
+        <div className="admin-dashboard">
+          <div className="dashboard-kpi-grid">
+            <div className="kpi-card">
+              <span className="kpi-card__title">Total Revenue</span>
+              <span className="kpi-card__value">
+                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(totalSales)}
+              </span>
+              <span className="kpi-card__indicator">Live checkout receipts</span>
+            </div>
+
+            <div className="kpi-card">
+              <span className="kpi-card__title">Total Orders</span>
+              <span className="kpi-card__value">{totalOrders}</span>
+              <span className="kpi-card__indicator">Completed transactions</span>
+            </div>
+
+            <div className="kpi-card">
+              <span className="kpi-card__title">Average Order Value</span>
+              <span className="kpi-card__value">
+                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(aov)}
+              </span>
+              <span className="kpi-card__indicator">Basket size average</span>
+            </div>
+
+            <div className="kpi-card animate-pulse-kpi">
+              <span className="kpi-card__title">Active Shipments</span>
+              <span className="kpi-card__value">{activeShipments}</span>
+              <span className="kpi-card__indicator">In Shiprocket pipeline</span>
+            </div>
+          </div>
+
+          <div className="dashboard-charts-grid">
+            <div className="admin-card chart-card">
+              <h3>Sales Timeline (INR)</h3>
+              <div className="sales-chart-wrapper">
+                <svg viewBox="0 0 500 220" className="sales-svg-chart">
+                  <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                  <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                  <line x1="40" y1="120" x2="480" y2="120" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                  <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+
+                  {displayTimeline.map((item, idx) => {
+                    const x = 60 + idx * 60;
+                    const height = (item[1] / maxSaleValue) * 130;
+                    const y = 170 - height;
+                    return (
+                      <g key={idx} className="chart-bar-group">
+                        <rect x={x} y={y} width="24" height={height} fill="var(--accent-color)" rx="2" />
+                        <text x={x + 12} y="192" textAnchor="middle" className="chart-label-text">{item[0]}</text>
+                        <text x={x + 12} y={y - 8} textAnchor="middle" className="chart-val-text">{new Intl.NumberFormat('en-IN', { notation: 'compact' }).format(item[1])}</text>
+                      </g>
+                    );
+                  })}
+                  <line x1="40" y1="170" x2="480" y2="170" stroke="var(--accent-color)" strokeWidth="1.5" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="admin-card chart-card">
+              <h3>Shipment Status Split</h3>
+              <div className="status-progress-wrapper">
+                {Object.entries(statusCounts).map(([status, count]) => {
+                  const percentage = totalOrders > 0 ? (count / totalOrders) * 100 : 0;
+                  return (
+                    <div key={status} className="status-row">
+                      <div className="status-meta">
+                        <span className="status-name">{status}</span>
+                        <span className="status-count">{count} order{count !== 1 ? 's' : ''} ({Math.round(percentage)}%)</span>
+                      </div>
+                      <div className="status-bar-bg">
+                        <div 
+                          className="status-bar-fill" 
+                          style={{ 
+                            width: `${percentage}%`,
+                            backgroundColor: status === 'Delivered' ? '#2e7d32' : 
+                                             status === 'Out for Delivery' ? '#1565c0' :
+                                             status === 'In Transit' ? '#f57c00' :
+                                             status === 'Manifested & Picked Up' ? '#6a1b9a' : '#d84315'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="dashboard-details-grid">
+            <div className="admin-card table-card">
+              <h3>Top Selling Products</h3>
+              <div className="table-wrapper">
+                {bestSellers.length === 0 ? <p className="empty-message">No items sold yet.</p> : (
+                  <table className="dashboard-table">
+                    <thead>
+                      <tr><th>Product</th><th style={{ textAlign: 'center' }}>Qty Sold</th><th style={{ textAlign: 'right' }}>Revenue</th></tr>
+                    </thead>
+                    <tbody>
+                      {bestSellers.map((item, idx) => (
+                        <tr key={idx}>
+                          <td style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                            <img src={item.image} alt={item.title} className="table-product-img" />
+                            <span className="table-product-title">{item.title}</span>
+                          </td>
+                          <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{item.qty}</td>
+                          <td style={{ textAlign: 'right', fontWeight: '600' }}>{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(item.revenue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            <div className="admin-card table-card">
+              <h3>Promo Code Redeeming</h3>
+              <div className="table-wrapper">
+                {promoStats.length === 0 ? <p className="empty-message">No promo codes used yet.</p> : (
+                  <table className="dashboard-table">
+                    <thead>
+                      <tr><th>Promo Code</th><th style={{ textAlign: 'center' }}>Uses</th><th style={{ textAlign: 'right' }}>Total Discount</th></tr>
+                    </thead>
+                    <tbody>
+                      {promoStats.map((promo, idx) => (
+                        <tr key={idx}>
+                          <td><span className="table-promo-badge">{promo.code}</span></td>
+                          <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{promo.count}</td>
+                          <td style={{ textAlign: 'right', fontWeight: '600', color: '#e53e3e' }}>-{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(promo.discountTotal)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeAdminTab === 'products' && (
+        <div className="admin-grid">
+          <div className="admin-card admin-form-card">
+            <h2>{isEditing ? 'Edit Product Details' : 'Add New Product'}</h2>
+            <form onSubmit={handleSubmit} className="admin-form">
+              <div className="form-group">
+                <label>Product Title *</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} required />
+              </div>
+
+              <div className="form-group">
+                <label>Price * (e.g. ₹699)</label>
+                <input type="text" value={price} onChange={e => setPrice(e.target.value)} required />
+              </div>
+
+              <div className="form-group">
+                <label>Category *</label>
+                <select value={category} onChange={e => setCategory(e.target.value)} className="form-select" style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem' }} required>
+                  <option value="Outerwear">Outerwear</option>
+                  <option value="Accessories">Accessories</option>
+                  <option value="Tops">Tops</option>
+                  <option value="Bottoms">Bottoms</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Status Label</label>
+                <select value={label} onChange={e => setLabel(e.target.value)} className="form-select" style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem' }}>
+                  <option value="">None (Standard)</option>
+                  <option value="selling-fast">Selling Fast</option>
+                  <option value="few-left">Few Left</option>
+                  <option value="out-of-stock">Out of Stock</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea rows="3" value={description} onChange={e => setDescription(e.target.value)} />
+              </div>
+
+              <div className="form-group">
+                <label>Details & Fit (one bullet point per line)</label>
+                <textarea rows="4" value={details} onChange={e => setDetails(e.target.value)} placeholder="e.g. 100% full-grain calf leather&#10;Made in Italy" />
+              </div>
+
+              <div className="form-group">
+                <label>Available Sizes</label>
+                <div className="admin-size-chips">
+                  {commonSizes.map(size => (
+                    <button
+                      type="button"
+                      key={size}
+                      className={`admin-size-chip-btn ${sizes.includes(size) ? 'active' : ''}`}
+                      onClick={() => toggleSize(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Select Images for Product ({selectedImages.length} selected)</label>
+                <div className="admin-image-picker">
+                  {images.map(img => {
+                    const imgUrl = `/assets/${img}`;
+                    const isSelected = selectedImages.includes(imgUrl);
+                    return (
+                      <div 
+                        key={img} 
+                        className={`admin-picker-img-wrapper ${isSelected ? 'selected' : ''}`}
+                        onClick={() => toggleImageSelect(imgUrl)}
+                      >
+                        <img src={imgUrl} alt={img} className="admin-picker-img" />
+                        <div className="admin-picker-checkbox">
+                          {isSelected ? '✓' : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Upload New Asset to public/assets/</label>
+                <div className="admin-upload-zone">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                    id="file-upload" 
+                    disabled={uploading} 
+                  />
+                  <label htmlFor="file-upload" className="admin-upload-label">
+                    {uploading ? 'Uploading asset...' : 'Choose image to upload'}
+                  </label>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn--primary">
+                  {isEditing ? 'Save Changes' : 'Publish Product'}
+                </button>
+                {isEditing && (
+                  <button type="button" className="btn btn--outline" onClick={resetForm}>
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="admin-card admin-catalog-card">
+            <h2>Product Catalog ({products.length})</h2>
+            <div className="admin-catalog-list">
+              {products.map(product => (
+                <div key={product.id} className="admin-catalog-item">
+                  <img 
+                    src={product.images?.[0] || '/assets/favicon.png'} 
+                    alt={product.title} 
+                    className="admin-catalog-img" 
+                  />
+                  <div className="admin-catalog-info">
+                    <h3>{product.title}</h3>
+                    <p>{product.price} — <span style={{ textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>{product.category || 'Outerwear'}</span></p>
+                    <span className="admin-catalog-sizes">
+                      {product.sizes?.join(', ') || 'No sizes'}
+                    </span>
+                  </div>
+                  <div className="admin-catalog-actions">
+                    <button className="admin-icon-btn edit" onClick={() => handleEdit(product)} title="Edit">
+                      Edit
+                    </button>
+                    <button className="admin-icon-btn delete" onClick={() => handleDelete(product.id)} title="Delete">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeAdminTab === 'reviews' && (
+        <div className="admin-grid">
+          <div className="admin-card admin-form-card">
+            <h2>Add Customer Feedback</h2>
+            <form onSubmit={handleReviewSubmit} className="admin-form">
+              <div className="form-group">
+                <label>Select Product *</label>
+                <select 
+                  value={reviewProductId} 
+                  onChange={e => setReviewProductId(e.target.value)} 
+                  className="form-select"
+                  style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem' }} 
+                  required
+                >
+                  <option value="">-- Choose Product --</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Reviewer Name *</label>
+                <input 
+                  type="text" 
+                  value={reviewAuthor} 
+                  onChange={e => setReviewAuthor(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Star Rating *</label>
+                <select 
+                  value={reviewRating} 
+                  onChange={e => setReviewRating(e.target.value)} 
+                  className="form-select"
+                  style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem' }} 
+                  required
+                >
+                  <option value={5}>5 Stars</option>
+                  <option value={4}>4 Stars</option>
+                  <option value={3}>3 Stars</option>
+                  <option value={2}>2 Stars</option>
+                  <option value={1}>1 Star</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  id="verified-review"
+                  checked={reviewVerified} 
+                  onChange={e => setReviewVerified(e.target.checked)} 
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--accent-color)' }}
+                />
+                <label htmlFor="verified-review" style={{ cursor: 'pointer', marginBottom: 0 }}>Verified Purchaser</label>
+              </div>
+
+              <div className="form-group">
+                <label>Review Comment *</label>
+                <textarea 
+                  rows="4" 
+                  value={reviewComment} 
+                  onChange={e => setReviewComment(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Select Review Image (Optional)</label>
+                <div className="admin-image-picker" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.8rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', padding: '0.8rem' }}>
+                  {feedbackImages.map(img => {
+                    const imgUrl = `/assets/feedback_images/${img}`;
+                    const isSelected = reviewSelectedImage === imgUrl;
+                    return (
+                      <div 
+                        key={img} 
+                        className={`admin-picker-img-wrapper ${isSelected ? 'selected' : ''}`}
+                        onClick={() => setReviewSelectedImage(isSelected ? '' : imgUrl)}
+                        style={{ position: 'relative', aspectRatio: '1', cursor: 'pointer', border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)', outline: 'none', transition: 'border-color var(--transition-fast)' }}
+                      >
+                        <img src={imgUrl} alt={img} className="admin-picker-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div className="admin-picker-checkbox" style={{ position: 'absolute', top: '4px', right: '4px', background: isSelected ? 'var(--accent-color)' : 'transparent', color: '#fff', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                          {isSelected ? '✓' : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn--primary" style={{ width: '100%' }}>
+                Publish Review
+              </button>
+            </form>
+          </div>
+
+          <div className="admin-card admin-catalog-card">
+            <h2>Existing Feedback ({reviews.length})</h2>
+            <div className="admin-catalog-list">
+              {reviews.map(review => {
+                const product = products.find(p => p.id === review.productId);
+                return (
+                  <div key={review.id} className="admin-catalog-item" style={{ alignItems: 'flex-start' }}>
+                    {review.images?.[0] && (
+                      <img 
+                        src={review.images[0]} 
+                        alt="Review upload" 
+                        className="admin-catalog-img" 
+                      />
+                    )}
+                    <div className="admin-catalog-info" style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold' }}>{review.author}</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        Product: <strong>{product?.title || `ID: ${review.productId}`}</strong>
+                      </p>
+                      <p style={{ margin: '0.4rem 0', fontSize: '0.85rem' }}>{review.comment}</p>
+                      <span className="admin-catalog-sizes" style={{ textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)} — {review.date}
+                      </span>
+                    </div>
+                    <div className="admin-catalog-actions">
+                      <button 
+                        className="admin-icon-btn delete" 
+                        onClick={() => handleReviewDelete(review.id)} 
+                        title="Delete"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeAdminTab === 'orders' && (
+        <div className="admin-orders-tab" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="admin-card" style={{ padding: '2.5rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)' }}>
+            <h2>Active Logistics & Shipments ({orders.length})</h2>
+            <div className="admin-orders-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              {orders.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', padding: '2rem 0', textAlign: 'center' }}>No orders placed yet.</p>
+              ) : (
+                orders.map(order => (
+                  <div key={order.id} className="admin-order-item-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1.5rem', border: '1px solid var(--border-color)', backgroundColor: '#fafafa' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '1rem' }}>Order ID: {order.id}</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        AWB: <strong>{order.awb}</strong> ({order.courier})
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        Customer: <strong>{order.shippingDetails?.name}</strong> | Total: {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(order.total)}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.8rem' }}>
+                      {['Order Received', 'Manifested & Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].map(status => (
+                        <button
+                          key={status}
+                          type="button"
+                          className="btn btn--outline"
+                          onClick={() => updateOrderStatus(order.id, status)}
+                          style={{
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.75rem',
+                            textTransform: 'uppercase',
+                            backgroundColor: order.status === status ? 'var(--accent-color)' : 'transparent',
+                            color: order.status === status ? 'var(--white)' : 'var(--text-primary)',
+                            borderColor: order.status === status ? 'var(--accent-color)' : 'var(--border-color)'
+                          }}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminPanel;
