@@ -279,20 +279,19 @@ export const deleteReview = async (id) => {
 
 export const getOrders = async () => {
   if (isSupabaseConfigured) {
-    // Get current user to filter their orders
+    // Get current user — orders are private, only accessible when logged in
     const { data: { user } } = await supabase.auth.getUser();
-    
-    let query = supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    // If logged in, filter by user_id; otherwise return all (for admin)
-    if (user) {
-      query = query.eq('user_id', user.id);
+
+    // Security: if not authenticated, return nothing
+    if (!user) {
+      return [];
     }
 
-    const { data, error } = await query;
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
     
     if (error) {
       console.error('Error fetching orders from Supabase:', error);
@@ -313,7 +312,12 @@ export const getOrders = async () => {
       date: o.date
     }));
   } else {
-    return JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
+    // Local mock mode: only show orders for the currently mocked-in user
+    const mockUser = JSON.parse(localStorage.getItem('hellabold_mock_user') || 'null');
+    if (!mockUser) return [];
+    const allOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
+    // Filter by user_id if orders were stored with one, otherwise show all local orders
+    return allOrders.filter(o => !o.user_id || o.user_id === mockUser.id);
   }
 };
 

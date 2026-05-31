@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, updateOrderStatusInDB } from '../utils/supabase';
+import { getOrders, updateOrderStatusInDB, getCurrentUser } from '../utils/supabase';
 
 const OrderStatus = () => {
   const [order, setOrder] = useState(null);
   const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(null); // null = checking, true/false = resolved
 
   // Shiprocket milestones
   const steps = [
@@ -16,26 +17,33 @@ const OrderStatus = () => {
   ];
 
   useEffect(() => {
-    const fetchOrder = () => {
-      const params = new URLSearchParams(window.location.search);
-      const orderId = params.get('id');
-
+    const fetchOrder = async () => {
       setLoading(true);
-      getOrders()
-        .then(orders => {
-          setAllOrders(orders || []);
-          if (orderId) {
-            const foundOrder = orders.find(o => o.id === orderId);
-            setOrder(foundOrder || null);
-          } else {
-            setOrder(null);
-          }
+      try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          setIsLoggedIn(false);
           setLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching order tracking info:', err);
-          setLoading(false);
-        });
+          return;
+        }
+        setIsLoggedIn(true);
+
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('id');
+
+        const orders = await getOrders();
+        setAllOrders(orders || []);
+        if (orderId) {
+          const foundOrder = orders.find(o => o.id === orderId);
+          setOrder(foundOrder || null);
+        } else {
+          setOrder(null);
+        }
+      } catch (err) {
+        console.error('Error fetching order tracking info:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchOrder();
@@ -93,6 +101,24 @@ const OrderStatus = () => {
     return (
       <div className="order-status-loading">
         <p>FETCHING TRACKING INFORMATION...</p>
+      </div>
+    );
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <div className="order-status-container">
+        <div className="order-status__header">
+          <div className="order-status__meta">
+            <h1>Your Orders</h1>
+            <p>Sign in to your HELLABOLD account to view your order history.</p>
+          </div>
+        </div>
+        <div className="order-status-error-view" style={{ marginTop: '2rem' }}>
+          <h2>Sign In Required</h2>
+          <p>Your orders are linked to your account. Please sign in to access your order history and tracking details.</p>
+          <a href="/" className="btn btn--primary" style={{ marginTop: '1rem' }}>Go to Homepage & Sign In</a>
+        </div>
       </div>
     );
   }
