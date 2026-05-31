@@ -155,13 +155,17 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     };
 
     try {
-      await saveProduct(productData, isEditing ? editingId : null);
+      const savedData = await saveProduct(productData, isEditing ? editingId : null);
+      if (savedData && savedData[0] && savedData[0]._warning) {
+        alert(savedData[0]._warning + "\n\nTo enable this, go to your Supabase Dashboard Table Editor and add a column 'original_price' (type: text, nullable) to the 'products' table.");
+      }
       const allProducts = await getProducts();
       onProductsUpdated(allProducts);
       setProducts(allProducts);
       resetForm();
     } catch (err) {
       console.error('Error saving product:', err);
+      alert('Failed to save product: ' + (err.message || err));
     }
   };
 

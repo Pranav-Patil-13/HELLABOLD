@@ -73,30 +73,39 @@ export const getProducts = async () => {
 
 export const saveProduct = async (productData, editingId = null) => {
   if (isSupabaseConfigured) {
-    if (editingId) {
-      const { data, error } = await supabase
-        .from('products')
-        .update(productData)
-        .eq('id', editingId)
-        .select();
-      
-      if (error) {
-        console.error('Error updating product in Supabase:', error);
-        throw error;
+    const performSave = async (payload) => {
+      if (editingId) {
+        return await supabase
+          .from('products')
+          .update(payload)
+          .eq('id', editingId)
+          .select();
+      } else {
+        return await supabase
+          .from('products')
+          .insert([payload])
+          .select();
       }
-      return data;
-    } else {
-      const { data, error } = await supabase
-        .from('products')
-        .insert([productData])
-        .select();
-      
-      if (error) {
-        console.error('Error inserting product into Supabase:', error);
-        throw error;
+    };
+
+    let { data, error } = await performSave(productData);
+
+    if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('original_price'))) && 'original_price' in productData) {
+      console.warn('Supabase products table is missing original_price column. Retrying without it.');
+      const { original_price, ...fallbackPayload } = productData;
+      const retryResult = await performSave(fallbackPayload);
+      if (retryResult.error) throw retryResult.error;
+      if (retryResult.data && retryResult.data[0]) {
+        retryResult.data[0]._warning = "Supabase is missing the 'original_price' column. The product was saved, but your original price was not persisted. Please add the column in your Supabase dashboard.";
       }
-      return data;
+      return retryResult.data;
     }
+
+    if (error) {
+      console.error('Error saving product in Supabase:', error);
+      throw error;
+    }
+    return data;
   } else {
     // Local API mode: send complete list (handled inside AdminPanel using POST /api/products)
     const currentProducts = await getProducts();
