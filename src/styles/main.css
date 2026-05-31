@@ -4950,7 +4950,7 @@ button {
     /* Hero Section adjustment for mobile */
     .hero {
         height: 32vh !important;
-        min-height: 200px !important;
+        min-height: 180px !important;
     }
     .hero__content {
         display: none !important;
@@ -4981,7 +4981,7 @@ button {
     }
     
     .hero {
-        height: 32vh !important;
+        height: 30vh !important;
         min-height: 180px !important;
     }
     
