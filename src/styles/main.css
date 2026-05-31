@@ -4919,6 +4919,9 @@ button {
         height: 35vh !important;
         min-height: 250px !important;
     }
+    .hero__content {
+        display: none !important;
+    }
 }
 
 @media (max-width: 640px) {
