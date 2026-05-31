@@ -4047,7 +4047,7 @@ button {
 
 .footer__link {
     font-size: 0.82rem;
-    color: var(--accent-red);
+    color: var(--white);
     transition: color var(--transition-fast);
     letter-spacing: 0.5px;
 }
