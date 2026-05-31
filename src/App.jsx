@@ -237,7 +237,7 @@ function App() {
     if (query) {
       setTimeout(() => {
         const shopEl = document.querySelector('.shop');
-        const headerEl = document.querySelector('.header');
+        const headerEl = document.querySelector('.header-wrapper') || document.querySelector('.header');
         if (shopEl) {
           const headerHeight = headerEl ? headerEl.offsetHeight : 80;
           const targetScrollY = shopEl.getBoundingClientRect().top + window.scrollY - headerHeight;

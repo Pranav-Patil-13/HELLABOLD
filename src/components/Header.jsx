@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 const Header = ({ 
   cartCount, 
@@ -17,6 +17,22 @@ const Header = ({
   const [isBannerVisible, setIsBannerVisible] = useState(true);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
   const [fadeClass, setFadeClass] = useState('fade-in');
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    if (headerRef.current) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const height = entry.borderBoxSize 
+            ? entry.borderBoxSize[0].blockSize 
+            : entry.target.offsetHeight;
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
+        }
+      });
+      resizeObserver.observe(headerRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, [isBannerVisible]);
 
   const promos = [
     { text: "USE CODE: BOLD10 FOR 10% OFF ON ALL ORDERS", highlight: "BOLD10" },
@@ -74,7 +90,7 @@ const Header = ({
   };
 
   return (
-    <div className="header-wrapper">
+    <div className="header-wrapper" ref={headerRef}>
       {isBannerVisible && (
         <div className="promo-banner">
           <div className={`promo-banner__content ${fadeClass}`}>

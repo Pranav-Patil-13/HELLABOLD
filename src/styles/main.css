@@ -351,7 +351,7 @@ button {
 /* Filters Sidebar */
 .shop__filters {
     position: sticky;
-    top: 100px;
+    top: calc(var(--header-height, 80px) + 20px);
     align-self: start;
 }
 
@@ -869,7 +869,7 @@ button {
     flex-direction: column;
     gap: 1.5rem;
     position: sticky;
-    top: 120px;
+    top: calc(var(--header-height, 80px) + 40px);
 }
 
 .pdp-info__title {
@@ -2076,7 +2076,7 @@ button {
     border: 1px solid var(--border-color);
     padding: 3rem;
     position: sticky;
-    top: 100px;
+    top: calc(var(--header-height, 80px) + 20px);
 }
 
 .checkout-summary__list {
@@ -2251,7 +2251,7 @@ button {
 /* Atelier FAQ & Help Column */
 .pdp-help-section {
     position: sticky;
-    top: 120px;
+    top: calc(var(--header-height, 80px) + 40px);
 }
 
 .pdp-help-title {
