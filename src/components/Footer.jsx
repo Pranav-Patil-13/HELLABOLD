@@ -123,9 +123,9 @@ const Footer = ({ onNavigate }) => {
       <div className="footer__bottom">
         <span className="footer__copyright">© {new Date().getFullYear()} HELLABOLD. All rights reserved.</span>
         <div className="footer__legal">
-          <a href="/" onClick={handleNavClick('/')} className="footer__legal-link">Privacy Policy</a>
-          <a href="/" onClick={handleNavClick('/')} className="footer__legal-link">Terms of Service</a>
-          <a href="/" onClick={handleNavClick('/')} className="footer__legal-link">Cookie Policy</a>
+          <a href="/about" onClick={handleNavClick('/about')} className="footer__legal-link">About Us</a>
+          <a href="/privacy" onClick={handleNavClick('/privacy')} className="footer__legal-link">Privacy Policy</a>
+          <a href="/terms" onClick={handleNavClick('/terms')} className="footer__legal-link">Terms of Service</a>
         </div>
       </div>
     </footer>
