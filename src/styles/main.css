@@ -720,6 +720,7 @@ button {
     color: var(--text-primary);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
 }
 
