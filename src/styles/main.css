@@ -4981,8 +4981,8 @@ button {
     }
     
     .hero {
-        height: 30vh !important;
-        min-height: 180px !important;
+        height: 28vh !important;
+        min-height: 160px !important;
     }
     
     .hero__title {
