@@ -50,6 +50,7 @@ function App() {
   // Filters, Search, and Discount States
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(() => {
@@ -280,6 +281,7 @@ function App() {
   const handleResetFilters = () => {
     setSelectedCategories([]);
     setSelectedSizes([]);
+    setPriceRange([0, 10000]);
   };
 
   const handleFooterNavigation = (path) => {
@@ -309,10 +311,12 @@ function App() {
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
     const matchesSize = selectedSizes.length === 0 || product.sizes?.some(size => selectedSizes.includes(size));
+    const priceNum = parseFloat(product.price.replace(/[^0-9.]/g, ''));
+    const matchesPrice = priceNum >= priceRange[0] && priceNum <= priceRange[1];
     const matchesSearch = !searchQuery || 
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSize && matchesSearch;
+    return matchesCategory && matchesSize && matchesPrice && matchesSearch;
   });
 
   // 2. Sorting logic
@@ -416,8 +420,10 @@ function App() {
             <Filters 
               selectedCategories={selectedCategories}
               selectedSizes={selectedSizes}
+              priceRange={priceRange}
               onCategoryChange={handleCategoryChange}
               onSizeChange={handleSizeChange}
+              onPriceChange={setPriceRange}
               onReset={handleResetFilters}
             />
             <section className="shop__products">
