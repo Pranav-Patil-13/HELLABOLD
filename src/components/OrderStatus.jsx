@@ -92,12 +92,39 @@ const OrderStatus = () => {
   }
 
   if (!order) {
+    const handleSearchSubmit = (e) => {
+      e.preventDefault();
+      const inputId = e.target.elements.orderIdInput.value.trim();
+      if (inputId) {
+        window.history.pushState({}, '', `/order-status?id=${inputId}`);
+        window.dispatchEvent(new Event('popstate'));
+      }
+    };
+
     return (
       <div className="order-status-container error-state">
         <div className="order-status-error-view">
-          <h2>Order Not Found</h2>
-          <p>We couldn't retrieve tracking information for this identifier. Please verify the URL or return to the shop.</p>
-          <a href="/" className="btn btn--primary">Return to Shop</a>
+          <h2>Track Your Order</h2>
+          <p>Enter your HELLABOLD Order ID (e.g. HB-12345) to look up live Shiprocket tracking information.</p>
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.5rem', margin: '1.5rem 0', width: '100%', maxWidth: '400px' }}>
+            <input 
+              name="orderIdInput"
+              type="text" 
+              placeholder="e.g. HB-12345" 
+              required
+              style={{
+                flex: 1,
+                padding: '0.8rem 1rem',
+                border: '1px solid var(--border-color)',
+                outline: 'none',
+                fontFamily: 'inherit',
+                fontSize: '0.95rem',
+                textTransform: 'uppercase'
+              }}
+            />
+            <button type="submit" className="btn btn--primary" style={{ padding: '0.8rem 1.5rem' }}>Track</button>
+          </form>
+          <a href="/" className="btn btn--outline">Return to Shop</a>
         </div>
       </div>
     );
