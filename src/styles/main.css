@@ -7,6 +7,7 @@
     --text-secondary: #666666;
     --white: #ffffff;
     --border-color: rgba(0, 0, 0, 0.1);
+    --border-color-light: rgba(255, 255, 255, 0.7);
     --accent-red: #ed3000;
 
     /* Typography */
@@ -1784,6 +1785,7 @@ button {
     gap: 2rem;
     padding: 1rem 2rem;
     border-radius: 50px;
+    border: 1px solid var(--border-color-light);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     z-index: 990;
