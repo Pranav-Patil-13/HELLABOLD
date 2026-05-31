@@ -115,12 +115,19 @@ function App() {
       const path = window.location.pathname;
       const params = new URLSearchParams(window.location.search);
       const productId = params.get('product');
+      const categoryParam = params.get('category');
 
       setIsAdmin(path === '/admin');
       setIsCheckoutPage(path === '/checkout');
       setIsOrderStatusPage(path === '/order-status');
       setIsCollectionsPage(path === '/collections');
       setActiveProductId(productId ? parseInt(productId, 10) : null);
+
+      if (categoryParam) {
+        setSelectedCategories([categoryParam]);
+      } else {
+        setSelectedCategories([]);
+      }
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -258,14 +265,23 @@ function App() {
   };
 
   const handleFooterNavigation = (path) => {
-    const params = new URLSearchParams(window.location.search);
+    // Parse target path query parameters
+    const queryStr = path.includes('?') ? path.split('?')[1] : '';
+    const params = new URLSearchParams(queryStr);
     const productId = params.get('product');
+    const categoryParam = params.get('category');
 
-    setIsAdmin(path === '/admin');
-    setIsCheckoutPage(path === '/checkout');
-    setIsOrderStatusPage(path === '/order-status');
-    setIsCollectionsPage(path === '/collections');
+    setIsAdmin(path.startsWith('/admin'));
+    setIsCheckoutPage(path.startsWith('/checkout'));
+    setIsOrderStatusPage(path.startsWith('/order-status'));
+    setIsCollectionsPage(path.startsWith('/collections'));
     setActiveProductId(productId ? parseInt(productId, 10) : null);
+
+    if (categoryParam) {
+      setSelectedCategories([categoryParam]);
+    } else {
+      setSelectedCategories([]);
+    }
 
     // Trigger state synchronization event for components checking location query params
     window.dispatchEvent(new Event('popstate'));

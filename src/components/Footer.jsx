@@ -66,10 +66,10 @@ const Footer = ({ onNavigate }) => {
           <h4 className="footer__col-title">Shop</h4>
           <ul className="footer__links">
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">New Arrivals</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Hoodies</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">T-Shirts</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Shorts</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Accessories</a></li>
+            <li><a href="/?category=Hoodies" onClick={handleNavClick('/?category=Hoodies')} className="footer__link">Hoodies</a></li>
+            <li><a href="/?category=T-Shirts" onClick={handleNavClick('/?category=T-Shirts')} className="footer__link">T-Shirts</a></li>
+            <li><a href="/?category=Shorts" onClick={handleNavClick('/?category=Shorts')} className="footer__link">Shorts</a></li>
+            <li><a href="/?category=Accessories" onClick={handleNavClick('/?category=Accessories')} className="footer__link">Accessories</a></li>
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Sale</a></li>
           </ul>
         </div>
@@ -123,9 +123,9 @@ const Footer = ({ onNavigate }) => {
       <div className="footer__bottom">
         <span className="footer__copyright">© {new Date().getFullYear()} HELLABOLD. All rights reserved.</span>
         <div className="footer__legal">
-          <a href="/" className="footer__legal-link">Privacy Policy</a>
-          <a href="/" className="footer__legal-link">Terms of Service</a>
-          <a href="/" className="footer__legal-link">Cookie Policy</a>
+          <a href="/" onClick={handleNavClick('/')} className="footer__legal-link">Privacy Policy</a>
+          <a href="/" onClick={handleNavClick('/')} className="footer__legal-link">Terms of Service</a>
+          <a href="/" onClick={handleNavClick('/')} className="footer__legal-link">Cookie Policy</a>
         </div>
       </div>
     </footer>
