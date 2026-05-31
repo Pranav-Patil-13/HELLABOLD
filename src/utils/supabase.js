@@ -24,6 +24,21 @@ export const supabase = isSupabaseConfigured
 
 export const getProducts = async () => {
   if (isSupabaseConfigured) {
+    // Force sync database to use updated local printed t-shirts data
+    try {
+      const { data: currentDbData } = await supabase.from('products').select('*');
+      if (currentDbData && currentDbData.length > 0) {
+        const firstProduct = currentDbData[0];
+        if (firstProduct.title === 'Born to Stand Out' || firstProduct.title === 'Signature Saddle Bag' || firstProduct.title.includes('Boot') || firstProduct.title.includes('Coat')) {
+          console.log('Detected legacy products in Supabase. Overwriting with printed t-shirts...');
+          await supabase.from('products').delete().neq('id', 0); // Clear old records
+          await supabase.from('products').insert(productsJson);  // Insert updated list
+        }
+      }
+    } catch (e) {
+      console.error('Failed to sync updated items to database:', e);
+    }
+
     let { data, error } = await supabase
       .from('products')
       .select('*')
