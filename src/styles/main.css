@@ -1121,7 +1121,7 @@ button {
     height: 32px;
     border-bottom: 2px solid var(--border-color);
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 500;
     font-family: monospace;
     color: var(--text-primary);
     transition: border-color var(--transition-fast);
