@@ -4752,5 +4752,195 @@ button {
     75% { transform: rotate(3deg); }
 }
 
+/* =========================================
+   Mobile Responsiveness Additions
+   ========================================= */
+
+/* Header Hamburger & Mobile Menu Styles */
+.header__hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 110;
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 2px;
+    background-color: var(--accent-color);
+    transition: all var(--transition-fast);
+    transform-origin: left center;
+}
+
+.header__hamburger--active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translateY(-2px);
+}
+
+.header__hamburger--active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.header__hamburger--active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translateY(2px);
+}
+
+/* Mobile Filters Drawer/Collapsible Accordion */
+.filters__toggle-btn {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.filters__toggle-btn:hover {
+    border-color: var(--accent-color);
+}
+
+.toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    transition: transform var(--transition-fast);
+}
+
+.toggle-icon.open {
+    transform: rotate(180deg);
+}
+
+/* Media Query overrides for screen sizes */
+
+@media (max-width: 768px) {
+    /* Header layout styling */
+    .header {
+        padding: 0.8rem 1.5rem;
+    }
+    
+    .header__hamburger {
+        display: flex;
+    }
+    
+    .header__nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background-color: var(--bg-color);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        z-index: 105;
+        transform: translateX(-100%);
+        transition: transform var(--transition-slow);
+    }
+    
+    .header__nav--open {
+        transform: translateX(0);
+    }
+    
+    .header__link {
+        font-size: 1.5rem;
+    }
+
+    .header__search-container {
+        display: none !important; /* Hide search input directly inside header actions to make space on mobile */
+    }
+
+    /* Filters adjustment */
+    .shop {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: var(--spacing-lg) 1.5rem;
+    }
+    
+    .filters__toggle-btn {
+        display: flex;
+    }
+    
+    .filters__title {
+        display: none; /* Hide the big desktop header title inside content */
+    }
+    
+    .filters__content {
+        display: none;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .shop__filters.is-open .filters__content {
+        display: block;
+    }
+    
+    /* PDP Layout */
+    .pdp-container {
+        padding: var(--spacing-md) 1.5rem var(--spacing-lg) 1.5rem;
+    }
+    
+    .pdp-layout {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+    }
+    
+    /* Checkout & checkout forms stacking on tablets/mobile */
+    .checkout-layout {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+    }
+
+    /* Product Card adjustments for touch devices (non-hover states) */
+    .add-to-cart-btn {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+    
+    .like-btn, .carousel-btn, .product-card__dots {
+        opacity: 1 !important;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Shop layout grids */
+    .shop__products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.5rem !important;
+    }
+    
+    /* Product details typography scales */
+    .product-details__title {
+        font-size: 2rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .shop__products-grid {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+    }
+    
+    .hero__title {
+        font-size: 2.2rem !important;
+    }
+    
+    .hero__subtitle {
+        font-size: 1rem !important;
+    }
+}
+
 
 

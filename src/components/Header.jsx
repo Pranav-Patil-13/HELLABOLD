@@ -17,6 +17,7 @@ const Header = ({
   const [isBannerVisible, setIsBannerVisible] = useState(true);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
   const [fadeClass, setFadeClass] = useState('fade-in');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const headerRef = useRef(null);
 
   useEffect(() => {
@@ -108,12 +109,24 @@ const Header = ({
       )}
 
       <header className="header">
+        <button 
+          className={`header__hamburger ${isMobileNavOpen ? 'header__hamburger--active' : ''}`}
+          onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+          aria-label="Toggle Menu"
+          aria-expanded={isMobileNavOpen}
+        >
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+        </button>
+
         <div className="header__logo" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
           <img src="/assets/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" />
         </div>
-        <nav className="header__nav">
-          <a href="/" onClick={handleGoHome} className={`header__link${activeTab === 'shop' ? ' active' : ''}`}>Shop</a>
-          <a href="/collections" className={`header__link${activeTab === 'collections' ? ' active' : ''}`}>Collections</a>
+
+        <nav className={`header__nav ${isMobileNavOpen ? 'header__nav--open' : ''}`}>
+          <a href="/" onClick={(e) => { handleGoHome(e); setIsMobileNavOpen(false); }} className={`header__link${activeTab === 'shop' ? ' active' : ''}`}>Shop</a>
+          <a href="/collections" onClick={() => setIsMobileNavOpen(false)} className={`header__link${activeTab === 'collections' ? ' active' : ''}`}>Collections</a>
         </nav>
 
         <div className="header__actions">
@@ -133,7 +146,7 @@ const Header = ({
           )}
           {onOpenFavorites && (
             <button 
-              className="icon-btn" 
+              className="icon-btn header__action-btn" 
               aria-label="Favorites" 
               onClick={(e) => { e.preventDefault(); onOpenFavorites(); }}
               style={{ position: 'relative' }}
@@ -147,7 +160,7 @@ const Header = ({
             </button>
           )}
           <button 
-            className="icon-btn" 
+            className="icon-btn header__action-btn" 
             aria-label="Cart" 
             style={{ transform: pulse ? 'scale(1.2)' : 'scale(1)' }}
             onClick={onOpenCart}
@@ -159,7 +172,7 @@ const Header = ({
           {/* User Account / Profile Trigger */}
           {userProfile ? (
             <button 
-              className="icon-btn profile-trigger-btn"
+              className="icon-btn profile-trigger-btn header__action-btn"
               onClick={onOpenProfile}
               title={userProfile.fullName}
               style={{ 
@@ -182,7 +195,7 @@ const Header = ({
             </button>
           ) : (
             <button 
-              className="btn btn--outline" 
+              className="btn btn--outline header__signin-btn" 
               onClick={onOpenAuth}
               style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginLeft: '0.5rem' }}
             >
