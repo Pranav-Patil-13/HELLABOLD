@@ -18,6 +18,7 @@ import CollectionsPage from './components/CollectionsPage';
 import AboutUs from './components/AboutUs';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import FaqPage from './components/FaqPage';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -39,6 +40,7 @@ function App() {
   const [isAboutPage, setIsAboutPage] = useState(false);
   const [isPrivacyPage, setIsPrivacyPage] = useState(false);
   const [isTermsPage, setIsTermsPage] = useState(false);
+  const [isFaqPage, setIsFaqPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   
@@ -94,6 +96,9 @@ function App() {
     if (window.location.pathname === '/terms') {
       setIsTermsPage(true);
     }
+    if (window.location.pathname === '/faqs') {
+      setIsFaqPage(true);
+    }
 
     // Resolve active Supabase or mock user session
     getCurrentUser()
@@ -140,6 +145,7 @@ function App() {
       setIsAboutPage(path === '/about');
       setIsPrivacyPage(path === '/privacy');
       setIsTermsPage(path === '/terms');
+      setIsFaqPage(path === '/faqs');
       setActiveProductId(productId ? parseInt(productId, 10) : null);
 
       if (categoryParam) {
@@ -295,6 +301,10 @@ function App() {
     setIsCheckoutPage(path.startsWith('/checkout'));
     setIsOrderStatusPage(path.startsWith('/order-status'));
     setIsCollectionsPage(path.startsWith('/collections'));
+    setIsAboutPage(path.startsWith('/about'));
+    setIsPrivacyPage(path.startsWith('/privacy'));
+    setIsTermsPage(path.startsWith('/terms'));
+    setIsFaqPage(path.startsWith('/faqs'));
     setActiveProductId(productId ? parseInt(productId, 10) : null);
 
     if (categoryParam) {
@@ -366,8 +376,8 @@ function App() {
         userProfile={userProfile}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-        activeTab={isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : "shop")))}
+        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); }}
+        activeTab={isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : "shop"))))}
       />
       
       {isCheckoutPage ? (
@@ -394,6 +404,11 @@ function App() {
       ) : isTermsPage ? (
         <>
           <TermsOfService />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isFaqPage ? (
+        <>
+          <FaqPage />
           <Footer onNavigate={handleFooterNavigation} />
         </>
       ) : isCollectionsPage ? (

@@ -80,7 +80,7 @@ const Footer = ({ onNavigate }) => {
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Shipping Policy</a></li>
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Returns &amp; Exchanges</a></li>
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Size Guide</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">FAQs</a></li>
+            <li><a href="/faqs" onClick={handleNavClick('/faqs')} className="footer__link">FAQs</a></li>
             <li><a href="mailto:support@hellabold.com" className="footer__link">Contact Us</a></li>
           </ul>
         </div>
