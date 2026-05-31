@@ -294,9 +294,7 @@ button {
    ========================================= */
 .hero {
     position: relative;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 7;
+    height: 60vh;
     min-height: 400px;
     display: flex;
     align-items: center;
@@ -312,18 +310,18 @@ button {
     height: 100%;
     object-fit: cover;
     z-index: -1;
-    filter: brightness(0.85);
+    filter: brightness(0.8);
 }
 
 .hero__content {
     text-align: center;
     color: var(--bg-color);
-    padding: 2rem 3rem;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    max-width: 90%;
-    z-index: 2;
+    padding: 0.8rem 2rem;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: absolute;
+    bottom: 0;
 }
 
 .hero__title {
@@ -4906,13 +4904,6 @@ button {
         gap: 2rem !important;
     }
 
-    /* Hero section responsiveness ratios */
-    .hero {
-        aspect-ratio: 1 / 1 !important;
-        height: auto !important;
-        min-height: auto !important;
-    }
-
     /* Product Card adjustments for touch devices (non-hover states) */
     .add-to-cart-btn {
         opacity: 1 !important;
@@ -4921,6 +4912,12 @@ button {
     
     .like-btn, .carousel-btn, .product-card__dots {
         opacity: 1 !important;
+    }
+
+    /* Hero Section adjustment for mobile */
+    .hero {
+        height: 40vh !important;
+        min-height: 280px !important;
     }
 }
 
@@ -4945,6 +4942,11 @@ button {
     .shop__products-grid {
         grid-template-columns: 1fr !important;
         gap: 2rem !important;
+    }
+    
+    .hero {
+        height: 35vh !important;
+        min-height: 220px !important;
     }
     
     .hero__title {
