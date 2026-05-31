@@ -589,7 +589,7 @@ button {
 }
 
 .like-btn.liked svg {
-    fill: var(--accent-color);
+    fill: var(--accent-red);
 }
 
 .like-btn:hover {
