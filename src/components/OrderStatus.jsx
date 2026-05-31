@@ -3,6 +3,7 @@ import { getOrders, updateOrderStatusInDB } from '../utils/supabase';
 
 const OrderStatus = () => {
   const [order, setOrder] = useState(null);
+  const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Shiprocket milestones
@@ -19,26 +20,22 @@ const OrderStatus = () => {
       const params = new URLSearchParams(window.location.search);
       const orderId = params.get('id');
 
-      if (orderId) {
-        setLoading(true);
-        getOrders()
-          .then(orders => {
+      setLoading(true);
+      getOrders()
+        .then(orders => {
+          setAllOrders(orders || []);
+          if (orderId) {
             const foundOrder = orders.find(o => o.id === orderId);
-            if (foundOrder) {
-              setOrder(foundOrder);
-            } else {
-              setOrder(null);
-            }
-            setLoading(false);
-          })
-          .catch(err => {
-            console.error('Error fetching order tracking info:', err);
-            setLoading(false);
-          });
-      } else {
-        setOrder(null);
-        setLoading(false);
-      }
+            setOrder(foundOrder || null);
+          } else {
+            setOrder(null);
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error fetching order tracking info:', err);
+          setLoading(false);
+        });
     };
 
     fetchOrder();
@@ -83,6 +80,15 @@ const OrderStatus = () => {
     }
   };
 
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(val);
+  };
+
   if (loading) {
     return (
       <div className="order-status-loading">
@@ -92,54 +98,63 @@ const OrderStatus = () => {
   }
 
   if (!order) {
-    const handleSearchSubmit = (e) => {
-      e.preventDefault();
-      const inputId = e.target.elements.orderIdInput.value.trim();
-      if (inputId) {
-        window.history.pushState({}, '', `/order-status?id=${inputId}`);
-        window.dispatchEvent(new Event('popstate'));
-      }
+    const handleTrackOrderClick = (id) => {
+      window.history.pushState({}, '', `/order-status?id=${id}`);
+      window.dispatchEvent(new Event('popstate'));
     };
 
     return (
-      <div className="order-status-container error-state">
-        <div className="order-status-error-view">
-          <h2>Track Your Order</h2>
-          <p>Enter your HELLABOLD Order ID (e.g. HB-12345) to look up live Shiprocket tracking information.</p>
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '0.5rem', margin: '1.5rem 0', width: '100%', maxWidth: '400px' }}>
-            <input 
-              name="orderIdInput"
-              type="text" 
-              placeholder="e.g. HB-12345" 
-              required
-              style={{
-                flex: 1,
-                padding: '0.8rem 1rem',
-                border: '1px solid var(--border-color)',
-                outline: 'none',
-                fontFamily: 'inherit',
-                fontSize: '0.95rem',
-                textTransform: 'uppercase'
-              }}
-            />
-            <button type="submit" className="btn btn--primary" style={{ padding: '0.8rem 1.5rem' }}>Track</button>
-          </form>
-          <a href="/" className="btn btn--outline">Return to Shop</a>
+      <div className="order-status-container">
+        <div className="order-status__header">
+          <div className="order-status__meta">
+            <h1>Your Orders</h1>
+            <p>Select any of your premium HELLABOLD orders below to view tracking information.</p>
+          </div>
         </div>
+
+        {allOrders.length === 0 ? (
+          <div className="order-status-error-view" style={{ marginTop: '2rem' }}>
+            <h2>No Orders Placed Yet</h2>
+            <p>We couldn't find any order history in your account. Once you place an order, it will appear here.</p>
+            <a href="/" className="btn btn--primary" style={{ marginTop: '1rem' }}>Shop Now</a>
+          </div>
+        ) : (
+          <div className="orders-list-grid" style={{ display: 'grid', gap: '1.5rem', marginTop: '2rem' }}>
+            {allOrders.map(o => (
+              <div 
+                key={o.id} 
+                style={{ 
+                  border: '1px solid var(--border-color)', 
+                  padding: '1.5rem', 
+                  backgroundColor: 'var(--white)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem'
+                }}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>Order {o.id}</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0' }}>Placed on {o.date} | Status: <strong style={{ color: 'var(--accent-color)' }}>{o.status}</strong></p>
+                  <p style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: 0 }}>Total: {formatCurrency(o.total)}</p>
+                </div>
+                <button 
+                  onClick={() => handleTrackOrderClick(o.id)}
+                  className="btn btn--primary" 
+                  style={{ padding: '0.6rem 1.2rem', fontSize: '0.8rem' }}
+                >
+                  Track Package
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   const currentStepIdx = getStepIndex(order.status);
-
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(val);
-  };
 
   return (
     <div className="order-status-container">
