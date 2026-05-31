@@ -19,6 +19,7 @@ import AboutUs from './components/AboutUs';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import FaqPage from './components/FaqPage';
+import PolicyPages from './components/PolicyPages';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -41,6 +42,9 @@ function App() {
   const [isPrivacyPage, setIsPrivacyPage] = useState(false);
   const [isTermsPage, setIsTermsPage] = useState(false);
   const [isFaqPage, setIsFaqPage] = useState(false);
+  const [isShippingPage, setIsShippingPage] = useState(false);
+  const [isReturnsPage, setIsReturnsPage] = useState(false);
+  const [isSizeGuidePage, setIsSizeGuidePage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   
@@ -99,6 +103,15 @@ function App() {
     if (window.location.pathname === '/faqs') {
       setIsFaqPage(true);
     }
+    if (window.location.pathname === '/shipping-policy') {
+      setIsShippingPage(true);
+    }
+    if (window.location.pathname === '/returns-exchanges') {
+      setIsReturnsPage(true);
+    }
+    if (window.location.pathname === '/size-guide') {
+      setIsSizeGuidePage(true);
+    }
 
     // Resolve active Supabase or mock user session
     getCurrentUser()
@@ -146,6 +159,9 @@ function App() {
       setIsPrivacyPage(path === '/privacy');
       setIsTermsPage(path === '/terms');
       setIsFaqPage(path === '/faqs');
+      setIsShippingPage(path === '/shipping-policy');
+      setIsReturnsPage(path === '/returns-exchanges');
+      setIsSizeGuidePage(path === '/size-guide');
       setActiveProductId(productId ? parseInt(productId, 10) : null);
 
       if (categoryParam) {
@@ -305,6 +321,9 @@ function App() {
     setIsPrivacyPage(path.startsWith('/privacy'));
     setIsTermsPage(path.startsWith('/terms'));
     setIsFaqPage(path.startsWith('/faqs'));
+    setIsShippingPage(path.startsWith('/shipping-policy'));
+    setIsReturnsPage(path.startsWith('/returns-exchanges'));
+    setIsSizeGuidePage(path.startsWith('/size-guide'));
     setActiveProductId(productId ? parseInt(productId, 10) : null);
 
     if (categoryParam) {
@@ -376,7 +395,7 @@ function App() {
         userProfile={userProfile}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); }}
+        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); }}
         activeTab={isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : "shop"))))}
       />
       
@@ -409,6 +428,21 @@ function App() {
       ) : isFaqPage ? (
         <>
           <FaqPage />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isShippingPage ? (
+        <>
+          <PolicyPages type="shipping" />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isReturnsPage ? (
+        <>
+          <PolicyPages type="returns" />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isSizeGuidePage ? (
+        <>
+          <PolicyPages type="size-guide" />
           <Footer onNavigate={handleFooterNavigation} />
         </>
       ) : isCollectionsPage ? (

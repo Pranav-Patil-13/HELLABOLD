@@ -77,9 +77,9 @@ const Footer = ({ onNavigate }) => {
           <h4 className="footer__col-title">Help</h4>
           <ul className="footer__links">
             <li><a href="/order-status" onClick={handleNavClick('/order-status')} className="footer__link">Track My Order</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Shipping Policy</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Returns &amp; Exchanges</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Size Guide</a></li>
+            <li><a href="/shipping-policy" onClick={handleNavClick('/shipping-policy')} className="footer__link">Shipping Policy</a></li>
+            <li><a href="/returns-exchanges" onClick={handleNavClick('/returns-exchanges')} className="footer__link">Returns &amp; Exchanges</a></li>
+            <li><a href="/size-guide" onClick={handleNavClick('/size-guide')} className="footer__link">Size Guide</a></li>
             <li><a href="/faqs" onClick={handleNavClick('/faqs')} className="footer__link">FAQs</a></li>
             <li><a href="mailto:support@hellabold.com" className="footer__link">Contact Us</a></li>
           </ul>
