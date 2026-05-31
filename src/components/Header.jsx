@@ -14,9 +14,7 @@ const Header = ({
   activeTab
 }) => {
   const [pulse, setPulse] = useState(false);
-  const [isBannerVisible, setIsBannerVisible] = useState(() => {
-    return sessionStorage.getItem('hellabold_promo_dismissed') !== 'true';
-  });
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
   const [fadeClass, setFadeClass] = useState('fade-in');
 
@@ -55,7 +53,6 @@ const Header = ({
   const handleDismissBanner = (e) => {
     e.stopPropagation();
     setIsBannerVisible(false);
-    sessionStorage.setItem('hellabold_promo_dismissed', 'true');
   };
 
   const currentPromo = promos[currentPromoIndex];
