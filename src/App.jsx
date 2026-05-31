@@ -191,6 +191,22 @@ function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Auto-invalidate applied discount if subtotal drops below thresholds
+  useEffect(() => {
+    if (appliedDiscount) {
+      const subtotal = cartItems.reduce((acc, item) => {
+        const numericalPrice = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+        return acc + (numericalPrice * item.quantity);
+      }, 0);
+
+      if (appliedDiscount.code === 'BOLD20' && subtotal < 899) {
+        saveDiscount(null);
+      } else if (appliedDiscount.code === 'HELLA50' && subtotal < 1299) {
+        saveDiscount(null);
+      }
+    }
+  }, [cartItems, appliedDiscount]);
+
   const saveCart = (newItems) => {
     setCartItems(newItems);
     localStorage.setItem('hellabold_cart', JSON.stringify(newItems));

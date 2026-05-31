@@ -87,11 +87,24 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       setPromoError('');
       setPromoCode('');
       triggerConfettiBurst(e.target);
+    } else if (code === 'BOLD20') {
+      if (subtotal < 899) {
+        setPromoError('This code requires a minimum order of ₹899');
+      } else {
+        onApplyDiscount({ code, percent: 20 });
+        setPromoError('');
+        setPromoCode('');
+        triggerConfettiBurst(e.target);
+      }
     } else if (code === 'HELLA50') {
-      onApplyDiscount({ code, percent: 50 });
-      setPromoError('');
-      setPromoCode('');
-      triggerConfettiBurst(e.target);
+      if (subtotal < 1299) {
+        setPromoError('This code requires a minimum order of ₹1,299');
+      } else {
+        onApplyDiscount({ code, percent: 50 });
+        setPromoError('');
+        setPromoCode('');
+        triggerConfettiBurst(e.target);
+      }
     } else {
       setPromoError('Invalid promo code');
     }

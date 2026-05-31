@@ -19,8 +19,9 @@ const Header = ({
   const [fadeClass, setFadeClass] = useState('fade-in');
 
   const promos = [
-    { text: "USE CODE: BOLD10 FOR 10% OFF EXTRA", highlight: "BOLD10" },
-    { text: "LIMITED TIME ONLY: USE CODE HELLA50 FOR 50% OFF", highlight: "HELLA50" }
+    { text: "USE CODE: BOLD10 FOR 10% OFF ON ALL ORDERS", highlight: "BOLD10" },
+    { text: "20% OFF ON ORDERS ABOVE ₹899 | USE CODE BOLD20", highlight: "BOLD20" },
+    { text: "50% OFF ON ORDERS ABOVE ₹1299 | USE CODE HELLA50", highlight: "HELLA50" }
   ];
 
   useEffect(() => {
