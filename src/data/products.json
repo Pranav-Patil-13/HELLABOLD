@@ -134,5 +134,22 @@
     "sizes": ["S", "M", "L"],
     "category": "Tops",
     "label": ""
+  },
+  {
+    "id": 9,
+    "title": "NEO GLITCH",
+    "price": "₹799",
+    "images": ["/assets/product4_A.png", "/assets/product4_B.png"],
+    "description": "A premium heavy-weight graphic featuring a corrupted retro system console graphic. High-contrast neon overlays make this shirt an instant classic.",
+    "details": [
+      "100% premium long-staple cotton",
+      "230 GSM custom heavy knit",
+      "Premium neon chest screen print detailing",
+      "Oversized street silhouette fit",
+      "Preshrunk colorway"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "Tops",
+    "label": "new"
   }
 ]

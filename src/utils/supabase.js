@@ -27,10 +27,10 @@ export const getProducts = async () => {
     // Force sync database to use updated local printed t-shirts data
     try {
       const { data: currentDbData } = await supabase.from('products').select('*');
-      if (currentDbData && currentDbData.length > 0) {
-        const firstProduct = currentDbData[0];
-        if (firstProduct.title === 'Born to Stand Out' || firstProduct.title === 'Signature Saddle Bag' || firstProduct.title.includes('Boot') || firstProduct.title.includes('Coat')) {
-          console.log('Detected legacy products in Supabase. Overwriting with printed t-shirts...');
+      if (currentDbData) {
+        const hasLegacy = currentDbData.some(p => p.title === 'Born to Stand Out' || p.title === 'Signature Saddle Bag' || p.title.includes('Boot') || p.title.includes('Coat'));
+        if (hasLegacy || currentDbData.length !== 9) {
+          console.log('Syncing product count or items mismatch. Re-seeding printed t-shirts...');
           await supabase.from('products').delete().neq('id', 0); // Clear old records
           await supabase.from('products').insert(productsJson);  // Insert updated list
         }
