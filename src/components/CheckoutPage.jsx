@@ -10,9 +10,19 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [zipCode, setZipCode] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvc, setCardCvc] = useState('');
+
+  // Payment Selection State
+  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // razorpay, cod
+  const [paymentError, setPaymentError] = useState('');
+  const [tempOrder, setTempOrder] = useState(null);
+
+  // COD Verification State
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
 
   // Saved Address Selector State
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -56,8 +66,8 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     return acc + (numericalPrice * item.quantity);
   }, 0);
 
-  const discountAmount = appliedDiscount ? (subtotal * appliedDiscount.percent / 100) : 0;
-  const shipping = 50; // INR flat rate shipping
+  const discountAmount = appliedDiscount ? Math.round(subtotal * appliedDiscount.percent / 100) : 0;
+  const shipping = paymentMethod === 'razorpay' ? 0 : 50; // WAIVE shipping for online payments (incentive)
   const total = subtotal - discountAmount + shipping;
 
   const formatCurrency = (val) => {
@@ -67,20 +77,6 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(val);
-  };
-
-  const handleCardNumberChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    value = value.match(/.{1,4}/g)?.join(' ') || value;
-    setCardNumber(value.slice(0, 19));
-  };
-
-  const handleExpiryChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 2) {
-      value = value.slice(0, 2) + '/' + value.slice(2, 4);
-    }
-    setCardExpiry(value.slice(0, 5));
   };
 
   const handleApplyPromo = (e) => {
@@ -105,40 +101,21 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     onApplyDiscount(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Generate order ID and Shiprocket tracking details
-    const orderId = 'HB-' + Math.floor(10000 + Math.random() * 90000);
-    const awb = 'SR-' + Math.floor(100000000 + Math.random() * 900000000);
-    const couriers = ['Delhivery', 'Blue Dart', 'Shadowfax', 'Xpressbees'];
-    const courier = couriers[Math.floor(Math.random() * couriers.length)];
-    
-    const newOrder = {
-      id: orderId,
-      awb: awb,
-      courier: courier,
-      items: cartItems,
-      subtotal: subtotal,
-      discount: discountAmount,
-      appliedPromo: appliedDiscount ? appliedDiscount.code : null,
-      shipping: shipping,
-      total: total,
-      status: 'Order Received',
-      date: new Date().toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      }),
-      shippingDetails: {
-        name,
-        email,
-        address,
-        city,
-        zipCode
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
       }
-    };
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
+  const handlePaymentSuccess = async (completedOrder) => {
     // Auto-save address to user profile if checkbox is checked
     if (saveAddressToProfile && userProfile) {
       try {
@@ -168,18 +145,154 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
 
     // Save to live Supabase database
     try {
-      await createOrder(newOrder);
+      await createOrder(completedOrder);
     } catch (err) {
       console.error('Failed to create order in database:', err);
     }
 
     // Save to localStorage list of orders
     const existingOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
-    existingOrders.push(newOrder);
+    existingOrders.push(completedOrder);
     localStorage.setItem('hellabold_orders', JSON.stringify(existingOrders));
 
-    setPlacedOrder(newOrder);
+    setPlacedOrder(completedOrder);
     setStep('success');
+  };
+
+  const handleSendOtp = () => {
+    if (!phone || phone.length < 10) {
+      setOtpError('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError('');
+    setTimeout(() => {
+      setOtpLoading(false);
+      setOtpSent(true);
+    }, 1200);
+  };
+
+  const handleVerifyOtpAndPlaceOrder = async () => {
+    if (otpCode !== '1234' && otpCode !== '0000') {
+      setOtpError('Invalid OTP code. Please enter 1234 or 0000.');
+      return;
+    }
+
+    if (!tempOrder) return;
+
+    setOtpLoading(true);
+    setOtpError('');
+
+    const finalizedOrder = {
+      ...tempOrder,
+      shippingDetails: {
+        ...tempOrder.shippingDetails,
+        phone: '+91 ' + phone
+      }
+    };
+
+    setTimeout(async () => {
+      await handlePaymentSuccess(finalizedOrder);
+      setShowOtpVerification(false);
+      setOtpSent(false);
+      setOtpCode('');
+      setPhone('');
+      setOtpLoading(false);
+    }, 1800);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setPaymentError('');
+
+    // Generate order ID and Shiprocket tracking details
+    const orderId = 'HB-' + Math.floor(10000 + Math.random() * 90000);
+    const awb = 'SR-' + Math.floor(100000000 + Math.random() * 900000000);
+    const couriers = ['Delhivery', 'Blue Dart', 'Shadowfax', 'Xpressbees'];
+    const courier = couriers[Math.floor(Math.random() * couriers.length)];
+
+    const newOrder = {
+      id: orderId,
+      awb: awb,
+      courier: courier,
+      items: cartItems,
+      subtotal: subtotal,
+      discount: discountAmount,
+      appliedPromo: appliedDiscount ? appliedDiscount.code : null,
+      shipping: shipping,
+      total: total,
+      status: 'Order Received',
+      paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)',
+      date: new Date().toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }),
+      shippingDetails: {
+        name,
+        email,
+        phone: '+91 ' + phone,
+        address,
+        city,
+        zipCode
+      }
+    };
+
+    if (paymentMethod === 'cod') {
+      if (!phone || phone.length < 10) {
+        setPaymentError('Please enter a valid 10-digit phone number in the shipping form.');
+        return;
+      }
+      setTempOrder(newOrder);
+      setShowOtpVerification(true);
+      setOtpSent(true); // Phone is already captured, go directly to code entry
+      return;
+    }
+
+    // Load Razorpay Script dynamically
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      setPaymentError('Failed to load Razorpay payment SDK. Please check your internet connection.');
+      return;
+    }
+
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder';
+
+    const options = {
+      key: razorpayKey,
+      amount: total * 100, // Amount in paise
+      currency: 'INR',
+      name: 'HELLABOLD',
+      description: `Purchase for Order ${orderId}`,
+      image: '/logo.png',
+      handler: async function (response) {
+        const completedOrder = {
+          ...newOrder,
+          razorpayPaymentId: response.razorpay_payment_id
+        };
+        await handlePaymentSuccess(completedOrder);
+      },
+      prefill: {
+        name: name,
+        email: email
+      },
+      theme: {
+        color: '#000000'
+      },
+      modal: {
+        ondismiss: function () {
+          setPaymentError('Payment window was closed by the user.');
+        }
+      }
+    };
+
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error('Razorpay execution failed:', err);
+      setPaymentError('Could not initialize Razorpay checkout client.');
+    }
   };
 
   const handleFinish = () => {
@@ -210,8 +323,8 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
               </p>
             )}
             <div className="checkout-success-actions">
-              <button 
-                className="btn btn--primary" 
+              <button
+                className="btn btn--primary"
                 onClick={() => window.open(`/order-status?id=${placedOrder?.id}`, '_blank')}
               >
                 Track Order (Shiprocket)
@@ -274,7 +387,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
         <div className="checkout-page-layout">
           {/* Left Side: Form Details */}
           <div className="checkout-page-form-section">
-             <form onSubmit={handleSubmit} className="checkout-form">
+            <form onSubmit={handleSubmit} className="checkout-form">
               <h2 className="checkout-page-section-title">Shipping Address</h2>
 
               {/* Saved Address Selector */}
@@ -283,7 +396,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                   <h3 className="checkout-address-selector-title">Select Saved Address</h3>
                   <div className="checkout-address-selector-grid">
                     {userProfile.addresses.map((addr) => (
-                      <div 
+                      <div
                         key={addr.id}
                         className={`checkout-address-card ${selectedAddressId === addr.id ? 'active' : ''}`}
                         onClick={() => handleSelectAddress(addr)}
@@ -301,60 +414,92 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                   </div>
                 </div>
               )}
-              
+
+              <div className="form-group">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={handleInputChange(setName)}
+                  required
+                  placeholder="e.g. Alexander McQueen"
+                />
+              </div>
+
               <div className="form-group-row">
                 <div className="form-group">
-                  <label>Full Name</label>
-                  <input 
-                    type="text" 
-                    value={name} 
-                    onChange={handleInputChange(setName)} 
-                    required 
-                    placeholder="e.g. Alexander McQueen" 
+                  <label>Email Address</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    placeholder="e.g. alex@hellabold.com"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Email Address</label>
-                  <input 
-                    type="email" 
-                    value={email} 
-                    onChange={e => setEmail(e.target.value)} 
-                    required 
-                    placeholder="e.g. alex@hellabold.com" 
-                  />
+                  <label>Phone Number</label>
+                  <div className="phone-input-wrapper">
+                    <span className="phone-country-code">+91</span>
+                    <div className="phone-input-container">
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        required
+                        placeholder=""
+                        maxLength="10"
+                        pattern="[0-9]{10}"
+                        title="Please enter a valid 10-digit phone number"
+                      />
+                      <div className="phone-dashes-overlay">
+                        {Array.from({ length: 10 }).map((_, i) => {
+                          const isCursor = phone.length === i;
+                          return (
+                            <span 
+                              key={i} 
+                              className={`phone-dash ${phone.length > i ? 'active' : ''} ${isCursor ? 'is-cursor' : ''}`}
+                            >
+                              {phone[i] || ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Street Address</label>
-                <input 
-                  type="text" 
-                  value={address} 
-                  onChange={handleInputChange(setAddress)} 
-                  required 
-                  placeholder="e.g. 10 Bond Street" 
+                <input
+                  type="text"
+                  value={address}
+                  onChange={handleInputChange(setAddress)}
+                  required
+                  placeholder="e.g. 10 Bond Street"
                 />
               </div>
 
               <div className="form-group-row">
                 <div className="form-group">
                   <label>City</label>
-                  <input 
-                    type="text" 
-                    value={city} 
-                    onChange={handleInputChange(setCity)} 
-                    required 
-                    placeholder="e.g. Mumbai" 
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={handleInputChange(setCity)}
+                    required
+                    placeholder="e.g. Mumbai"
                   />
                 </div>
                 <div className="form-group">
                   <label>ZIP / Postal Code</label>
-                  <input 
-                    type="text" 
-                    value={zipCode} 
-                    onChange={handleInputChange(setZipCode)} 
-                    required 
-                    placeholder="e.g. 400001" 
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={handleInputChange(setZipCode)}
+                    required
+                    placeholder="e.g. 400001"
                   />
                 </div>
               </div>
@@ -363,8 +508,8 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
               {userProfile && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '1.2rem', marginBottom: '1.5rem' }}>
                   <label className="checkout-save-address-wrapper" style={{ margin: 0 }}>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="checkout-save-address-checkbox"
                       checked={saveAddressToProfile}
                       onChange={(e) => setSaveAddressToProfile(e.target.checked)}
@@ -374,9 +519,9 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                   {saveAddressToProfile && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', paddingLeft: '1.6rem' }}>
                       <label style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Label as:</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Home, Office, Work" 
+                      <input
+                        type="text"
+                        placeholder="e.g. Home, Office, Work"
                         value={saveAddressLabel}
                         onChange={(e) => setSaveAddressLabel(e.target.value)}
                         style={{ padding: '0.4rem 0.6rem', border: '1px solid var(--border-color)', fontSize: '0.8rem', maxWidth: '200px', backgroundColor: '#fff' }}
@@ -386,62 +531,44 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                 </div>
               )}
 
-              <h2 className="checkout-page-section-title">Payment Information</h2>
-
-              {/* Mock Credit Card Graphic */}
-              <div className="mock-card">
-                <div className="mock-card__chip"></div>
-                <div className="mock-card__number">
-                  {cardNumber || '•••• •••• •••• ••••'}
-                </div>
-                <div className="mock-card__footer">
-                  <div className="mock-card__holder">
-                    <span className="label">Card Holder</span>
-                    <span className="value">{name.toUpperCase() || 'YOUR NAME'}</span>
+              {/* Payment Method Selector */}
+              <h2 className="checkout-page-section-title" style={{ marginTop: '2rem' }}>Payment Method</h2>
+              <div className="payment-method-selector-grid">
+                <div
+                  className={`payment-method-card ${paymentMethod === 'razorpay' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('razorpay')}
+                >
+                  <div className="payment-method-card__header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <span className="payment-method-card__bullet">●</span>
+                      <strong>Online Payment</strong>
+                    </div>
+                    <span className="prepaid-badge-green">SAVE ₹50</span>
                   </div>
-                  <div className="mock-card__expiry">
-                    <span className="label">Expires</span>
-                    <span className="value">{cardExpiry || 'MM/YY'}</span>
+                  <span className="payment-method-card__details">Pay securely with Cards, UPI, Netbanking, or Wallets (via Razorpay). Includes free shipping.</span>
+                </div>
+                <div
+                  className={`payment-method-card ${paymentMethod === 'cod' ? 'active' : ''}`}
+                  onClick={() => setPaymentMethod('cod')}
+                >
+                  <div className="payment-method-card__header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <span className="payment-method-card__bullet">●</span>
+                      <strong>Cash on Delivery (COD)</strong>
+                    </div>
                   </div>
+                  <span className="payment-method-card__details">Pay with cash upon delivery. <br></br><p style={{ color: '#e11d48', textDecoration: 'underline' }}>Standard shipping fee ₹50 applies.</p></span>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Card Number</label>
-                <input 
-                  type="text" 
-                  value={cardNumber} 
-                  onChange={handleCardNumberChange} 
-                  required 
-                  placeholder="0000 0000 0000 0000" 
-                />
-              </div>
-
-              <div className="form-group-row">
-                <div className="form-group">
-                  <label>Expiration Date</label>
-                  <input 
-                    type="text" 
-                    value={cardExpiry} 
-                    onChange={handleExpiryChange} 
-                    placeholder="MM/YY" 
-                    required 
-                  />
+              {paymentError && (
+                <div style={{ padding: '1rem', backgroundColor: '#fed7d7', color: '#9b2c2c', borderRadius: '4px', marginBottom: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span>⚠</span> {paymentError}
                 </div>
-                <div className="form-group">
-                  <label>CVC</label>
-                  <input 
-                    type="password" 
-                    value={cardCvc} 
-                    onChange={e => setCardCvc(e.target.value.slice(0, 3))} 
-                    placeholder="•••" 
-                    required 
-                  />
-                </div>
-              </div>
+              )}
 
-              <button type="submit" className="btn btn--primary checkout-submit-btn">
-                Pay and Place Order ({formatCurrency(total)})
+              <button type="submit" className="btn btn--primary checkout-submit-btn" style={{ marginTop: '1.5rem' }}>
+                {paymentMethod === 'cod' ? 'Place COD Order' : 'Proceed to Payment'} ({formatCurrency(total)})
               </button>
             </form>
           </div>
@@ -471,10 +598,10 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                 </div>
               ) : (
                 <form onSubmit={handleApplyPromo} className="promo-form">
-                  <input 
-                    type="text" 
-                    placeholder="PROMO CODE" 
-                    value={promoCode} 
+                  <input
+                    type="text"
+                    placeholder="PROMO CODE"
+                    value={promoCode}
                     onChange={e => setPromoCode(e.target.value)}
                     className="promo-input"
                   />
@@ -496,14 +623,97 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                 </div>
               )}
               <div className="summary-row">
-                <span>Flat Rate Shipping</span>
-                <span>{formatCurrency(shipping)}</span>
+                <span>Shipping</span>
+                {shipping === 0 ? (
+                  <span style={{ color: '#38a169', fontWeight: 'bold' }}>FREE</span>
+                ) : (
+                  <span>{formatCurrency(shipping)}</span>
+                )}
               </div>
               <hr className="pdp-divider" />
               <div className="summary-row total">
                 <span>Total Amount</span>
                 <span>{formatCurrency(total)}</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOtpVerification && (
+        <div className="otp-overlay">
+          <div className="otp-modal">
+            <button className="otp-close-btn" onClick={() => {
+              setShowOtpVerification(false);
+              setOtpSent(false);
+              setOtpError('');
+              setOtpCode('');
+            }}>✕</button>
+            
+            <div className="otp-modal__header">
+              <h2>Order Verification</h2>
+              <p>Confirm your phone number to place your Cash on Delivery (COD) order.</p>
+            </div>
+
+            <div className="otp-modal__body">
+              {otpLoading ? (
+                <div className="otp-loading-state">
+                  <div className="otp-spinner-container">
+                    <span className="otp-spinner-box">📦</span>
+                    <div className="otp-spinner-road"></div>
+                  </div>
+                  <h3>Placing Your Order...</h3>
+                  <p>Securing your items and generating Shiprocket tracking details.</p>
+                </div>
+              ) : (
+                <div className="otp-form-step">
+                  {otpError && (
+                    <div className="otp-error-banner">
+                      <span>⚠</span> {otpError}
+                    </div>
+                  )}
+                  <p className="otp-sent-alert">🎉 Verification code sent to <strong>{phone}</strong>.</p>
+                  <div className="form-group">
+                    <label>Enter 4-Digit OTP</label>
+                    <div className="otp-input-wrapper">
+                      <div className="otp-input-container">
+                        <input 
+                          type="tel" 
+                          value={otpCode}
+                          maxLength="4"
+                          onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                          required
+                          className="otp-hidden-input"
+                        />
+                        <div className="otp-boxes-overlay">
+                          {Array.from({ length: 4 }).map((_, i) => {
+                            const isCursor = otpCode.length === i;
+                            return (
+                              <span 
+                                key={i} 
+                                className={`otp-box ${otpCode.length > i ? 'active' : ''} ${isCursor ? 'is-cursor' : ''}`}
+                              >
+                                {otpCode[i] || ''}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn btn--primary otp-action-btn"
+                    onClick={handleVerifyOtpAndPlaceOrder}
+                  >
+                    Verify & Confirm Order
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="otp-modal__footer">
+              <span className="otp-secure-tag">🛡 Verified COD Order</span>
             </div>
           </div>
         </div>

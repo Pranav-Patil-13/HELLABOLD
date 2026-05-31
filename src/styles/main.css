@@ -1036,6 +1036,7 @@ button {
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="password"],
+.form-group input[type="tel"],
 .form-group textarea {
     padding: 0.8rem 1rem;
     border: 1px solid var(--border-color);
@@ -1047,9 +1048,103 @@ button {
 .form-group input[type="text"]:focus,
 .form-group input[type="email"]:focus,
 .form-group input[type="password"]:focus,
+.form-group input[type="tel"]:focus,
 .form-group textarea:focus {
     outline: none;
     border-color: var(--accent-color);
+}
+
+.phone-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--white);
+    transition: border-color var(--transition-fast);
+}
+
+.phone-input-wrapper:focus-within {
+    border-color: var(--accent-color);
+}
+
+.phone-country-code {
+    padding: 0.8rem 1rem;
+    background-color: #fafafa;
+    border-right: 1px solid var(--border-color);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    user-select: none;
+}
+
+.phone-input-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.phone-input-wrapper input[type="tel"] {
+    border: none !important;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    outline: none;
+    background: transparent;
+    color: transparent;
+    caret-color: transparent; /* Hide native caret */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.phone-input-wrapper input[type="tel"]:focus {
+    outline: none;
+}
+
+.phone-dashes-overlay {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 8px;
+    padding-left: 1.1rem;
+    pointer-events: none;
+    width: 100%;
+}
+
+.phone-dash {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 18px;
+    height: 32px;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast);
+}
+
+.phone-dash.active {
+    border-bottom-color: var(--accent-color);
+}
+
+/* Custom Animated Blinking Cursor on the current input slot - only active when input is focused */
+.phone-input-wrapper:focus-within .phone-dash.is-cursor::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    width: 2px;
+    height: 18px;
+    background-color: var(--accent-color);
+    animation: phone-blink 1s infinite step-end;
+}
+
+@keyframes phone-blink {
+    from, to { background-color: transparent }
+    50% { background-color: var(--accent-color) }
 }
 
 /* Size picker */
@@ -1883,6 +1978,8 @@ button {
     background-color: #fafafa;
     border: 1px solid var(--border-color);
     padding: 3rem;
+    position: sticky;
+    top: 100px;
 }
 
 .checkout-summary__list {
@@ -2024,6 +2121,9 @@ button {
     .checkout-page-layout {
         grid-template-columns: 1fr;
         gap: 4rem;
+    }
+    .checkout-page-summary-section {
+        position: static;
     }
 }
 
@@ -3937,6 +4037,224 @@ button {
     color: #888;
 }
 
+/* =========================================
+   Component: Collections Page
+   ========================================= */
+
+.collections-page {
+  background-color: var(--bg-color);
+}
+
+/* Hero */
+.collections-hero {
+  position: relative;
+  height: 50vh;
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.collections-hero__bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55);
+}
+
+.collections-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));
+}
+
+.collections-hero__content {
+  position: relative;
+  text-align: center;
+  color: var(--white);
+  padding: 0 2rem;
+}
+
+.collections-hero__label {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.collections-hero__title {
+  font-size: 4rem;
+  font-weight: 500;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.collections-hero__subtitle {
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+/* Collections Grid */
+.collections-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Collection Card */
+.collection-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 520px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.collection-card--reverse {
+  direction: rtl;
+}
+
+.collection-card--reverse .collection-card__content {
+  direction: ltr;
+}
+
+.collection-card__image-wrapper {
+  overflow: hidden;
+  position: relative;
+}
+
+.collection-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.collection-card:hover .collection-card__image {
+  transform: scale(1.05);
+}
+
+.collection-card__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem;
+  background-color: var(--bg-color);
+}
+
+.collection-card__count {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.collection-card__title {
+  font-family: var(--font-heading);
+  font-size: 2.8rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+}
+
+.collection-card__subtitle {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-color);
+  margin-bottom: 1.5rem;
+}
+
+.collection-card__description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  max-width: 420px;
+}
+
+.collection-card__btn {
+  align-self: flex-start;
+  background-color: var(--accent-color);
+  color: var(--white);
+  border: 1px solid var(--accent-color);
+  padding: 1rem 2.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  transition: all var(--transition-fast);
+}
+
+.collection-card__btn:hover {
+  background-color: transparent;
+  color: var(--accent-color);
+}
+
+/* Collections Responsive */
+@media (max-width: 1024px) {
+  .collection-card {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .collection-card--reverse {
+    direction: ltr;
+  }
+
+  .collection-card__image-wrapper {
+    height: 340px;
+  }
+
+  .collection-card__content {
+    padding: 3rem 2rem;
+  }
+
+  .collection-card__title {
+    font-size: 2.2rem;
+  }
+
+  .collections-hero__title {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .collections-hero {
+    height: 40vh;
+    min-height: 280px;
+  }
+
+  .collections-hero__title {
+    font-size: 2rem;
+    letter-spacing: 4px;
+  }
+
+  .collection-card__image-wrapper {
+    height: 240px;
+  }
+
+  .collection-card__content {
+    padding: 2rem 1.5rem;
+  }
+
+  .collection-card__title {
+    font-size: 1.8rem;
+  }
+}
+
 /* Footer Responsive */
 @media (max-width: 1024px) {
     .footer__main {
@@ -3978,6 +4296,364 @@ button {
     }
 }
 
+
+
+/* =========================================
+   Payment Method Selector Styles
+   ========================================= */
+.payment-method-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+.payment-method-card {
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background-color: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    user-select: none;
+}
+
+.payment-method-card:hover {
+    border-color: var(--text-primary);
+}
+
+.payment-method-card.active {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 1px var(--text-primary);
+    background-color: #fafafa;
+}
+
+.payment-method-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.payment-method-card__bullet {
+    font-size: 0.6rem;
+    color: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.payment-method-card.active .payment-method-card__bullet {
+    background-color: var(--text-primary);
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+}
+
+.payment-method-card__details {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .payment-method-selector-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.prepaid-badge-green {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background-color: #e6fffa;
+    color: #0d9488;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    margin-left: auto;
+    text-transform: uppercase;
+}
+
+/* =========================================
+   COD OTP Verification Modal Styles
+   ========================================= */
+.otp-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.otp-modal {
+    background-color: var(--white);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 440px;
+    padding: 2.5rem;
+    position: relative;
+    animation: otpZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+@keyframes otpZoomIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.otp-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.otp-close-btn:hover {
+    color: var(--accent-color);
+}
+
+.otp-modal__header h2 {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.otp-modal__header p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.otp-error-banner {
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.otp-form-step {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.otp-action-btn {
+    width: 100%;
+    padding: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.8rem;
+}
+
+.otp-sent-alert {
+    font-size: 0.85rem;
+    color: #0d9488;
+    background-color: #f0fdfa;
+    padding: 0.8rem;
+    border: 1px dashed #99f6e4;
+    text-align: center;
+}
+
+.otp-resend-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+    align-self: center;
+    transition: color var(--transition-fast);
+}
+
+.otp-resend-btn:hover {
+    color: var(--text-primary);
+}
+
+.otp-modal__footer {
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.2rem;
+}
+
+.otp-secure-tag {
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+/* 4-digit OTP Box Styles */
+.otp-input-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.otp-input-container {
+    position: relative;
+    width: 240px;
+    height: 56px;
+}
+
+.otp-hidden-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    z-index: 2;
+    cursor: text;
+}
+
+.otp-boxes-overlay {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.otp-box {
+    width: 48px;
+    height: 56px;
+    border: 1px solid var(--border-color);
+    background-color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.otp-box.active {
+    border-color: var(--text-primary);
+}
+
+/* Custom Animated Blinking Cursor on the current OTP slot */
+.otp-input-wrapper:focus-within .otp-box.is-cursor::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 24px;
+    background-color: var(--accent-color);
+    animation: phone-blink 1s infinite step-end;
+}
+
+/* OTP Loading & Processing Styles */
+.otp-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+.otp-loading-state h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.otp-loading-state p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Premium Animated package/cart slider loader */
+.otp-spinner-container {
+    position: relative;
+    width: 120px;
+    height: 60px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.otp-spinner-road {
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--text-primary) 50%, transparent);
+    animation: road-slide 1s linear infinite;
+}
+
+.otp-spinner-box {
+    font-size: 2.2rem;
+    animation: box-bounce 0.6s ease-in-out infinite alternate, box-rotate 2.4s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+@keyframes road-slide {
+    0% { transform: translateX(-30px); }
+    100% { transform: translateX(30px); }
+}
+
+@keyframes box-bounce {
+    0% { transform: translateY(0) scaleY(0.9); }
+    100% { transform: translateY(-16px) scaleY(1.1); }
+}
+
+@keyframes box-rotate {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(5deg); }
+    50% { transform: rotate(-5deg); }
+    75% { transform: rotate(3deg); }
+}
 
 
 

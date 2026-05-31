@@ -14,6 +14,7 @@ import FavoritesDrawer from './components/FavoritesDrawer';
 import AuthModal from './components/AuthModal';
 import ProfileDrawer from './components/ProfileDrawer';
 import Footer from './components/Footer';
+import CollectionsPage from './components/CollectionsPage';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -31,6 +32,7 @@ function App() {
   const [isOrderStatusPage, setIsOrderStatusPage] = useState(false);
   const [activeProductId, setActiveProductId] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCollectionsPage, setIsCollectionsPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   
@@ -52,6 +54,14 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('product');
+    const categoryParam = params.get('category');
+
+    if (categoryParam) {
+      const categories = categoryParam.split(',').filter(Boolean);
+      if (categories.length > 0) {
+        setSelectedCategories(categories);
+      }
+    }
 
     if (productId) {
       setActiveProductId(parseInt(productId, 10));
@@ -64,6 +74,9 @@ function App() {
     }
     if (window.location.pathname === '/order-status') {
       setIsOrderStatusPage(true);
+    }
+    if (window.location.pathname === '/collections') {
+      setIsCollectionsPage(true);
     }
 
     // Resolve active Supabase or mock user session
@@ -96,6 +109,24 @@ function App() {
       .catch(err => {
         console.error('Error loading reviews:', err);
       });
+
+    // Handle back/forward navigation popstate routing
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const productId = params.get('product');
+
+      setIsAdmin(path === '/admin');
+      setIsCheckoutPage(path === '/checkout');
+      setIsOrderStatusPage(path === '/order-status');
+      setIsCollectionsPage(path === '/collections');
+      setActiveProductId(productId ? parseInt(productId, 10) : null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   // Listen to other tabs' storage changes for real-time synchronization
@@ -280,8 +311,73 @@ function App() {
           userProfile={userProfile}
           onOpenAuth={() => setIsAuthOpen(true)}
           onOpenProfile={() => setIsProfileOpen(true)}
+          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); }}
+          activeTab="shop"
         />
         <OrderStatus />
+      </>
+    );
+  }
+
+  if (isCollectionsPage) {
+    return (
+      <>
+        <Header 
+          cartCount={cartCount} 
+          onOpenCart={() => setIsCartOpen(true)} 
+          favoritesCount={likedIds.length}
+          onOpenFavorites={() => setIsFavoritesOpen(true)}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          userProfile={userProfile}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsCollectionsPage(false); }}
+          activeTab="collections"
+        />
+        <CollectionsPage />
+        <Footer />
+        <CartDrawer 
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cartItems={cartItems}
+          onUpdateQuantity={handleUpdateQuantity}
+          onRemoveItem={handleRemoveItem}
+          appliedDiscount={appliedDiscount}
+          onApplyDiscount={saveDiscount}
+          onCheckout={() => {
+            setIsCartOpen(false);
+            window.open('/checkout', '_blank');
+          }}
+        />
+        <FavoritesDrawer 
+          isOpen={isFavoritesOpen}
+          onClose={() => setIsFavoritesOpen(false)}
+          likedProducts={products.filter(p => likedIds.includes(p.id))}
+          onToggleLike={handleToggleLike}
+          onAddToCart={(product, size) => {
+            handleAddToCart(product, size);
+            setIsFavoritesOpen(false);
+          }}
+        />
+        {!isCartOpen && !isCheckoutPage && (
+          <CartIsland 
+            cartItems={cartItems} 
+            onOpenCart={() => setIsCartOpen(true)} 
+          />
+        )}
+        <AuthModal 
+          isOpen={isAuthOpen}
+          onClose={() => setIsAuthOpen(false)}
+          onAuthSuccess={(profile) => setUserProfile(profile)}
+        />
+        <ProfileDrawer 
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          userProfile={userProfile}
+          onProfileUpdate={(profile) => setUserProfile(profile)}
+          onSignOut={() => setUserProfile(null)}
+        />
       </>
     );
   }
@@ -299,6 +395,7 @@ function App() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
         onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); }}
+        activeTab="shop"
       />
       
       {isCheckoutPage ? (

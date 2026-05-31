@@ -10,7 +10,8 @@ const Header = ({
   userProfile,
   onOpenAuth,
   onOpenProfile,
-  onGoHome
+  onGoHome,
+  activeTab
 }) => {
   const [pulse, setPulse] = useState(false);
 
@@ -24,6 +25,7 @@ const Header = ({
 
   const handleGoHome = (e) => {
     e.preventDefault();
+    window.history.pushState({}, '', '/');
     if (onGoHome) onGoHome();
   };
 
@@ -33,9 +35,8 @@ const Header = ({
         <img src="/assets/header_logo.png" alt="HELLABOLD" className="header__logo-img" />
       </div>
       <nav className="header__nav">
-        <a href="/" onClick={handleGoHome} className="header__link active">Shop</a>
-        <a href="#" className="header__link">New Arrivals</a>
-        <a href="#" className="header__link">Collections</a>
+        <a href="/" onClick={handleGoHome} className={`header__link${activeTab === 'shop' ? ' active' : ''}`}>Shop</a>
+        <a href="/collections" className={`header__link${activeTab === 'collections' ? ' active' : ''}`}>Collections</a>
       </nav>
 
       <div className="header__actions">
