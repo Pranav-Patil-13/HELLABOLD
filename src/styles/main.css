@@ -4835,6 +4835,7 @@ button {
     }
     
     .header__nav {
+        display: flex !important;
         position: fixed;
         top: 0;
         left: 0;
@@ -4919,6 +4920,10 @@ button {
     .shop__products-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 1.5rem !important;
+    }
+
+    .cart-island{    
+        padding: 0.4rem 1rem;
     }
     
     /* Product details typography scales */
