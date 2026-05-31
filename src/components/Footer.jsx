@@ -66,10 +66,8 @@ const Footer = ({ onNavigate }) => {
           <h4 className="footer__col-title">Shop</h4>
           <ul className="footer__links">
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">New Arrivals</a></li>
-            <li><a href="/?category=Hoodies" onClick={handleNavClick('/?category=Hoodies')} className="footer__link">Hoodies</a></li>
-            <li><a href="/?category=T-Shirts" onClick={handleNavClick('/?category=T-Shirts')} className="footer__link">T-Shirts</a></li>
-            <li><a href="/?category=Shorts" onClick={handleNavClick('/?category=Shorts')} className="footer__link">Shorts</a></li>
-            <li><a href="/?category=Accessories" onClick={handleNavClick('/?category=Accessories')} className="footer__link">Accessories</a></li>
+            <li><a href="/?category=Tops" onClick={handleNavClick('/?category=Tops')} className="footer__link">Printed Tees</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Limited Drops</a></li>
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Sale</a></li>
           </ul>
         </div>

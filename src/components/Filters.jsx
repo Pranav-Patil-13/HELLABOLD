@@ -9,7 +9,7 @@ const Filters = ({
   onPriceChange,
   onReset 
 }) => {
-  const categoriesList = ['Outerwear', 'Accessories', 'Tops', 'Bottoms'];
+  const categoriesList = ['Tops'];
   const sizesList = ['S', 'M', 'L', 'XL'];
 
   const hasActiveFilters = selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange[1] < 3000 || priceRange[0] > 0;

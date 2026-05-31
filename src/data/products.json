@@ -1,1 +1,138 @@
-[{"id":1,"title":"Born to Stand Out","price":"₹899","images":["/assets/product1_A.png","/assets/product1_B.png"],"description":"Crafted from ultra-soft full-grain lambskin leather, the Atelier Leather Jacket is a testament to timeless luxury. Featuring custom gunmetal hardware, asymmetric zipper closure, and structured shoulders for an elegant silhouette.","details":["100% full-grain lambskin leather","Satin-lined interior for smooth layering","Asymmetric front zip closure","Two zippered pockets, internal slip pocket","Specialist dry clean only"],"sizes":["XS","S","M","L","XL"],"category":"Outerwear","label":""},{"id":2,"title":"Signature Saddle Bag","price":"₹699","images":["/assets/product4_B.png","/assets/product4_A.png"],"description":"The Signature Saddle Bag defines understated sophistication. Constructed from smooth calfskin with hand-painted edges, it features an adjustable crossbody strap and our signature brushed gold logo clasp.","details":["Premium Italian calfskin leather","Brushed gold-tone hardware clasp closure","Adjustable leather shoulder strap","Interior zip compartment and phone pocket","Handmade in Italy"],"sizes":["One Size"],"category":"Accessories","label":""},{"id":3,"title":"Classic Rider Jacket","price":"₹899","images":["/assets/product3_B.png","/assets/product3_A.png"],"description":"An archival silhouette reinvented. The Classic Rider Jacket features a slightly cropped fit, heavy-duty silver hardware, and snap-down lapels. The durable cowhide leather develops a beautiful patina over time.","details":["100% durable drum-dyed cowhide","Polyester quilted thermal lining","Snap-down lapels and zippered cuffs","Adjustable belted waist","Water-resistant finish"],"sizes":["S","M","L","XL"],"category":"Outerwear","label":""},{"id":4,"title":"Crossbody Mini","price":"₹499","images":["/assets/product2_A.png","/assets/product2_B.png"],"description":"Minimalist form meets functional luxury. The Crossbody Mini is compact yet surprisingly spacious, perfect for carrying essentials from day to night. Featuring a secure magnetic foldover flap.","details":["Pebbled calf leather","Magnetic flap closure","Suede-effect lining","Detachable chain and leather strap","Dust bag included"],"sizes":["One Size"],"category":"Accessories","label":""},{"id":5,"title":"Suede Trench Coat","price":"₹899","images":["/assets/product5_A.png","/assets/product5_B.png"],"description":"A modern take on the classic trench. Crafted from premium Italian calf split suede, this coat features an elegant drape, self-tie waist belt, and adjustable cuffs for a tailored luxury fit.","details":["100% genuine split calf suede","Viscose satin lining","Double-breasted button front closure","Removable belt at waist","Specialist leather clean only"],"sizes":["S","M","L"],"category":"Outerwear","label":"few-left"},{"id":6,"title":"Signature Chelsea Boot","price":"₹699","images":["/assets/product6_A.png","/assets/product6_B.png"],"description":"A sleek, wardrobe essential boot. Made from fine brushed calf leather with durable elastic side panels and a hand-crafted stacked leather sole, providing comfort and effortless style.","details":["Premium brushed calf leather upper","Durable elastic pull-tabs","Leather lining and sole","Hand-stitched welt construction","Made in Portugal"],"sizes":["40","41","42","43","44","45"],"category":"Bottoms","label":""},{"id":7,"title":"Premium Silk Scarf","price":"₹499","images":["/assets/product7_A.png","/assets/product7_B.png"],"description":"Woven from 100% organic mulberry silk, this scarf features a bold, custom hand-rolled print pattern designed in-house. A versatile statement accessory to elevate any outfit.","details":["100% organic mulberry silk","Hand-rolled finished edges","Custom seasonal abstract design","Dimensions: 90cm x 90cm","Dry clean only"],"sizes":["One Size"],"category":"Accessories","label":""},{"id":1780135441890,"title":"The Ascent","price":"₹899","images":["/assets/product8_A.png","/assets/product8_B.png"],"description":"A statement piece inspired by the relentless pursuit of purpose. Through darkness, uncertainty, and challenge, the path upward remains. Every step taken is proof that progress is possible. The destination awaits those who refuse to stop climbing.","details":["100% organic mulberry silk","Hand-rolled finished edges","Custom seasonal abstract design","Dimensions: 90cm x 90cm","Dry clean only"],"sizes":["L","S","M"],"category":"Accessories","label":"out-of-stock"},{"id":1780135554770,"title":"RED REQUIEM","price":"₹699","images":["/assets/product9_A.png","/assets/product9_B.png"],"description":"A striking dark-fantasy graphic featuring a lone warrior beneath a crimson moon. Inspired by courage, purpose, and the relentless pursuit of greatness. Made for those bold enough to carve their own destiny.","details":["100% organic mulberry silk","Hand-rolled finished edges","Custom seasonal abstract design","Dimensions: 90cm x 90cm","Dry clean only"],"sizes":["S","M","L","XL"],"category":"Tops","label":"selling-fast"}]
+[
+  {
+    "id": 1,
+    "title": "RED REQUIEM",
+    "price": "₹899",
+    "images": ["/assets/product9_A.png", "/assets/product9_B.png"],
+    "description": "A striking dark-fantasy graphic featuring a lone warrior beneath a crimson moon. Inspired by courage, purpose, and the relentless pursuit of greatness. Made for those bold enough to carve their own destiny.",
+    "details": [
+      "100% heavyweight custom-milled cotton",
+      "240 GSM pre-shrunk fabric",
+      "High-density premium graphic screen print",
+      "Oversized boxy fit with dropped shoulders",
+      "Machine wash cold inside out"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "Tops",
+    "label": "selling-fast"
+  },
+  {
+    "id": 2,
+    "title": "The Ascent",
+    "price": "₹899",
+    "images": ["/assets/product8_A.png", "/assets/product8_B.png"],
+    "description": "A statement graphic piece inspired by the relentless pursuit of purpose. Through darkness, uncertainty, and challenge, the path upward remains. Every step taken is proof that progress is possible. The destination awaits those who refuse to stop climbing.",
+    "details": [
+      "100% premium cotton construction",
+      "240 GSM custom-knit heavy jersey fabric",
+      "In-house designed custom graphic placement",
+      "Reinforced double-needle stitching",
+      "Preshrunk to preserve shape"
+    ],
+    "sizes": ["S", "M", "L"],
+    "category": "Tops",
+    "label": "new"
+  },
+  {
+    "id": 3,
+    "title": "NEO-TOKYO OVERDRIVE",
+    "price": "₹799",
+    "images": ["/assets/product3_A.png", "/assets/product3_B.png"],
+    "description": "Inspired by cyberpunk landscapes and neon-drenched night runs. A futuristic typography graphic t-shirt engineered for midnight explorers.",
+    "details": [
+      "100% luxury long-staple cotton",
+      "220 GSM medium-heavy jersey",
+      "Dual sleeve screen print detailing",
+      "Premium rib-knit collar band",
+      "Hand printed in limited batches"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "Tops",
+    "label": ""
+  },
+  {
+    "id": 4,
+    "title": "CHAOS THEORY",
+    "price": "₹699",
+    "images": ["/assets/product2_A.png", "/assets/product2_B.png"],
+    "description": "Embrace the beauty of disorder. A premium heavy-weight graphic t-shirt featuring clean industrial typography mixed with abstract noise prints.",
+    "details": [
+      "100% premium combed cotton",
+      "230 GSM durable construction",
+      "Eco-friendly plastisol graphic prints",
+      "Comfort-first boxy fit silhouette",
+      "Made in limited print runs"
+    ],
+    "sizes": ["S", "M", "L"],
+    "category": "Tops",
+    "label": "few-left"
+  },
+  {
+    "id": 5,
+    "title": "ARCHITECT OF DOOM",
+    "price": "₹899",
+    "images": ["/assets/product5_A.png", "/assets/product5_B.png"],
+    "description": "A brutalist graphic design displaying mathematical structure overlapping high-contrast industrial illustration. For those who design their own rules.",
+    "details": [
+      "100% heavyweight custom cotton",
+      "240 GSM streetwear cut",
+      "High-density ink printing process",
+      "Pre-shrunk for an optimal fit lifecycle",
+      "Cold-wash recommended"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "Tops",
+    "label": ""
+  },
+  {
+    "id": 6,
+    "title": "LOST SIGNAL",
+    "price": "₹799",
+    "images": ["/assets/product6_A.png", "/assets/product6_B.png"],
+    "description": "Static television interference meets modern streetwear. Featuring a glitch-art print across the front torso.",
+    "details": [
+      "100% custom-milled organic cotton",
+      "220 GSM weight",
+      "Soft-feel discharge graphic print method",
+      "Classic drop shoulder streetwear fit",
+      "Double-stitched seams"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "Tops",
+    "label": ""
+  },
+  {
+    "id": 7,
+    "title": "BORN TO STAND OUT",
+    "price": "₹899",
+    "images": ["/assets/product1_A.png", "/assets/product1_B.png"],
+    "description": "Our signature brand graphic t-shirt. A premium drop representing the core vision of HELLABOLD. Be unapologetically loud.",
+    "details": [
+      "100% luxury ring-spun cotton",
+      "240 GSM heavy jersey",
+      "Bold puff print brand graphic detailing",
+      "Reinforced shoulders and neckband",
+      "Pre-washed for ultimate softness"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "category": "Tops",
+    "label": "selling-fast"
+  },
+  {
+    "id": 8,
+    "title": "SILENT VOID",
+    "price": "₹699",
+    "images": ["/assets/product7_A.png", "/assets/product7_B.png"],
+    "description": "A clean, minimal front typography signature graphic matched with a high-contrast abstract grid print spanning the reverse back panel.",
+    "details": [
+      "100% premium cotton knit",
+      "220 GSM comfortable weight",
+      "Premium soft-feel waterbase prints",
+      "Relaxed athletic fit",
+      "Color-fast print treatment"
+    ],
+    "sizes": ["S", "M", "L"],
+    "category": "Tops",
+    "label": ""
+  }
+]
