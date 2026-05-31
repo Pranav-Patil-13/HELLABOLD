@@ -257,6 +257,20 @@ function App() {
     setSelectedSizes([]);
   };
 
+  const handleFooterNavigation = (path) => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product');
+
+    setIsAdmin(path === '/admin');
+    setIsCheckoutPage(path === '/checkout');
+    setIsOrderStatusPage(path === '/order-status');
+    setIsCollectionsPage(path === '/collections');
+    setActiveProductId(productId ? parseInt(productId, 10) : null);
+
+    // Trigger state synchronization event for components checking location query params
+    window.dispatchEvent(new Event('popstate'));
+  };
+
   // 1. Filtering logic
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
@@ -336,7 +350,7 @@ function App() {
           activeTab="collections"
         />
         <CollectionsPage />
-        <Footer />
+        <Footer onNavigate={handleFooterNavigation} />
         <CartDrawer 
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
@@ -417,7 +431,7 @@ function App() {
             isLiked={likedIds.includes(activeProduct.id)}
             onToggleLike={handleToggleLike}
           />
-          <Footer />
+          <Footer onNavigate={handleFooterNavigation} />
         </>
       ) : (
         <>
@@ -474,7 +488,7 @@ function App() {
               )}
             </section>
           </main>
-          <Footer />
+          <Footer onNavigate={handleFooterNavigation} />
         </>
       )}
 

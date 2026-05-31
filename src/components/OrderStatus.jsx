@@ -15,26 +15,44 @@ const OrderStatus = () => {
   ];
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('id');
+    const fetchOrder = () => {
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get('id');
 
-    if (orderId) {
-      getOrders()
-        .then(orders => {
-          const foundOrder = orders.find(o => o.id === orderId);
-          if (foundOrder) {
-            setOrder(foundOrder);
-          }
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching order tracking info:', err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, []);
+      if (orderId) {
+        setLoading(true);
+        getOrders()
+          .then(orders => {
+            const foundOrder = orders.find(o => o.id === orderId);
+            if (foundOrder) {
+              setOrder(foundOrder);
+            } else {
+              setOrder(null);
+            }
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error('Error fetching order tracking info:', err);
+            setLoading(false);
+          });
+      } else {
+        setOrder(null);
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+
+    // Listen to changes in navigation history
+    const handlePopState = () => {
+      fetchOrder();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [window.location.search]);
 
   const handleUpdateStatus = async (newStatus) => {
     if (!order) return;

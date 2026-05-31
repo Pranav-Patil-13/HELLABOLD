@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Footer = () => {
+const Footer = ({ onNavigate }) => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -10,6 +10,12 @@ const Footer = () => {
       setSubscribed(true);
       setEmail('');
     }
+  };
+
+  const handleNavClick = (path) => (e) => {
+    e.preventDefault();
+    window.history.pushState({}, '', path);
+    if (onNavigate) onNavigate(path);
   };
 
   return (
@@ -28,7 +34,7 @@ const Footer = () => {
 
         {/* Brand Column */}
         <div className="footer__brand">
-          <h2 className="footer__logo">HELLABOLD</h2>
+          <h2 className="footer__logo" onClick={handleNavClick('/')} style={{ cursor: 'pointer' }}>HELLABOLD</h2>
           <p className="footer__tagline">
             Unapologetically loud. Hella bold.<br />
             Premium streetwear built for those who refuse to blend in.
@@ -59,12 +65,12 @@ const Footer = () => {
         <div className="footer__col">
           <h4 className="footer__col-title">Shop</h4>
           <ul className="footer__links">
-            <li><a href="/" className="footer__link">New Arrivals</a></li>
-            <li><a href="/" className="footer__link">Hoodies</a></li>
-            <li><a href="/" className="footer__link">T-Shirts</a></li>
-            <li><a href="/" className="footer__link">Shorts</a></li>
-            <li><a href="/" className="footer__link">Accessories</a></li>
-            <li><a href="/" className="footer__link">Sale</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">New Arrivals</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Hoodies</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">T-Shirts</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Shorts</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Accessories</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Sale</a></li>
           </ul>
         </div>
 
@@ -72,11 +78,11 @@ const Footer = () => {
         <div className="footer__col">
           <h4 className="footer__col-title">Help</h4>
           <ul className="footer__links">
-            <li><a href="/order-status" className="footer__link">Track My Order</a></li>
-            <li><a href="/" className="footer__link">Shipping Policy</a></li>
-            <li><a href="/" className="footer__link">Returns &amp; Exchanges</a></li>
-            <li><a href="/" className="footer__link">Size Guide</a></li>
-            <li><a href="/" className="footer__link">FAQs</a></li>
+            <li><a href="/order-status" onClick={handleNavClick('/order-status')} className="footer__link">Track My Order</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Shipping Policy</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Returns &amp; Exchanges</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Size Guide</a></li>
+            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">FAQs</a></li>
             <li><a href="mailto:support@hellabold.com" className="footer__link">Contact Us</a></li>
           </ul>
         </div>
