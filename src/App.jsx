@@ -50,7 +50,7 @@ function App() {
   // Filters, Search, and Discount States
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [priceRange, setPriceRange] = useState([0, 3000]);
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(() => {
@@ -281,7 +281,7 @@ function App() {
   const handleResetFilters = () => {
     setSelectedCategories([]);
     setSelectedSizes([]);
-    setPriceRange([0, 10000]);
+    setPriceRange([0, 3000]);
   };
 
   const handleFooterNavigation = (path) => {

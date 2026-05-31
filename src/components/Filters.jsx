@@ -3,7 +3,7 @@ import React from 'react';
 const Filters = ({ 
   selectedCategories = [], 
   selectedSizes = [], 
-  priceRange = [0, 10000],
+  priceRange = [0, 3000],
   onCategoryChange, 
   onSizeChange,
   onPriceChange,
@@ -12,7 +12,7 @@ const Filters = ({
   const categoriesList = ['Outerwear', 'Accessories', 'Tops', 'Bottoms'];
   const sizesList = ['S', 'M', 'L', 'XL'];
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange[1] < 10000 || priceRange[0] > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange[1] < 3000 || priceRange[0] > 0;
 
   const handlePriceSliderChange = (e) => {
     onPriceChange([priceRange[0], parseInt(e.target.value, 10)]);
@@ -60,15 +60,15 @@ const Filters = ({
           <input 
             type="range" 
             min="0" 
-            max="10000" 
-            step="250"
+            max="3000" 
+            step="100"
             value={priceRange[1]} 
             onChange={handlePriceSliderChange}
             style={{ width: '100%', accentColor: 'var(--text-primary)', cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
             <span>Up to {formatCurrency(priceRange[1])}</span>
-            <span>Max {formatCurrency(10000)}</span>
+            <span>Max {formatCurrency(3000)}</span>
           </div>
         </div>
       </div>
