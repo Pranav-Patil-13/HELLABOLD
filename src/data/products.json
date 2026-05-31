@@ -14,7 +14,8 @@
     ],
     "sizes": ["S", "M", "L", "XL"],
     "category": "Tops",
-    "label": "selling-fast"
+    "label": "selling-fast",
+    "original_price": "₹1499"
   },
   {
     "id": 2,
@@ -116,7 +117,8 @@
     ],
     "sizes": ["S", "M", "L", "XL"],
     "category": "Tops",
-    "label": "selling-fast"
+    "label": "selling-fast",
+    "original_price": "₹1699"
   },
   {
     "id": 8,

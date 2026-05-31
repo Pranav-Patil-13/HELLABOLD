@@ -716,7 +716,18 @@ button {
 
 .product-card__price {
     font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.product-card__original-price {
+    font-size: 0.9rem;
+    text-decoration: line-through;
     color: var(--text-secondary);
+    font-weight: 400;
 }
 
 .add-to-cart-btn {
@@ -868,7 +879,18 @@ button {
 
 .pdp-info__price {
     font-size: 1.4rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pdp-info__original-price {
+    font-size: 1.1rem;
+    text-decoration: line-through;
     color: var(--text-secondary);
+    font-weight: 400;
 }
 
 .pdp-info__description {

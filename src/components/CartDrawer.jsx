@@ -31,7 +31,8 @@ const CartDrawer = ({
       triggerConfettiBurst(e.target);
     } else if (code === 'BOLD20') {
       if (subtotal < 899) {
-        setPromoError('This code requires a minimum order of ₹899');
+        const diff = 899 - subtotal;
+        setPromoError(`Add items worth ₹${Math.round(diff)} more to redeem this offer`);
       } else {
         onApplyDiscount({ code, percent: 20 });
         setPromoError('');
@@ -40,7 +41,8 @@ const CartDrawer = ({
       }
     } else if (code === 'HELLA50') {
       if (subtotal < 1299) {
-        setPromoError('This code requires a minimum order of ₹1,299');
+        const diff = 1299 - subtotal;
+        setPromoError(`Add items worth ₹${Math.round(diff)} more to redeem this offer`);
       } else {
         onApplyDiscount({ code, percent: 50 });
         setPromoError('');

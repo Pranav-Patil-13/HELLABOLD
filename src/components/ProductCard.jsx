@@ -133,7 +133,12 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike }) =>
         </div>
         <div className="product-card__info">
             <h3 className="product-card__title">{product.title}</h3>
-            <p className="product-card__price">{product.price}</p>
+            <p className="product-card__price">
+              <span>{product.price}</span>
+              {product.original_price && (
+                <span className="product-card__original-price">{product.original_price}</span>
+              )}
+            </p>
         </div>
         <button 
           className="btn btn--primary add-to-cart-btn" 

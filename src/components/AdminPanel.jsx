@@ -20,6 +20,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   // Form Fields
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
+  const [originalPrice, setOriginalPrice] = useState('');
   const [description, setDescription] = useState('');
   const [details, setDetails] = useState('');
   const [sizes, setSizes] = useState([]);
@@ -144,6 +145,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     const productData = {
       title,
       price,
+      original_price: originalPrice || null,
       description,
       details: details.split('\n').filter(line => line.trim() !== ''),
       sizes,
@@ -168,6 +170,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     setEditingId(product.id);
     setTitle(product.title);
     setPrice(product.price);
+    setOriginalPrice(product.original_price || '');
     setDescription(product.description || '');
     setDetails(product.details?.join('\n') || '');
     setSizes(product.sizes || []);
@@ -193,6 +196,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     setEditingId(null);
     setTitle('');
     setPrice('');
+    setOriginalPrice('');
     setDescription('');
     setDetails('');
     setSizes([]);
@@ -585,6 +589,11 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                 <label>Price * (e.g. ₹699)</label>
                 <input type="text" value={price} onChange={e => setPrice(e.target.value)} required />
               </div>
+ 
+              <div className="form-group">
+                <label>Original Price (Strikethrough - Optional, e.g. ₹1499)</label>
+                <input type="text" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} />
+              </div>
 
               <div className="form-group">
                 <label>Category *</label>
@@ -695,7 +704,18 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                   />
                   <div className="admin-catalog-info">
                     <h3>{product.title}</h3>
-                    <p>{product.price} — <span style={{ textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>{product.category || 'Outerwear'}</span></p>
+                    <p>
+                      {product.price}
+                      {product.original_price && (
+                        <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                          {product.original_price}
+                        </span>
+                      )}
+                      {` — `}
+                      <span style={{ textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        {product.category || 'Outerwear'}
+                      </span>
+                    </p>
                     <span className="admin-catalog-sizes">
                       {product.sizes?.join(', ') || 'No sizes'}
                     </span>

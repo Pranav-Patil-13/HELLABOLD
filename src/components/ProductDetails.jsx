@@ -321,7 +321,12 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
             {product.title}
             {renderProductBadgeInline()}
           </h1>
-          <div className="pdp-info__price">{product.price}</div>
+          <div className="pdp-info__price">
+            <span>{product.price}</span>
+            {product.original_price && (
+              <span className="pdp-info__original-price">{product.original_price}</span>
+            )}
+          </div>
           
           <p className="pdp-info__description">{product.description}</p>
 
