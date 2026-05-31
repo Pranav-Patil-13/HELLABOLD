@@ -93,7 +93,7 @@ const Header = ({
 
       <header className="header">
         <div className="header__logo" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
-          <img src="/assets/header_logo.png" alt="HELLABOLD" className="header__logo-img" />
+          <img src="/assets/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" />
         </div>
         <nav className="header__nav">
           <a href="/" onClick={handleGoHome} className={`header__link${activeTab === 'shop' ? ' active' : ''}`}>Shop</a>

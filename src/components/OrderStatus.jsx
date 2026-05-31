@@ -161,7 +161,7 @@ const OrderStatus = () => {
       {/* Shiprocket Tracker Header */}
       <div className="order-status__header">
         <div className="order-status__brand-shiprocket">
-          <img src="/assets/header_logo.png" alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
+          <img src="/assets/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
           <span>×</span>
           <span className="shiprocket-badge">Shiprocket Fulfillment</span>
         </div>
