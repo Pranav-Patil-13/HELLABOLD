@@ -348,153 +348,7 @@ function App() {
     );
   }
 
-  if (isOrderStatusPage) {
-    return (
-      <>
-        <Header 
-          cartCount={cartCount} 
-          onOpenCart={() => setIsCartOpen(true)} 
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          userProfile={userProfile}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-          activeTab="shop"
-        />
-        <OrderStatus />
-      </>
-    );
-  }
 
-  if (isAboutPage) {
-    return (
-      <>
-        <Header 
-          cartCount={cartCount} 
-          onOpenCart={() => setIsCartOpen(true)} 
-          favoritesCount={likedIds.length}
-          onOpenFavorites={() => setIsFavoritesOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          userProfile={userProfile}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-          activeTab="about"
-        />
-        <AboutUs />
-        <Footer onNavigate={handleFooterNavigation} />
-      </>
-    );
-  }
-
-  if (isPrivacyPage) {
-    return (
-      <>
-        <Header 
-          cartCount={cartCount} 
-          onOpenCart={() => setIsCartOpen(true)} 
-          favoritesCount={likedIds.length}
-          onOpenFavorites={() => setIsFavoritesOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          userProfile={userProfile}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-          activeTab="privacy"
-        />
-        <PrivacyPolicy />
-        <Footer onNavigate={handleFooterNavigation} />
-      </>
-    );
-  }
-
-  if (isTermsPage) {
-    return (
-      <>
-        <Header 
-          cartCount={cartCount} 
-          onOpenCart={() => setIsCartOpen(true)} 
-          favoritesCount={likedIds.length}
-          onOpenFavorites={() => setIsFavoritesOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          userProfile={userProfile}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-          activeTab="terms"
-        />
-        <TermsOfService />
-        <Footer onNavigate={handleFooterNavigation} />
-      </>
-    );
-  }
-
-  if (isCollectionsPage) {
-    return (
-      <>
-        <Header 
-          cartCount={cartCount} 
-          onOpenCart={() => setIsCartOpen(true)} 
-          favoritesCount={likedIds.length}
-          onOpenFavorites={() => setIsFavoritesOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          userProfile={userProfile}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-          activeTab="collections"
-        />
-        <CollectionsPage />
-        <Footer onNavigate={handleFooterNavigation} />
-        <CartDrawer 
-          isOpen={isCartOpen}
-          onClose={() => setIsCartOpen(false)}
-          cartItems={cartItems}
-          onUpdateQuantity={handleUpdateQuantity}
-          onRemoveItem={handleRemoveItem}
-          appliedDiscount={appliedDiscount}
-          onApplyDiscount={saveDiscount}
-          onCheckout={() => {
-            setIsCartOpen(false);
-            window.open('/checkout', '_blank');
-          }}
-        />
-        <FavoritesDrawer 
-          isOpen={isFavoritesOpen}
-          onClose={() => setIsFavoritesOpen(false)}
-          likedProducts={products.filter(p => likedIds.includes(p.id))}
-          onToggleLike={handleToggleLike}
-          onAddToCart={(product, size) => {
-            handleAddToCart(product, size);
-            setIsFavoritesOpen(false);
-          }}
-        />
-        {!isCartOpen && !isCheckoutPage && (
-          <CartIsland 
-            cartItems={cartItems} 
-            onOpenCart={() => setIsCartOpen(true)} 
-          />
-        )}
-        <AuthModal 
-          isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
-          onAuthSuccess={(profile) => setUserProfile(profile)}
-        />
-        <ProfileDrawer 
-          isOpen={isProfileOpen}
-          onClose={() => setIsProfileOpen(false)}
-          userProfile={userProfile}
-          onProfileUpdate={(profile) => setUserProfile(profile)}
-          onSignOut={() => setUserProfile(null)}
-        />
-      </>
-    );
-  }
 
   return (
     <>
@@ -509,7 +363,7 @@ function App() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
         onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); }}
-        activeTab="shop"
+        activeTab={isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : "shop")))}
       />
       
       {isCheckoutPage ? (
@@ -521,6 +375,28 @@ function App() {
           userProfile={userProfile}
           onProfileUpdate={(profile) => setUserProfile(profile)}
         />
+      ) : isOrderStatusPage ? (
+        <OrderStatus />
+      ) : isAboutPage ? (
+        <>
+          <AboutUs />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isPrivacyPage ? (
+        <>
+          <PrivacyPolicy />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isTermsPage ? (
+        <>
+          <TermsOfService />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isCollectionsPage ? (
+        <>
+          <CollectionsPage />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
       ) : activeProduct ? (
         <>
           <ProductDetails 
