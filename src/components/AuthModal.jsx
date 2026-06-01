@@ -7,6 +7,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmationInfo, setShowConfirmationInfo] = useState(false);
@@ -25,7 +26,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
         onAuthSuccess(profile);
         onClose();
       } else {
-        const { user, session, profile } = await signUpUser(email, password, fullName);
+        const { user, session, profile } = await signUpUser(email, password, fullName, phone);
         // If session is null, email confirmation is active in Supabase
         if (!session) {
           setShowConfirmationInfo(true);
@@ -91,6 +92,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     setEmail('');
     setPassword('');
     setFullName('');
+    setPhone('');
   };
 
   return (
@@ -157,17 +159,30 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
 
             <form onSubmit={handleSubmit} className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               {mode === 'signup' && (
-                <div className="form-group">
-                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Full Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Virgil Abloh" 
-                    value={fullName}
-                    onChange={e => setFullName(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '0.8rem 1rem', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-primary)', outline: 'none' }}
-                  />
-                </div>
+                <>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Full Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Virgil Abloh" 
+                      value={fullName}
+                      onChange={e => setFullName(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.8rem 1rem', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-primary)', outline: 'none' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Phone Number</label>
+                    <input 
+                      type="tel" 
+                      placeholder="e.g. +91 9876543210" 
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.8rem 1rem', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-primary)', outline: 'none' }}
+                    />
+                  </div>
+                </>
               )}
 
               <div className="form-group">

@@ -384,7 +384,7 @@ export const updateOrderStatusInDB = async (orderId, newStatus) => {
 // 4. USER ACCOUNTS & AUTH ACTIONS
 // ==========================================
 
-export const signUpUser = async (email, password, fullName) => {
+export const signUpUser = async (email, password, fullName, phone) => {
   if (isSupabaseConfigured) {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -392,6 +392,7 @@ export const signUpUser = async (email, password, fullName) => {
       options: {
         data: {
           full_name: fullName,
+          phone: phone,
           role: 'customer'
         }
       }
@@ -408,7 +409,7 @@ export const signUpUser = async (email, password, fullName) => {
       profile = await getProfileById(data.user.id);
     } catch (e) {
       console.warn('Could not load profile instantly on signup:', e);
-      profile = { id: data.user.id, fullName: fullName, role: 'customer' };
+      profile = { id: data.user.id, fullName: fullName, phone: phone, role: 'customer' };
     }
     return { user: data.user, session: data.session, profile };
   } else {
@@ -417,6 +418,7 @@ export const signUpUser = async (email, password, fullName) => {
       id: 'mock-uid-' + Date.now(),
       email,
       fullName,
+      phone,
       role: email.includes('admin') ? 'admin' : 'customer',
       address: '',
       city: '',
@@ -516,6 +518,7 @@ export const updateProfile = async (profileData) => {
       updated_at: new Date().toISOString()
     };
     if (profileData.fullName !== undefined) dbProfile.full_name = profileData.fullName;
+    if (profileData.phone !== undefined) dbProfile.phone = profileData.phone;
     if (profileData.address !== undefined) dbProfile.address = profileData.address;
     if (profileData.city !== undefined) dbProfile.city = profileData.city;
     if (profileData.zipCode !== undefined) dbProfile.zip_code = profileData.zipCode;
@@ -536,6 +539,7 @@ export const updateProfile = async (profileData) => {
     return {
       id: row.id,
       fullName: row.full_name,
+      phone: row.phone,
       email: row.email,
       address: row.address,
       city: row.city,
@@ -562,11 +566,12 @@ const getProfileById = async (userId) => {
   if (error) {
     console.error('Error resolving user profile row:', error);
     // fallback row to prevent crash
-    return { id: userId, full_name: 'Valued Customer', role: 'customer', addresses: [] };
+    return { id: userId, full_name: 'Valued Customer', phone: '', role: 'customer', addresses: [] };
   }
   return {
     id: data.id,
     fullName: data.full_name,
+    phone: data.phone,
     address: data.address,
     city: data.city,
     zipCode: data.zip_code,
