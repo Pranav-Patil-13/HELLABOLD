@@ -9,6 +9,7 @@ import {
   getOrders, 
   updateOrderStatusInDB 
 } from '../utils/supabase';
+import { createShiprocketOrder } from '../utils/shiprocket';
 
 const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userProfile }) => {
   const [products, setProducts] = useState([]);
@@ -81,6 +82,30 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     const savedOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
     const updated = savedOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
     localStorage.setItem('hellabold_orders', JSON.stringify(updated));
+  };
+
+  const handleResyncToShiprocket = async (order) => {
+    setOrders(prev => prev.map(o => o.id === order.id ? { ...o, _resyncing: true } : o));
+    try {
+      const srResult = await createShiprocketOrder(order);
+      if (srResult.success) {
+        setOrders(prev => prev.map(o => o.id === order.id ? {
+          ...o,
+          awb: srResult.awb,
+          courier: srResult.courier,
+          shiprocketOrderId: srResult.shiprocketOrderId,
+          shiprocketSynced: true,
+          _resyncing: false
+        } : o));
+        alert(`✅ Successfully synced to Shiprocket!\nAWB: ${srResult.awb}\nCourier: ${srResult.courier}`);
+      } else {
+        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, _resyncing: false } : o));
+        alert('❌ Shiprocket sync failed: ' + srResult.error);
+      }
+    } catch (err) {
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, _resyncing: false } : o));
+      alert('❌ Unexpected error: ' + err.message);
+    }
   };
 
   const fetchProducts = async () => {
@@ -891,32 +916,60 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                       <span style={{ fontWeight: 700, fontSize: '1rem' }}>Order ID: {order.id}</span>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        AWB: <strong>{order.awb}</strong> ({order.courier})
+                        AWB: <strong>{order.awb || '—'}</strong>{order.courier ? ` (${order.courier})` : ''}
                       </span>
+                      {order.shiprocketOrderId && (
+                        <span style={{ fontSize: '0.75rem', color: '#6b46c1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          🚀 Shiprocket ID: <strong>{order.shiprocketOrderId}</strong>
+                          {order.shiprocketSynced
+                            ? <span style={{ color: '#38a169', fontWeight: 700 }}>✓ Synced</span>
+                            : <span style={{ color: '#e53e3e', fontWeight: 700 }}>⚠ Pending</span>
+                          }
+                        </span>
+                      )}
+                      {order.shiprocketSynced === false && !order.shiprocketOrderId && (
+                        <span style={{ fontSize: '0.75rem', color: '#e53e3e', fontWeight: 600 }}>⚠ Not yet synced to Shiprocket</span>
+                      )}
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                         Customer: <strong>{order.shippingDetails?.name}</strong> | Total: {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(order.total)}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.8rem' }}>
-                      {['Order Received', 'Manifested & Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].map(status => (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'flex-end' }}>
+                      {/* Shiprocket re-sync button for failed/unsynced orders */}
+                      {(order.shiprocketSynced === false || (!order.awb || order.awb?.startsWith?.('SR-'))) && (
                         <button
-                          key={status}
                           type="button"
-                          className="btn btn--outline"
-                          onClick={() => updateOrderStatus(order.id, status)}
-                          style={{
-                            padding: '0.4rem 0.8rem',
-                            fontSize: '0.75rem',
-                            textTransform: 'uppercase',
-                            backgroundColor: order.status === status ? 'var(--accent-color)' : 'transparent',
-                            color: order.status === status ? 'var(--white)' : 'var(--text-primary)',
-                            borderColor: order.status === status ? 'var(--accent-color)' : 'var(--border-color)'
-                          }}
+                          className="btn btn--primary"
+                          onClick={() => handleResyncToShiprocket(order)}
+                          disabled={order._resyncing}
+                          style={{ padding: '0.4rem 1rem', fontSize: '0.75rem', opacity: order._resyncing ? 0.6 : 1 }}
                         >
-                          {status}
+                          {order._resyncing ? '⏳ Syncing...' : '🚀 Sync to Shiprocket'}
                         </button>
-                      ))}
+                      )}
+
+                      {/* Status update buttons */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+                        {['Order Received', 'Manifested & Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].map(status => (
+                          <button
+                            key={status}
+                            type="button"
+                            className="btn btn--outline"
+                            onClick={() => updateOrderStatus(order.id, status)}
+                            style={{
+                              padding: '0.4rem 0.8rem',
+                              fontSize: '0.75rem',
+                              textTransform: 'uppercase',
+                              backgroundColor: order.status === status ? 'var(--accent-color)' : 'transparent',
+                              color: order.status === status ? 'var(--white)' : 'var(--text-primary)',
+                              borderColor: order.status === status ? 'var(--accent-color)' : 'var(--border-color)'
+                            }}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))

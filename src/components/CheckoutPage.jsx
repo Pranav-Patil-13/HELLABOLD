@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
 import { createOrder, updateProfile } from '../utils/supabase';
+import { createShiprocketOrder } from '../utils/shiprocket';
 
 const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDiscount, userProfile, onProfileUpdate }) => {
   const [step, setStep] = useState('form'); // form, success
@@ -9,6 +10,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
 
   // Payment Selection State
@@ -35,6 +37,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     setName(addr.fullName || '');
     setAddress(addr.address || '');
     setCity(addr.city || '');
+    setState(addr.state || '');
     setZipCode(addr.zipCode || '');
   };
 
@@ -53,6 +56,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
         setName(userProfile.fullName || '');
         setAddress(userProfile.address || '');
         setCity(userProfile.city || '');
+        setState(userProfile.state || '');
         setZipCode(userProfile.zipCode || '');
       }
     }
@@ -131,7 +135,31 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
   };
 
   const handlePaymentSuccess = async (completedOrder) => {
-    // Auto-save address to user profile if checkbox is checked
+    // ── Push order to Shiprocket ────────────────────────────────────────────
+    // This replaces the fake generated AWB/courier with real Shiprocket data.
+    // If Shiprocket is unreachable, we fall back gracefully and keep the order.
+    let finalizedOrder = { ...completedOrder };
+    try {
+      const srResult = await createShiprocketOrder(completedOrder);
+      if (srResult.success) {
+        finalizedOrder = {
+          ...completedOrder,
+          awb: srResult.awb,
+          courier: srResult.courier,
+          shiprocketOrderId: srResult.shiprocketOrderId,
+          shipmentId: srResult.shipmentId,
+          shiprocketSynced: true
+        };
+      } else {
+        console.warn('[Shiprocket] Fallback: order saved locally without real AWB.', srResult.error);
+        finalizedOrder = { ...completedOrder, shiprocketSynced: false };
+      }
+    } catch (err) {
+      console.error('[Shiprocket] Unexpected error, continuing with local order:', err);
+      finalizedOrder = { ...completedOrder, shiprocketSynced: false };
+    }
+
+    // ── Auto-save address to user profile if checkbox is checked ────────────
     if (saveAddressToProfile && userProfile) {
       try {
         const newAddr = {
@@ -140,6 +168,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
           fullName: name,
           address: address,
           city: city,
+          state: state,
           zipCode: zipCode
         };
         const currentAddresses = userProfile.addresses || [];
@@ -158,19 +187,19 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       }
     }
 
-    // Save to live Supabase database
+    // ── Save to Supabase ────────────────────────────────────────────────────
     try {
-      await createOrder(completedOrder);
+      await createOrder(finalizedOrder);
     } catch (err) {
       console.error('Failed to create order in database:', err);
     }
 
-    // Save to localStorage list of orders
+    // ── Save to localStorage (local cache / fallback) ────────────────────────
     const existingOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
-    existingOrders.push(completedOrder);
+    existingOrders.push(finalizedOrder);
     localStorage.setItem('hellabold_orders', JSON.stringify(existingOrders));
 
-    setPlacedOrder(completedOrder);
+    setPlacedOrder(finalizedOrder);
     setStep('success');
   };
 
@@ -220,16 +249,14 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     e.preventDefault();
     setPaymentError('');
 
-    // Generate order ID and Shiprocket tracking details
+    // Generate a local order ID (AWB will be replaced by the real Shiprocket AWB
+    // once createShiprocketOrder() runs inside handlePaymentSuccess).
     const orderId = 'HB-' + Math.floor(10000 + Math.random() * 90000);
-    const awb = 'SR-' + Math.floor(100000000 + Math.random() * 900000000);
-    const couriers = ['Delhivery', 'Blue Dart', 'Shadowfax', 'Xpressbees'];
-    const courier = couriers[Math.floor(Math.random() * couriers.length)];
 
     const newOrder = {
       id: orderId,
-      awb: awb,
-      courier: courier,
+      awb: null,       // filled by Shiprocket after payment
+      courier: null,   // filled by Shiprocket after payment
       items: cartItems,
       subtotal: subtotal,
       discount: discountAmount,
@@ -249,6 +276,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
         phone: '+91 ' + phone,
         address,
         city,
+        state,
         zipCode
       }
     };
@@ -508,15 +536,63 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                   />
                 </div>
                 <div className="form-group">
-                  <label>ZIP / Postal Code</label>
-                  <input
-                    type="text"
-                    value={zipCode}
-                    onChange={handleInputChange(setZipCode)}
+                  <label>State</label>
+                  <select
+                    value={state}
+                    onChange={(e) => { setState(e.target.value); setSelectedAddressId(null); }}
                     required
-                    placeholder="e.g. 400001"
-                  />
+                    style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem', width: '100%', backgroundColor: 'var(--white)' }}
+                  >
+                    <option value="">Select State</option>
+                    <option>Andhra Pradesh</option>
+                    <option>Arunachal Pradesh</option>
+                    <option>Assam</option>
+                    <option>Bihar</option>
+                    <option>Chhattisgarh</option>
+                    <option>Goa</option>
+                    <option>Gujarat</option>
+                    <option>Haryana</option>
+                    <option>Himachal Pradesh</option>
+                    <option>Jharkhand</option>
+                    <option>Karnataka</option>
+                    <option>Kerala</option>
+                    <option>Madhya Pradesh</option>
+                    <option>Maharashtra</option>
+                    <option>Manipur</option>
+                    <option>Meghalaya</option>
+                    <option>Mizoram</option>
+                    <option>Nagaland</option>
+                    <option>Odisha</option>
+                    <option>Punjab</option>
+                    <option>Rajasthan</option>
+                    <option>Sikkim</option>
+                    <option>Tamil Nadu</option>
+                    <option>Telangana</option>
+                    <option>Tripura</option>
+                    <option>Uttar Pradesh</option>
+                    <option>Uttarakhand</option>
+                    <option>West Bengal</option>
+                    <option>Andaman and Nicobar Islands</option>
+                    <option>Chandigarh</option>
+                    <option>Dadra and Nagar Haveli and Daman and Diu</option>
+                    <option>Delhi</option>
+                    <option>Jammu and Kashmir</option>
+                    <option>Ladakh</option>
+                    <option>Lakshadweep</option>
+                    <option>Puducherry</option>
+                  </select>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label>ZIP / Postal Code</label>
+                <input
+                  type="text"
+                  value={zipCode}
+                  onChange={handleInputChange(setZipCode)}
+                  required
+                  placeholder="e.g. 400001"
+                />
               </div>
 
               {/* Save Address Checkbox */}
