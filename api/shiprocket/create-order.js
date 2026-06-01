@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
   if (!email || !password) {
     return res.status(500).json({
-      error: 'Shiprocket credentials not configured on the server.'
+      error: 'Shiprocket credentials not configured on the server. Add SHIPROCKET_EMAIL, SHIPROCKET_PASSWORD, SHIPROCKET_CHANNEL_ID to Vercel Environment Variables.'
     });
   }
 
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     });
     const authData = await authRes.json();
     if (!authRes.ok || !authData.token) {
-      console.error('[Shiprocket] Auth failed:', authData);
+      console.error('[Shiprocket] Auth failed:', JSON.stringify(authData));
       return res.status(502).json({ error: 'Shiprocket authentication failed', details: authData });
     }
     token = authData.token;
@@ -36,7 +36,27 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: 'Could not reach Shiprocket API for auth', details: err.message });
   }
 
-  // ── Step 2: Parse the incoming order from the frontend ─────────────────────
+  // ── Step 2: Parse the request body ────────────────────────────────────────
+  // Vercel does NOT auto-parse JSON — we must do it manually.
+  let body;
+  try {
+    if (typeof req.body === 'object' && req.body !== null) {
+      // Body already parsed (e.g. by Vercel's built-in parser for some runtimes)
+      body = req.body;
+    } else {
+      // Collect raw buffer and parse
+      const rawBody = await new Promise((resolve, reject) => {
+        let data = '';
+        req.on('data', chunk => { data += chunk; });
+        req.on('end', () => resolve(data));
+        req.on('error', reject);
+      });
+      body = JSON.parse(rawBody);
+    }
+  } catch (err) {
+    return res.status(400).json({ error: 'Invalid JSON body', details: err.message });
+  }
+
   const {
     orderId,
     orderDate,
@@ -52,17 +72,34 @@ export default async function handler(req, res) {
     paymentMethod,
     subTotal,
     discount,
-    shipping,
-    total
-  } = req.body;
+    shipping
+  } = body;
+
+  // ── Step 2b: Validate required fields ─────────────────────────────────────
+  const missingFields = [];
+  if (!orderId) missingFields.push('orderId');
+  if (!customerName) missingFields.push('customerName');
+  if (!phone) missingFields.push('phone');
+  if (!address) missingFields.push('address');
+  if (!city) missingFields.push('city');
+  if (!state) missingFields.push('state');
+  if (!pincode) missingFields.push('pincode');
+  if (!items || !items.length) missingFields.push('items');
+  if (subTotal === undefined) missingFields.push('subTotal');
+
+  if (missingFields.length > 0) {
+    console.error('[Shiprocket] Missing required fields:', missingFields);
+    return res.status(400).json({
+      error: 'Missing required fields in order payload',
+      missingFields
+    });
+  }
 
   // ── Step 3: Build Shiprocket order payload ─────────────────────────────────
-  // Weight: 0.5 kg per item (configurable constant)
   const WEIGHT_PER_ITEM_KG = 0.5;
   const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const totalWeight = parseFloat((totalQuantity * WEIGHT_PER_ITEM_KG).toFixed(2));
 
-  // Map cart items to Shiprocket order_items format
   const orderItems = items.map((item) => {
     const unitPrice = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
     return {
@@ -72,46 +109,43 @@ export default async function handler(req, res) {
       selling_price: unitPrice,
       discount: 0,
       tax: 0,
-      hsn: 61091000 // HSN code for knitted t-shirts (standard)
+      hsn: 61091000 // HSN code for knitted t-shirts
     };
   });
-
-  // Shiprocket requires dimensions in cm; standard t-shirt packaging
-  const dimensions = { length: 30, breadth: 25, height: 5 };
 
   const shiprocketPayload = {
     order_id: orderId,
     order_date: orderDate,
     pickup_location: 'Primary',
 
-    // Billing (same as shipping for D2C)
     billing_customer_name: customerName,
     billing_last_name: '',
     billing_address: address,
     billing_address_2: '',
     billing_city: city,
-    billing_pincode: pincode,
+    billing_pincode: String(pincode),
     billing_state: state,
     billing_country: country || 'India',
-    billing_email: customerEmail,
-    billing_phone: phone,
+    billing_email: customerEmail || '',
+    billing_phone: String(phone).replace(/\D/g, '').slice(-10),
 
-    // Shipping (ship to billing address)
     shipping_is_billing: true,
 
     order_items: orderItems,
     payment_method: paymentMethod === 'COD' ? 'COD' : 'Prepaid',
-    shipping_charges: shipping || 0,
+    shipping_charges: Number(shipping) || 0,
     giftwrap_charges: 0,
     transaction_charges: 0,
-    total_discount: discount || 0,
-    sub_total: subTotal,
-    length: dimensions.length,
-    breadth: dimensions.breadth,
-    height: dimensions.height,
+    total_discount: Number(discount) || 0,
+    sub_total: Number(subTotal),
+    length: 30,
+    breadth: 25,
+    height: 5,
     weight: totalWeight,
     ...(channelId > 0 && { channel_id: channelId })
   };
+
+  console.log('[Shiprocket] Creating order with payload:', JSON.stringify(shiprocketPayload));
 
   // ── Step 4: Create the order in Shiprocket ─────────────────────────────────
   let shiprocketOrder;
@@ -127,7 +161,7 @@ export default async function handler(req, res) {
     const createData = await createRes.json();
 
     if (!createRes.ok) {
-      console.error('[Shiprocket] Order creation failed:', createData);
+      console.error('[Shiprocket] Order creation failed. Status:', createRes.status, 'Response:', JSON.stringify(createData));
       return res.status(createRes.status).json({
         error: 'Shiprocket order creation failed',
         details: createData
@@ -140,7 +174,6 @@ export default async function handler(req, res) {
   }
 
   // ── Step 5: Auto-assign courier to get AWB ─────────────────────────────────
-  // Shiprocket assigns AWB after courier assignment. We auto-assign using Shiprocket's recommendation.
   const shiprocketOrderId = shiprocketOrder.order_id;
   const shipmentId = shiprocketOrder.shipment_id;
 
@@ -164,8 +197,7 @@ export default async function handler(req, res) {
         courierName = awbData.response.data.courier_name || 'Shiprocket';
         console.log(`[Shiprocket] AWB assigned: ${awb} via ${courierName}`);
       } else {
-        console.warn('[Shiprocket] AWB assignment response:', awbData);
-        // AWB may be assigned asynchronously; order still created successfully
+        console.warn('[Shiprocket] AWB assignment response:', JSON.stringify(awbData));
         awb = `PENDING-${shipmentId}`;
       }
     } catch (err) {
@@ -180,7 +212,6 @@ export default async function handler(req, res) {
     shipmentId,
     awb: awb || `SR-${shiprocketOrderId}`,
     courier: courierName,
-    status: shiprocketOrder.status,
-    raw: shiprocketOrder
+    status: shiprocketOrder.status
   });
 }

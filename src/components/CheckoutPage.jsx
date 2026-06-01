@@ -136,9 +136,14 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
 
   const handlePaymentSuccess = async (completedOrder) => {
     // ── Push order to Shiprocket ────────────────────────────────────────────
-    // This replaces the fake generated AWB/courier with real Shiprocket data.
-    // If Shiprocket is unreachable, we fall back gracefully and keep the order.
-    let finalizedOrder = { ...completedOrder };
+    // This replaces awb/courier with real Shiprocket data.
+    // If Shiprocket is unreachable or returns an error, we fall back gracefully
+    // but always ensure awb/courier are non-null strings for the DB insert.
+    let finalizedOrder = {
+      ...completedOrder,
+      awb: completedOrder.awb || 'PENDING-SYNC',
+      courier: completedOrder.courier || 'TBD'
+    };
     try {
       const srResult = await createShiprocketOrder(completedOrder);
       if (srResult.success) {
@@ -152,11 +157,21 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
         };
       } else {
         console.warn('[Shiprocket] Fallback: order saved locally without real AWB.', srResult.error);
-        finalizedOrder = { ...completedOrder, shiprocketSynced: false };
+        finalizedOrder = {
+          ...completedOrder,
+          awb: 'PENDING-SYNC',
+          courier: 'TBD',
+          shiprocketSynced: false
+        };
       }
     } catch (err) {
       console.error('[Shiprocket] Unexpected error, continuing with local order:', err);
-      finalizedOrder = { ...completedOrder, shiprocketSynced: false };
+      finalizedOrder = {
+        ...completedOrder,
+        awb: 'PENDING-SYNC',
+        courier: 'TBD',
+        shiprocketSynced: false
+      };
     }
 
     // ── Auto-save address to user profile if checkbox is checked ────────────
