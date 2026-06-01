@@ -116,7 +116,7 @@ export default async function handler(req, res) {
   const shiprocketPayload = {
     order_id: orderId,
     order_date: orderDate,
-    pickup_location: 'Primary',
+    pickup_location: 'Home',
 
     billing_customer_name: customerName,
     billing_last_name: '',
