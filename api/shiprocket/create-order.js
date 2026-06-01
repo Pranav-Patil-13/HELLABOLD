@@ -160,9 +160,9 @@ export default async function handler(req, res) {
     });
     const createData = await createRes.json();
 
-    if (!createRes.ok) {
+    if (!createRes.ok || !createData.order_id) {
       console.error('[Shiprocket] Order creation failed. Status:', createRes.status, 'Response:', JSON.stringify(createData));
-      return res.status(createRes.status).json({
+      return res.status(createRes.ok ? 400 : createRes.status).json({
         error: 'Shiprocket order creation failed',
         details: createData
       });
