@@ -26,6 +26,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid JSON body' });
   }
 
+  // ── Webhook Security Token Check ──────────────────────────────────────────
+  const expectedToken = process.env.SHIPROCKET_WEBHOOK_TOKEN;
+  if (expectedToken) {
+    const providedToken = req.headers['x-api-key'] || req.headers['authorization'];
+    // Shiprocket sometimes sends it as x-api-key, or Bearer token depending on config
+    const cleanProvided = providedToken ? providedToken.replace('Bearer ', '') : null;
+    
+    if (cleanProvided !== expectedToken) {
+      console.warn('[Shiprocket Webhook] Unauthorized request. Token mismatch.');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   console.log('[Shiprocket Webhook] Received payload:', JSON.stringify(payload));
 
   const {
