@@ -166,6 +166,68 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── POST /api/shiprocket/webhook ──────────────────────────────────────
+        // Dev-server proxy to simulate the Vercel webhook endpoint locally
+        if (req.url === '/api/shiprocket/webhook' && req.method === 'POST') {
+          try {
+            const rawBody = await collectBody(req);
+            const payload = JSON.parse(rawBody);
+
+            const { channel_order_id, awb, current_status, shipment_status } = payload;
+            if (!channel_order_id && !awb) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Missing channel_order_id and awb' }));
+              return;
+            }
+
+            const rawStatus = (current_status || shipment_status || '').toUpperCase();
+            let mappedStatus = null;
+            if (rawStatus === 'NEW' || rawStatus === 'MANIFESTED') mappedStatus = 'Order Received';
+            else if (rawStatus === 'PICKED UP') mappedStatus = 'Manifested & Picked Up';
+            else if (rawStatus === 'IN TRANSIT' || rawStatus === 'SHIPPED') mappedStatus = 'In Transit';
+            else if (rawStatus === 'OUT FOR DELIVERY') mappedStatus = 'Out for Delivery';
+            else if (rawStatus === 'DELIVERED') mappedStatus = 'Delivered';
+            else if (rawStatus.includes('RTO') || rawStatus === 'RETURNED' || rawStatus === 'CANCELED') mappedStatus = 'Canceled / RTO';
+
+            if (!mappedStatus) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ message: 'Ignored unrecognized status' }));
+              return;
+            }
+
+            const supabaseUrl = process.env.VITE_SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+            let queryParams = `id=eq.${channel_order_id}`;
+            if (!channel_order_id) queryParams = `awb=eq.${awb}`;
+
+            const dbRes = await fetch(`${supabaseUrl}/rest/v1/orders?${queryParams}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify({ status: mappedStatus })
+            });
+
+            if (!dbRes.ok) {
+              const dbData = await dbRes.json();
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Database update failed', details: dbData }));
+              return;
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, updatedStatus: mappedStatus }));
+          } catch (err) {
+            res.writeHead(502, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+          return;
+        }
+
         // ── GET /api/products ──────────────────────────────────────────────────
         if (req.url === '/api/products' && req.method === 'GET') {
           const filePath = path.resolve(__dirname, 'src/data/products.json');
