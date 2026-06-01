@@ -166,9 +166,9 @@ function adminApiPlugin() {
           return;
         }
 
-        // ── POST /api/shiprocket/webhook ──────────────────────────────────────
+        // ── POST /api/tracking-webhook ────────────────────────────────────────
         // Dev-server proxy to simulate the Vercel webhook endpoint locally
-        if (req.url === '/api/shiprocket/webhook' && req.method === 'POST') {
+        if (req.url === '/api/tracking-webhook' && req.method === 'POST') {
           try {
             const rawBody = await collectBody(req);
             const payload = JSON.parse(rawBody);
