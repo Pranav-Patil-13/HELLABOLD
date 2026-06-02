@@ -202,6 +202,71 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       }
     }
 
+    // ── Save to local custom_orders folder if there are custom designs ─────
+    if (finalizedOrder.items && finalizedOrder.items.length > 0) {
+      for (const item of finalizedOrder.items) {
+        if (item.customDesign) {
+          if (!item.customDesign.startsWith('data:')) {
+            item.customDesignLocalUrl = item.customDesign;
+          } else {
+            try {
+              const base64Data = item.customDesign.split(',')[1];
+              const fileExtension = item.customDesignName?.split('.').pop() || 'png';
+              const filename = `${finalizedOrder.id}-${item.id}.${fileExtension}`;
+              
+              const uploadRes = await fetch('/api/custom-order-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  filename,
+                  base64: base64Data
+                })
+              });
+              const uploadData = await uploadRes.json();
+              if (uploadRes.ok) {
+                console.log(`[Custom Studio] Custom front image saved locally: ${uploadData.url}`);
+                item.customDesignLocalUrl = uploadData.url; // Save local url in order item
+              } else {
+                console.error('Failed to upload custom design image to server:', uploadData.error);
+              }
+            } catch (e) {
+              console.error('Failed to save custom design image to server:', e);
+            }
+          }
+        }
+        
+        if (item.customDesignBack) {
+          if (!item.customDesignBack.startsWith('data:')) {
+            item.customDesignBackLocalUrl = item.customDesignBack;
+          } else {
+            try {
+              const base64DataBack = item.customDesignBack.split(',')[1];
+              const fileExtensionBack = item.customDesignBackName?.split('.').pop() || 'png';
+              const filenameBack = `${finalizedOrder.id}-${item.id}-back.${fileExtensionBack}`;
+              
+              const uploadResBack = await fetch('/api/custom-order-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  filename: filenameBack,
+                  base64: base64DataBack
+                })
+              });
+              const uploadDataBack = await uploadResBack.json();
+              if (uploadResBack.ok) {
+                console.log(`[Custom Studio] Custom back image saved locally: ${uploadDataBack.url}`);
+                item.customDesignBackLocalUrl = uploadDataBack.url; // Save local back url in order item
+              } else {
+                console.error('Failed to upload custom back design image to server:', uploadDataBack.error);
+              }
+            } catch (e) {
+              console.error('Failed to save custom back design image to server:', e);
+            }
+          }
+        }
+      }
+    }
+
     // ── Save to Supabase ────────────────────────────────────────────────────
     try {
       await createOrder(finalizedOrder);
@@ -264,6 +329,12 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     e.preventDefault();
     setPaymentError('');
 
+    // Validate phone number for ALL payment methods — it's needed for shipping labels
+    if (!phone || phone.length < 10) {
+      setPaymentError('Please enter a valid 10-digit phone number to continue.');
+      return;
+    }
+
     // Generate a local order ID (AWB will be replaced by the real Shiprocket AWB
     // once createShiprocketOrder() runs inside handlePaymentSuccess).
     const orderId = 'HB-' + Math.floor(10000 + Math.random() * 90000);
@@ -297,10 +368,6 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     };
 
     if (paymentMethod === 'cod') {
-      if (!phone || phone.length < 10) {
-        setPaymentError('Please enter a valid 10-digit phone number in the shipping form.');
-        return;
-      }
       setTempOrder(newOrder);
       setShowOtpVerification(true);
       setOtpSent(true); // Phone is already captured, go directly to code entry
@@ -685,7 +752,11 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
             <div className="checkout-summary__list">
               {cartItems.map(item => (
                 <div key={`${item.id}-${item.size}`} className="summary-item">
-                  <img src={item.image} alt={item.title} className="summary-item__img" />
+                  <img 
+                    src={(item.customDesign || item.customDesignBack || item.id?.startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    alt={item.title} 
+                    className="summary-item__img" 
+                  />
                   <div className="summary-item__info">
                     <h4>{item.title}</h4>
                     <p>Size: {item.size} × {item.quantity}</p>

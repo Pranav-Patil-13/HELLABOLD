@@ -68,6 +68,7 @@ const Footer = ({ onNavigate }) => {
             <li><a href="/?category=Tops" onClick={handleNavClick('/?category=Tops')} className="footer__link">Printed Tees</a></li>
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Limited Drops</a></li>
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Sale</a></li>
+            <li><a href="/custom-studio" onClick={handleNavClick('/custom-studio')} className="footer__link">Custom Studio</a></li>
           </ul>
         </div>
 

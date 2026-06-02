@@ -341,6 +341,35 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── POST /api/custom-order-upload ───────────────────────────────────────
+        if (req.url === '/api/custom-order-upload' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { filename, base64 } = JSON.parse(body);
+              if (!filename || !base64) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Missing filename or base64 data' }));
+                return;
+              }
+              const buffer = Buffer.from(base64, 'base64');
+              const dirPath = path.resolve(__dirname, 'public/assets/custom_orders');
+              if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath, { recursive: true });
+              }
+              const filePath = path.resolve(dirPath, filename);
+              fs.writeFileSync(filePath, buffer);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, url: `/assets/custom_orders/${filename}` }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+          return;
+        }
+
         next();
       });
     }

@@ -127,6 +127,7 @@ const Header = ({
         <nav className={`header__nav ${isMobileNavOpen ? 'header__nav--open' : ''}`}>
           <a href="/" onClick={(e) => { handleGoHome(e); setIsMobileNavOpen(false); }} className={`header__link${activeTab === 'shop' ? ' active' : ''}`}>Shop</a>
           <a href="/collections" onClick={() => setIsMobileNavOpen(false)} className={`header__link${activeTab === 'collections' ? ' active' : ''}`}>Collections</a>
+          <a href="/custom-studio" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/custom-studio'); window.dispatchEvent(new Event('popstate')); setIsMobileNavOpen(false); }} className={`header__link${activeTab === 'custom-studio' ? ' active' : ''}`}>HELLA-LAB</a>
         </nav>
 
         <div className="header__actions">

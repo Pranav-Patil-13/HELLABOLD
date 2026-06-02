@@ -7,9 +7,40 @@ import {
   addReview, 
   deleteReview, 
   getOrders, 
+  getAllOrdersForAdmin,
   updateOrderStatusInDB 
 } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
+
+const PincodeResolver = ({ pin }) => {
+  const [location, setLocation] = useState('Resolving location...');
+  
+  useEffect(() => {
+    if (!pin) {
+      setLocation('');
+      return;
+    }
+    let isMounted = true;
+    fetch(`https://api.postalpincode.in/pincode/${pin}`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) {
+          if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice[0]) {
+            const po = data[0].PostOffice[0];
+            setLocation(`${po.District || po.Name}, ${po.State}`);
+          } else {
+            setLocation('Unknown Pincode Location');
+          }
+        }
+      })
+      .catch(err => {
+        if (isMounted) setLocation('Error fetching location');
+      });
+    return () => { isMounted = false; };
+  }, [pin]);
+
+  return <span style={{ color: 'var(--accent-color)', fontWeight: 600, fontSize: '0.8rem' }}> ({location})</span>;
+};
 
 const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userProfile }) => {
   const [products, setProducts] = useState([]);
@@ -62,7 +93,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
 
   const fetchOrders = async () => {
     try {
-      const dbOrders = await getOrders();
+      const dbOrders = await getAllOrdersForAdmin();
       setOrders(dbOrders);
     } catch (err) {
       console.error('Error fetching orders:', err);
@@ -911,68 +942,185 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               {orders.length === 0 ? (
                 <p style={{ color: 'var(--text-secondary)', padding: '2rem 0', textAlign: 'center' }}>No orders placed yet.</p>
               ) : (
-                orders.map(order => (
-                  <div key={order.id} className="admin-order-item-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1.5rem', border: '1px solid var(--border-color)', backgroundColor: '#fafafa' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                      <span style={{ fontWeight: 700, fontSize: '1rem' }}>Order ID: {order.id}</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        AWB: <strong>{order.awb || '—'}</strong>{order.courier ? ` (${order.courier})` : ''}
-                      </span>
-                      {order.shiprocketOrderId && (
-                        <span style={{ fontSize: '0.75rem', color: '#6b46c1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          🚀 Shiprocket ID: <strong>{order.shiprocketOrderId}</strong>
-                          {order.shiprocketSynced
-                            ? <span style={{ color: '#38a169', fontWeight: 700 }}>✓ Synced</span>
-                            : <span style={{ color: '#e53e3e', fontWeight: 700 }}>⚠ Pending</span>
-                          }
+                orders.map(order => {
+                  const customer = order.shippingDetails || {};
+                  return (
+                    <div key={order.id} className="admin-order-item-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: '#fafafa', borderRadius: '6px' }}>
+                      {/* Top Header Row of the Order */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid var(--border-color)', paddingBottom: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Order ID: {order.id}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            AWB: <strong>{order.awb || '—'}</strong>{order.courier ? ` (${order.courier})` : ''}
+                          </span>
+                          {order.shiprocketOrderId && (
+                            <span style={{ fontSize: '0.75rem', color: '#6b46c1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              🚀 Shiprocket ID: <strong>{order.shiprocketOrderId}</strong>
+                              {order.shiprocketSynced
+                                ? <span style={{ color: '#38a169', fontWeight: 700 }}>✓ Synced</span>
+                                : <span style={{ color: '#e53e3e', fontWeight: 700 }}>⚠ Pending</span>
+                              }
+                            </span>
+                          )}
+                          {order.shiprocketSynced === false && !order.shiprocketOrderId && (
+                            <span style={{ fontSize: '0.75rem', color: '#e53e3e', fontWeight: 600 }}>⚠ Not yet synced to Shiprocket</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block' }}>Total Paid</span>
+                            <strong style={{ fontSize: '1.1rem', color: 'var(--accent-color)' }}>
+                              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(order.total)}
+                            </strong>
+                          </div>
+                          {/* Shiprocket re-sync button for failed/unsynced orders */}
+                          {(order.shiprocketSynced === false || (!order.awb || order.awb?.startsWith?.('SR-'))) && (
+                            <button
+                              type="button"
+                              className="btn btn--primary"
+                              onClick={() => handleResyncToShiprocket(order)}
+                              disabled={order._resyncing}
+                              style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', opacity: order._resyncing ? 0.6 : 1 }}
+                            >
+                              {order._resyncing ? '⏳ Syncing...' : '🚀 Sync to Shiprocket'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Main Columns: Left (Items & Placements) | Right (Customer Details) */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                        
+                        {/* Column 1: Items List (2/3 width on large screens) */}
+                        <div style={{ flex: '2 1 450px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          {order.items?.map((item, idx) => {
+                            const isCustom = item.customDesignLocalUrl || item.customDesignBackLocalUrl || item.customDesign || item.customDesignBack;
+                            return (
+                              <div key={idx} style={{ padding: '1rem 1.2rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.6rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '0.4rem' }}>
+                                  <span>{item.title}</span>
+                                  <span style={{ color: 'var(--text-secondary)' }}>Size {item.size} × {item.quantity}</span>
+                                </div>
+                                
+                                {isCustom && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                      <span style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', color: '#38a169', padding: '0.25rem 0.5rem', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.5px' }}>CUSTOM DESIGNED</span>
+                                      {(item.customDesignLocalUrl || item.customDesign) && (
+                                        <a href={item.customDesignLocalUrl || item.customDesign} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Front Artwork</a>
+                                      )}
+                                      {(item.customDesignBackLocalUrl || item.customDesignBack) && (
+                                        <a href={item.customDesignBackLocalUrl || item.customDesignBack} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Back Artwork</a>
+                                      )}
+                                    </div>
+
+                                    {/* Placements Details Table */}
+                                    {item.customMeta?.placement && (
+                                      <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '4px', marginTop: '0.2rem' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left', minWidth: '350px' }}>
+                                          <thead>
+                                            <tr style={{ backgroundColor: '#fcfcfc', borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                                              <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Side</th>
+                                              <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Scale</th>
+                                              <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>X Pos</th>
+                                              <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Y Pos</th>
+                                              <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Rotation</th>
+                                              <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Opacity</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {(item.customDesignLocalUrl || item.customDesign) && item.customMeta.placement.front && (
+                                              <tr style={{ borderBottom: '1px solid #f2f2f2' }}>
+                                                <td style={{ padding: '0.5rem 0.8rem', fontWeight: 700 }}>Front</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.scale}%</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.x}%</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.y}%</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.rotation}°</td>
+                                                <td style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>{item.customMeta.placement.front.opacity ?? 100}%</td>
+                                              </tr>
+                                            )}
+                                            {(item.customDesignBackLocalUrl || item.customDesignBack) && item.customMeta.placement.back && (
+                                              <tr>
+                                                <td style={{ padding: '0.5rem 0.8rem', fontWeight: 700 }}>Back</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.back.scale}%</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.back.x}%</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.back.y}%</td>
+                                                <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.back.rotation}°</td>
+                                                <td style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>{item.customMeta.placement.back.opacity ?? 100}%</td>
+                                              </tr>
+                                            )}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+
+                                    {/* Printing Instructions Box */}
+                                    {item.customMeta?.instructions && (
+                                      <div style={{ backgroundColor: 'rgba(255, 69, 0, 0.04)', borderLeft: '3.5px solid var(--accent-red)', padding: '0.6rem 0.8rem', fontSize: '0.8rem', borderRadius: '0 4px 4px 0' }}>
+                                        <strong style={{ color: 'var(--accent-red)', display: 'block', marginBottom: '0.15rem', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.5px' }}>Print Instructions:</strong>
+                                        <span style={{ fontStyle: 'italic', color: 'var(--text-primary)', fontWeight: 500 }}>"{item.customMeta.instructions}"</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Column 2: Customer Shipping Profile (1/3 width) */}
+                        <div style={{ flex: '1 1 280px', padding: '1rem 1.2rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem', color: 'var(--text-primary)' }}>Customer Profile</h4>
+                          <div style={{ fontSize: '0.8rem', display: 'grid', gridTemplateColumns: '70px 1fr', gap: '0.4rem 0.5rem', lineHeight: '1.4' }}>
+                            <strong style={{ color: 'var(--text-secondary)' }}>Name:</strong>
+                            <span style={{ fontWeight: 600 }}>{customer.name || '—'}</span>
+                            <strong style={{ color: 'var(--text-secondary)' }}>Email:</strong>
+                            <span style={{ wordBreak: 'break-all' }}>{customer.email || '—'}</span>
+                            <strong style={{ color: 'var(--text-secondary)' }}>Phone:</strong>
+                            <span>{customer.phone || '—'}</span>
+                            <strong style={{ color: 'var(--text-secondary)' }}>Address:</strong>
+                            <span>{customer.address || '—'}</span>
+                            <strong style={{ color: 'var(--text-secondary)' }}>City/State:</strong>
+                            <span>{customer.city ? `${customer.city}, ${customer.state || ''}` : '—'}</span>
+                            <strong style={{ color: 'var(--text-secondary)' }}>PIN Code:</strong>
+                            <span>
+                              <span style={{ fontWeight: 600 }}>{customer.zipCode || '—'}</span>
+                              {customer.zipCode && <PincodeResolver pin={customer.zipCode} />}
+                            </span>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Bottom Order Status Switcher */}
+                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          Status: <strong style={{ color: 'var(--text-primary)' }}>{order.status}</strong>
                         </span>
-                      )}
-                      {order.shiprocketSynced === false && !order.shiprocketOrderId && (
-                        <span style={{ fontSize: '0.75rem', color: '#e53e3e', fontWeight: 600 }}>⚠ Not yet synced to Shiprocket</span>
-                      )}
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        Customer: <strong>{order.shippingDetails?.name}</strong> | Total: {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(order.total)}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', alignItems: 'flex-end' }}>
-                      {/* Shiprocket re-sync button for failed/unsynced orders */}
-                      {(order.shiprocketSynced === false || (!order.awb || order.awb?.startsWith?.('SR-'))) && (
-                        <button
-                          type="button"
-                          className="btn btn--primary"
-                          onClick={() => handleResyncToShiprocket(order)}
-                          disabled={order._resyncing}
-                          style={{ padding: '0.4rem 1rem', fontSize: '0.75rem', opacity: order._resyncing ? 0.6 : 1 }}
-                        >
-                          {order._resyncing ? '⏳ Syncing...' : '🚀 Sync to Shiprocket'}
-                        </button>
-                      )}
-
-                      {/* Status update buttons */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
-                        {['Order Received', 'Manifested & Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].map(status => (
-                          <button
-                            key={status}
-                            type="button"
-                            className="btn btn--outline"
-                            onClick={() => updateOrderStatus(order.id, status)}
-                            style={{
-                              padding: '0.4rem 0.8rem',
-                              fontSize: '0.75rem',
-                              textTransform: 'uppercase',
-                              backgroundColor: order.status === status ? 'var(--accent-color)' : 'transparent',
-                              color: order.status === status ? 'var(--white)' : 'var(--text-primary)',
-                              borderColor: order.status === status ? 'var(--accent-color)' : 'var(--border-color)'
-                            }}
-                          >
-                            {status}
-                          </button>
-                        ))}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
+                          {['Order Received', 'Manifested & Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].map(status => (
+                            <button
+                              key={status}
+                              type="button"
+                              className="btn btn--outline"
+                              onClick={() => updateOrderStatus(order.id, status)}
+                              style={{
+                                padding: '0.35rem 0.7rem',
+                                fontSize: '0.7rem',
+                                textTransform: 'uppercase',
+                                backgroundColor: order.status === status ? 'var(--accent-color)' : 'transparent',
+                                color: order.status === status ? 'var(--white)' : 'var(--text-primary)',
+                                borderColor: order.status === status ? 'var(--accent-color)' : 'var(--border-color)'
+                              }}
+                            >
+                              {status}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

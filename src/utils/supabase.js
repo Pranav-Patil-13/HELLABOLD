@@ -24,21 +24,6 @@ export const supabase = isSupabaseConfigured
 
 export const getProducts = async () => {
   if (isSupabaseConfigured) {
-    // Force sync database to use updated local printed t-shirts data
-    try {
-      const { data: currentDbData } = await supabase.from('products').select('*');
-      if (currentDbData) {
-        const hasLegacy = currentDbData.some(p => p.title === 'Born to Stand Out' || p.title === 'Signature Saddle Bag' || p.title.includes('Boot') || p.title.includes('Coat'));
-        if (hasLegacy || currentDbData.length !== 9) {
-          console.log('Syncing product count or items mismatch. Re-seeding printed t-shirts...');
-          await supabase.from('products').delete().neq('id', 0); // Clear old records
-          await supabase.from('products').insert(productsJson);  // Insert updated list
-        }
-      }
-    } catch (e) {
-      console.error('Failed to sync updated items to database:', e);
-    }
-
     let { data, error } = await supabase
       .from('products')
       .select('*')
@@ -49,7 +34,7 @@ export const getProducts = async () => {
       throw error;
     }
 
-    // Auto-seed if the database table is empty
+    // Only auto-seed if the database table is completely empty (first-time setup)
     if (data && data.length === 0) {
       console.log('Supabase products table is empty. Auto-seeding from products.json...');
       const { data: seededData, error: seedError } = await supabase
@@ -301,6 +286,8 @@ export const getOrders = async () => {
       id: o.id,
       awb: o.awb,
       courier: o.courier,
+      shiprocketOrderId: o.shiprocket_order_id,
+      shiprocketSynced: o.shiprocket_synced,
       items: o.items,
       subtotal: parseFloat(o.subtotal),
       discount: parseFloat(o.discount),
@@ -318,6 +305,38 @@ export const getOrders = async () => {
     const allOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
     // Filter by user_id if orders were stored with one, otherwise show all local orders
     return allOrders.filter(o => !o.user_id || o.user_id === mockUser.id);
+  }
+};
+
+export const getAllOrdersForAdmin = async () => {
+  if (isSupabaseConfigured) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching admin orders from Supabase:', error);
+      throw error;
+    }
+    return data.map(o => ({
+      id: o.id,
+      awb: o.awb,
+      courier: o.courier,
+      shiprocketOrderId: o.shiprocket_order_id,
+      shiprocketSynced: o.shiprocket_synced,
+      items: o.items,
+      subtotal: parseFloat(o.subtotal),
+      discount: parseFloat(o.discount),
+      appliedPromo: o.applied_promo,
+      shipping: parseFloat(o.shipping),
+      total: parseFloat(o.total),
+      status: o.status,
+      shippingDetails: o.shipping_details,
+      date: o.date
+    }));
+  } else {
+    return JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
   }
 };
 

@@ -254,7 +254,10 @@ const OrderStatus = () => {
             {order.items.map(item => (
               <div key={`${item.id}-${item.size}`} className="sidebar-item-row">
                 <div className="sidebar-item-img-wrap">
-                  <img src={item.image} alt={item.title} />
+                  <img 
+                    src={(item.customDesign || item.customDesignBack || item.id?.startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    alt={item.title} 
+                  />
                 </div>
                 <div className="sidebar-item-info">
                   <h4>{item.title}</h4>

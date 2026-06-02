@@ -92,7 +92,11 @@ const CartDrawer = ({
             <div className="cart-drawer__list">
               {cartItems.map((item) => (
                 <div key={`${item.id}-${item.size}`} className="cart-item">
-                  <img src={item.image} alt={item.title} className="cart-item__img" />
+                  <img 
+                    src={(item.customDesign || item.customDesignBack || item.id?.startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    alt={item.title} 
+                    className="cart-item__img" 
+                  />
                   <div className="cart-item__info">
                     <h3 className="cart-item__title">{item.title}</h3>
                     <p className="cart-item__size">Size: {item.size}</p>

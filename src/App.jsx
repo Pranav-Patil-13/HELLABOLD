@@ -20,6 +20,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import FaqPage from './components/FaqPage';
 import PolicyPages from './components/PolicyPages';
+import CustomStudio from './components/CustomStudio';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -45,6 +46,7 @@ function App() {
   const [isShippingPage, setIsShippingPage] = useState(false);
   const [isReturnsPage, setIsReturnsPage] = useState(false);
   const [isSizeGuidePage, setIsSizeGuidePage] = useState(false);
+  const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   
@@ -112,6 +114,9 @@ function App() {
     if (window.location.pathname === '/size-guide') {
       setIsSizeGuidePage(true);
     }
+    if (window.location.pathname === '/custom-studio') {
+      setIsCustomStudioPage(true);
+    }
 
     // Resolve active Supabase or mock user session
     getCurrentUser()
@@ -162,6 +167,7 @@ function App() {
       setIsShippingPage(path === '/shipping-policy');
       setIsReturnsPage(path === '/returns-exchanges');
       setIsSizeGuidePage(path === '/size-guide');
+      setIsCustomStudioPage(path === '/custom-studio');
       setActiveProductId(productId ? parseInt(productId, 10) : null);
 
       if (categoryParam) {
@@ -266,7 +272,12 @@ function App() {
         price: product.price,
         image: product.images?.[0] || '',
         size: size,
-        quantity: 1
+        quantity: 1,
+        customDesign: product.customDesign || null,
+        customDesignName: product.customDesignName || '',
+        customDesignBack: product.customDesignBack || null,
+        customDesignBackName: product.customDesignBackName || '',
+        customMeta: product.customMeta || null
       };
       newItems = [...cartItems, newItem];
     }
@@ -340,6 +351,7 @@ function App() {
     setIsShippingPage(path.startsWith('/shipping-policy'));
     setIsReturnsPage(path.startsWith('/returns-exchanges'));
     setIsSizeGuidePage(path.startsWith('/size-guide'));
+    setIsCustomStudioPage(path.startsWith('/custom-studio'));
     setActiveProductId(productId ? parseInt(productId, 10) : null);
 
     if (categoryParam) {
@@ -411,8 +423,8 @@ function App() {
         userProfile={userProfile}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); }}
-        activeTab={isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : "shop"))))}
+        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); setIsCustomStudioPage(false); }}
+        activeTab={isCustomStudioPage ? "custom-studio" : (isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : "shop")))))}
       />
       
       {isCheckoutPage ? (
@@ -464,6 +476,11 @@ function App() {
       ) : isCollectionsPage ? (
         <>
           <CollectionsPage />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isCustomStudioPage ? (
+        <>
+          <CustomStudio onAddToCart={handleAddToCart} userProfile={userProfile} />
           <Footer onNavigate={handleFooterNavigation} />
         </>
       ) : activeProduct ? (
@@ -550,7 +567,8 @@ function App() {
         onApplyDiscount={saveDiscount}
         onCheckout={() => {
           setIsCartOpen(false);
-          window.open('/checkout', '_blank');
+          window.history.pushState({}, '', '/checkout');
+          setIsCheckoutPage(true);
         }}
       />
 
@@ -567,7 +585,7 @@ function App() {
       />
 
       {/* Floating Cart Island Summary */}
-      {!isCartOpen && !isCheckoutPage && (
+      {!isCartOpen && !isCheckoutPage && !isOrderStatusPage && !isCustomStudioPage && (
         <CartIsland 
           cartItems={cartItems} 
           onOpenCart={() => setIsCartOpen(true)} 
