@@ -753,7 +753,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
               {cartItems.map(item => (
                 <div key={`${item.id}-${item.size}`} className="summary-item">
                   <img 
-                    src={(item.customDesign || item.customDesignBack || item.id?.startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
                     alt={item.title} 
                     className="summary-item__img" 
                   />

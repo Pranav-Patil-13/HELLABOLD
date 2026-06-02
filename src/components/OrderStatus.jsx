@@ -255,7 +255,7 @@ const OrderStatus = () => {
               <div key={`${item.id}-${item.size}`} className="sidebar-item-row">
                 <div className="sidebar-item-img-wrap">
                   <img 
-                    src={(item.customDesign || item.customDesignBack || item.id?.startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
                     alt={item.title} 
                   />
                 </div>
