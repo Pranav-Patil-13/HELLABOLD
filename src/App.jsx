@@ -127,7 +127,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
-  const [typewriterDone, setTypewriterDone] = useState(false);
+  const [typewriterDone, setTypewriterDone] = useState(() => {
+    const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
+    return !isMainHome;
+  });
 
   // Auth & Profile states
   const [userProfile, setUserProfile] = useState(null);
@@ -508,7 +511,9 @@ function App() {
   const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const activeProduct = products.find(p => p.id === activeProductId);
 
-  if (loading) {
+  const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
+
+  if (loading && isMainHome) {
     return <SplashLoader onComplete={() => setTypewriterDone(true)} />;
   }
 
