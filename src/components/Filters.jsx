@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 const Filters = ({
   selectedCategories = [],
   selectedSizes = [],
-  priceRange = [0, 3000],
+  priceRange = [499, 1000],
   onCategoryChange,
   onSizeChange,
   onPriceChange,
@@ -13,7 +13,7 @@ const Filters = ({
   const categoriesList = ['Tops'];
   const sizesList = ['S', 'M', 'L', 'XL'];
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange[1] < 3000 || priceRange[0] > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange[1] < 1000;
 
   const handlePriceSliderChange = (e) => {
     onPriceChange([priceRange[0], parseInt(e.target.value, 10)]);

@@ -13,7 +13,14 @@ const ContactUs = () => {
     if (!name || !email || !subject || !message) return;
 
     setSending(true);
-    // Simulate API Request
+
+    // Open the user's email client pre-filled with the contact details
+    const mailBody = `Name: ${name}\nEmail: ${email}\n\n${message}`;
+    window.open(
+      `mailto:support@hellabold.com?subject=${encodeURIComponent(`[HELLABOLD] ${subject}`)}&body=${encodeURIComponent(mailBody)}`,
+      '_self'
+    );
+
     setTimeout(() => {
       setSending(false);
       setSent(true);
@@ -21,7 +28,7 @@ const ContactUs = () => {
       setEmail('');
       setSubject('');
       setMessage('');
-    }, 1500);
+    }, 800);
   };
 
   return (
@@ -62,12 +69,14 @@ const ContactUs = () => {
                 <div className="contact-detail-item">
                   <div className="contact-detail-item__icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
                     </svg>
                   </div>
                   <div className="contact-detail-item__content">
-                    <span className="contact-detail-item__label">CALL OR WHATSAPP</span>
-                    <a href="tel:+919999988888" className="contact-detail-item__link">+91 99999 88888</a>
+                    <span className="contact-detail-item__label">INSTAGRAM / DM US</span>
+                    <a href="https://www.instagram.com/hellaboldofficial/" target="_blank" rel="noopener noreferrer" className="contact-detail-item__link">@hellaboldofficial</a>
                   </div>
                 </div>
 
@@ -80,7 +89,7 @@ const ContactUs = () => {
                   </div>
                   <div className="contact-detail-item__content">
                     <span className="contact-detail-item__label">HEADQUARTERS</span>
-                    <span className="contact-detail-item__value">Bandra West, Link Road, Mumbai, MH - 400050</span>
+                    <span className="contact-detail-item__value">Mumbai, Maharashtra, India</span>
                   </div>
                 </div>
 

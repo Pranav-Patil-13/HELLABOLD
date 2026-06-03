@@ -75,6 +75,7 @@ const SplashLoader = ({ onComplete }) => {
         src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1780463490/hellabold/products/hella_loading.png"
         alt="HELLABOLD Mascot"
         onLoad={() => setImgLoaded(true)}
+        onError={() => setImgLoaded(true)}
         style={{
           height: '180px',
           width: 'auto',
@@ -93,6 +94,73 @@ const SplashLoader = ({ onComplete }) => {
       </div>
       <div className="clean-loader-line">
         <div className="clean-loader-progress"></div>
+      </div>
+    </div>
+  );
+};
+
+// ── Admin Login Gate ─────────────────────────────────────────────────────────
+// Simple password barrier for the /admin route. The password is never sent to
+// any server — it's just compared client-side. Upgrade to a proper auth check
+// (e.g., Supabase admin role) when you want stronger security.
+const ADMIN_PASSWORD = 'hellabold@admin';
+const ADMIN_SESSION_KEY = 'hb_admin_session_v1';
+
+const AdminLoginGate = ({ onAuthenticated }) => {
+  const [pwd, setPwd] = React.useState('');
+  const [error, setError] = React.useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (pwd === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_SESSION_KEY, ADMIN_PASSWORD);
+      onAuthenticated();
+    } else {
+      setError('Incorrect password. Please try again.');
+      setPwd('');
+    }
+  };
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh',
+      background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)'
+    }}>
+      <div style={{
+        backgroundColor: '#fff', padding: '3rem', maxWidth: '380px',
+        width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+      }}>
+        <h2 style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 900, marginBottom: '0.4rem', fontSize: '1.3rem' }}>Admin Access</h2>
+        <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '2rem' }}>Enter the admin password to access the dashboard.</p>
+        {error && (
+          <p style={{ color: '#e53e3e', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 'bold' }}>{error}</p>
+        )}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <input
+            type="password"
+            value={pwd}
+            onChange={e => setPwd(e.target.value)}
+            placeholder="Admin password"
+            required
+            autoFocus
+            style={{
+              padding: '0.85rem 1rem', border: '1px solid #ddd',
+              fontSize: '0.95rem', outline: 'none', width: '100%',
+              boxSizing: 'border-box'
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: '0.9rem', backgroundColor: '#000', color: '#fff',
+              border: 'none', fontWeight: 'bold', textTransform: 'uppercase',
+              letterSpacing: '2px', cursor: 'pointer', fontSize: '0.85rem'
+            }}
+          >
+            Enter
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -125,6 +193,9 @@ function App() {
   const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
   const [isContactPage, setIsContactPage] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(() =>
+    localStorage.getItem(ADMIN_SESSION_KEY) === ADMIN_PASSWORD
+  );
   const [reviews, setReviews] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [typewriterDone, setTypewriterDone] = useState(false);
@@ -513,6 +584,11 @@ function App() {
   }
 
   if (isAdmin) {
+    if (!adminAuthenticated) {
+      return (
+        <AdminLoginGate onAuthenticated={() => setAdminAuthenticated(true)} />
+      );
+    }
     return (
       <AdminPanel
         onProductsUpdated={(updated) => setProducts(updated)}

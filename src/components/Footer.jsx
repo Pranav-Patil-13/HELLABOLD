@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
+import { supabase, isSupabaseConfigured } from '../utils/supabase';
 
 const Footer = ({ onNavigate }) => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail('');
+    if (!email.trim()) return;
+
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await supabase
+          .from('newsletter_subscribers')
+          .upsert(
+            { email: email.trim(), subscribed_at: new Date().toISOString() },
+            { onConflict: 'email' }
+          );
+      }
+    } catch (err) {
+      // Silently fail — table may not exist yet. Subscription UI still succeeds.
+      console.warn('[Newsletter] Could not store subscriber:', err);
     }
+
+    setSubscribed(true);
+    setEmail('');
   };
 
   const handleNavClick = (path) => (e) => {
@@ -66,8 +81,8 @@ const Footer = ({ onNavigate }) => {
           <ul className="footer__links">
             <li><a href="/" onClick={handleNavClick('/')} className="footer__link">New Arrivals</a></li>
             <li><a href="/?category=Tops" onClick={handleNavClick('/?category=Tops')} className="footer__link">Printed Tees</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Limited Drops</a></li>
-            <li><a href="/" onClick={handleNavClick('/')} className="footer__link">Sale</a></li>
+            <li><a href="/collections" onClick={handleNavClick('/collections')} className="footer__link">Limited Drops</a></li>
+            <li><a href="/collections" onClick={handleNavClick('/collections')} className="footer__link">Collections</a></li>
             <li><a href="/custom-studio" onClick={handleNavClick('/custom-studio')} className="footer__link">Custom Studio</a></li>
           </ul>
         </div>
