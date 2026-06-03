@@ -72,12 +72,14 @@ function adminApiPlugin() {
     name: 'admin-api-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        const url = new URL(req.url, 'http://localhost');
+        const pathname = url.pathname;
 
         // ── POST /api/shiprocket/create-order ─────────────────────────────────
         // Dev-server proxy that mirrors the Vercel serverless function.
         // Reads SHIPROCKET_EMAIL / SHIPROCKET_PASSWORD / SHIPROCKET_CHANNEL_ID
         // from the .env file (Vite loads it into process.env automatically).
-        if (req.url === '/api/shiprocket/create-order' && req.method === 'POST') {
+        if (pathname === '/api/shiprocket/create-order' && req.method === 'POST') {
           try {
             const rawBody = await collectBody(req);
             const orderPayload = JSON.parse(rawBody);
@@ -222,7 +224,7 @@ function adminApiPlugin() {
 
         // ── POST /api/tracking-webhook ────────────────────────────────────────
         // Dev-server proxy to simulate the Vercel webhook endpoint locally
-        if (req.url === '/api/tracking-webhook' && req.method === 'POST') {
+        if (pathname === '/api/tracking-webhook' && req.method === 'POST') {
           try {
             const rawBody = await collectBody(req);
             const payload = JSON.parse(rawBody);
@@ -283,7 +285,7 @@ function adminApiPlugin() {
         }
 
         // ── GET /api/products ──────────────────────────────────────────────────
-        if (req.url === '/api/products' && req.method === 'GET') {
+        if (pathname === '/api/products' && req.method === 'GET') {
           const filePath = path.resolve(__dirname, 'src/data/products.json');
           if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath, 'utf-8');
@@ -297,7 +299,7 @@ function adminApiPlugin() {
         }
 
         // ── POST /api/products ─────────────────────────────────────────────────
-        if (req.url === '/api/products' && req.method === 'POST') {
+        if (pathname === '/api/products' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
           req.on('end', () => {
@@ -310,7 +312,7 @@ function adminApiPlugin() {
         }
 
         // ── GET /api/reviews ───────────────────────────────────────────────────
-        if (req.url === '/api/reviews' && req.method === 'GET') {
+        if (pathname === '/api/reviews' && req.method === 'GET') {
           const filePath = path.resolve(__dirname, 'src/data/reviews.json');
           if (fs.existsSync(filePath)) {
             const data = fs.readFileSync(filePath, 'utf-8');
@@ -324,7 +326,7 @@ function adminApiPlugin() {
         }
 
         // ── POST /api/reviews ──────────────────────────────────────────────────
-        if (req.url === '/api/reviews' && req.method === 'POST') {
+        if (pathname === '/api/reviews' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
           req.on('end', () => {
@@ -337,7 +339,7 @@ function adminApiPlugin() {
         }
 
         // ── GET /api/images ────────────────────────────────────────────────────
-        if (req.url === '/api/images' && req.method === 'GET') {
+        if (pathname === '/api/images' && req.method === 'GET') {
           try {
             const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtx3jvozs';
             const apiKey = process.env.CLOUDINARY_API_KEY || '387515192585761';
@@ -375,7 +377,7 @@ function adminApiPlugin() {
         }
 
         // ── GET /api/feedback-images ───────────────────────────────────────────
-        if (req.url === '/api/feedback-images' && req.method === 'GET') {
+        if (pathname === '/api/feedback-images' && req.method === 'GET') {
           try {
             const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtx3jvozs';
             const apiKey = process.env.CLOUDINARY_API_KEY || '387515192585761';
@@ -413,7 +415,7 @@ function adminApiPlugin() {
         }
 
         // ── POST /api/upload ───────────────────────────────────────────────────
-        if (req.url === '/api/upload' && req.method === 'POST') {
+        if (pathname === '/api/upload' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
           req.on('end', async () => {
@@ -441,7 +443,7 @@ function adminApiPlugin() {
         }
 
         // ── POST /api/custom-order-upload ───────────────────────────────────────
-        if (req.url === '/api/custom-order-upload' && req.method === 'POST') {
+        if (pathname === '/api/custom-order-upload' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
           req.on('end', async () => {
