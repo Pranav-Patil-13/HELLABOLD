@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 
-const Filters = ({ 
-  selectedCategories = [], 
-  selectedSizes = [], 
+const Filters = ({
+  selectedCategories = [],
+  selectedSizes = [],
   priceRange = [0, 3000],
-  onCategoryChange, 
+  onCategoryChange,
   onSizeChange,
   onPriceChange,
-  onReset 
+  onReset
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const categoriesList = ['Tops'];
@@ -30,8 +30,8 @@ const Filters = ({
 
   return (
     <aside className={`shop__filters ${isOpen ? 'is-open' : ''}`}>
-      <button 
-        type="button" 
+      <button
+        type="button"
         className="filters__toggle-btn"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
@@ -44,14 +44,14 @@ const Filters = ({
         </span>
         <span className={`toggle-icon ${isOpen ? 'open' : ''}`}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="m6 9 6 6 6-6"/>
+            <path d="m6 9 6 6 6-6" />
           </svg>
         </span>
       </button>
 
       <div className="filters__content">
         <h2 className="filters__title">Filter By</h2>
-        
+
         {/* Category Group */}
         <div className="filter-group">
           <h3 className="filter-group__title">Category</h3>
@@ -60,12 +60,12 @@ const Filters = ({
               const isChecked = selectedCategories.includes(category);
               return (
                 <label key={category} className="filter-group__item custom-checkbox-container">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={isChecked}
                     onChange={() => onCategoryChange(category)}
                     className="hidden-checkbox"
-                  /> 
+                  />
                   <span className={`custom-checkbox-indicator ${isChecked ? 'checked' : ''}`}></span>
                   <span className="checkbox-label-text">{category}</span>
                 </label>
@@ -78,18 +78,18 @@ const Filters = ({
         <div className="filter-group">
           <h3 className="filter-group__title">Price Range</h3>
           <div className="filter-price-slider-wrapper" style={{ marginTop: '0.8rem' }}>
-            <input 
-              type="range" 
-              min="0" 
-              max="3000" 
+            <input
+              type="range"
+              min="499"
+              max="1000"
               step="100"
-              value={priceRange[1]} 
+              value={priceRange[1]}
               onChange={handlePriceSliderChange}
               style={{ width: '100%', accentColor: 'var(--text-primary)', cursor: 'pointer' }}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
               <span>Up to {formatCurrency(priceRange[1])}</span>
-              <span>Max {formatCurrency(3000)}</span>
+              <span>Max {formatCurrency(1000)}</span>
             </div>
           </div>
         </div>
@@ -101,9 +101,9 @@ const Filters = ({
             {sizesList.map(size => {
               const isActive = selectedSizes.includes(size);
               return (
-                <button 
+                <button
                   type="button"
-                  key={size} 
+                  key={size}
                   className={`filter-size-chip ${isActive ? 'active' : ''}`}
                   onClick={() => onSizeChange(size)}
                 >
