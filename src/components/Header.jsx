@@ -121,7 +121,7 @@ const Header = ({
         </button>
 
         <div className="header__logo" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
-          <img src="/assets/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" />
+          <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" />
         </div>
 
         <nav className={`header__nav ${isMobileNavOpen ? 'header__nav--open' : ''}`}>

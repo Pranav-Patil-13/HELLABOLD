@@ -93,7 +93,7 @@ const CartDrawer = ({
               {cartItems.map((item) => (
                 <div key={`${item.id}-${item.size}`} className="cart-item">
                   <img 
-                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png' : item.image} 
                     alt={item.title} 
                     className="cart-item__img" 
                   />

@@ -224,13 +224,13 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
               });
               const uploadData = await uploadRes.json();
               if (uploadRes.ok) {
-                console.log(`[Custom Studio] Custom front image saved locally: ${uploadData.url}`);
-                item.customDesignLocalUrl = uploadData.url; // Save local url in order item
+                console.log(`[Custom Studio] Custom front image saved to Cloudinary: ${uploadData.url}`);
+                item.customDesignLocalUrl = uploadData.url; // Save Cloudinary url in order item
               } else {
-                console.error('Failed to upload custom design image to server:', uploadData.error);
+                console.error('Failed to upload custom design image to Cloudinary:', uploadData.error);
               }
             } catch (e) {
-              console.error('Failed to save custom design image to server:', e);
+              console.error('Failed to save custom design image to Cloudinary:', e);
             }
           }
         }
@@ -254,13 +254,13 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
               });
               const uploadDataBack = await uploadResBack.json();
               if (uploadResBack.ok) {
-                console.log(`[Custom Studio] Custom back image saved locally: ${uploadDataBack.url}`);
-                item.customDesignBackLocalUrl = uploadDataBack.url; // Save local back url in order item
+                console.log(`[Custom Studio] Custom back image saved to Cloudinary: ${uploadDataBack.url}`);
+                item.customDesignBackLocalUrl = uploadDataBack.url; // Save Cloudinary back url in order item
               } else {
-                console.error('Failed to upload custom back design image to server:', uploadDataBack.error);
+                console.error('Failed to upload custom back design image to Cloudinary:', uploadDataBack.error);
               }
             } catch (e) {
-              console.error('Failed to save custom back design image to server:', e);
+              console.error('Failed to save custom back design image to Cloudinary:', e);
             }
           }
         }
@@ -753,7 +753,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
               {cartItems.map(item => (
                 <div key={`${item.id}-${item.size}`} className="summary-item">
                   <img 
-                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png' : item.image} 
                     alt={item.title} 
                     className="summary-item__img" 
                   />

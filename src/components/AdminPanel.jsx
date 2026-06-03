@@ -175,25 +175,32 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     if (!file) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('image', file);
 
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok) {
-        fetchImages();
-      } else {
-        alert(data.error || 'Upload failed');
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result.split(',')[1];
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            base64
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          fetchImages();
+        } else {
+          alert(data.error || 'Upload failed');
+        }
+      } catch (err) {
+        console.error('Error uploading:', err);
+      } finally {
+        setUploading(false);
       }
-    } catch (err) {
-      console.error('Error uploading:', err);
-    } finally {
-      setUploading(false);
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -343,7 +350,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
             title: item.title,
             qty: 0,
             revenue: 0,
-            image: item.images?.[0] || '/assets/favicon.png'
+            image: item.images?.[0] || 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png'
           };
         }
         productSalesMap[item.id].qty += (item.quantity || 0);
@@ -705,7 +712,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                 <label>Select Images for Product ({selectedImages.length} selected)</label>
                 <div className="admin-image-picker">
                   {images.map(img => {
-                    const imgUrl = `/assets/${img}`;
+                    const imgUrl = (img.startsWith('http') || img.startsWith('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/')) ? img : `https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/${img}`;
                     const isSelected = selectedImages.includes(imgUrl);
                     return (
                       <div 
@@ -724,7 +731,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               </div>
 
               <div className="form-group">
-                <label>Upload New Asset to public/assets/</label>
+                <label>Upload New Asset to Cloudinary</label>
                 <div className="admin-upload-zone">
                   <input 
                     type="file" 
@@ -758,7 +765,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               {products.map(product => (
                 <div key={product.id} className="admin-catalog-item">
                   <img 
-                    src={product.images?.[0] || '/assets/favicon.png'} 
+                    src={product.images?.[0] || 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png'} 
                     alt={product.title} 
                     className="admin-catalog-img" 
                   />
@@ -868,7 +875,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                 <label>Select Review Image (Optional)</label>
                 <div className="admin-image-picker" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.8rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', padding: '0.8rem' }}>
                   {feedbackImages.map(img => {
-                    const imgUrl = `/assets/feedback_images/${img}`;
+                    const imgUrl = (img.startsWith('http') || img.startsWith('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/')) ? img : `https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/feedback_images/${img}`;
                     const isSelected = reviewSelectedImage === imgUrl;
                     return (
                       <div 

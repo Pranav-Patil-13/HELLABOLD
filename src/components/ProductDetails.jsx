@@ -11,7 +11,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 24, 2026",
       verified: true,
       comment: "Absolutely unmatched quality. The leather is buttery soft, thick enough to hold structured shoulders, yet fits perfectly. Exceeded my high expectations.",
-      images: ["/assets/product1_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product1_B.png"]
     },
     {
       id: 102,
@@ -29,7 +29,7 @@ const MOCK_REVIEWS_DB = {
       date: "April 29, 2026",
       verified: true,
       comment: "A classic look done with premium craftsmanship. The hardware is custom, heavy, and glides perfectly. Worth every rupee.",
-      images: ["/assets/product3_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product3_B.png"]
     }
   ],
   2: [
@@ -40,7 +40,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 27, 2026",
       verified: true,
       comment: "Understated and elegant. The hand-painted edges are clean, and the brushed gold clasp is pure luxury. Fits my phone, keys, and cards perfectly.",
-      images: ["/assets/product4_A.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product4_A.png"]
     },
     {
       id: 202,
@@ -60,7 +60,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 22, 2026",
       verified: true,
       comment: "A rugged masterpiece. Fits perfectly around the shoulders and has that classic heavy leather jacket weight. Highly recommended.",
-      images: ["/assets/product3_A.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product3_A.png"]
     },
     {
       id: 302,
@@ -80,7 +80,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 25, 2026",
       verified: true,
       comment: "Perfect mini bag. It goes with every outfit. The magnetic flap is strong and secure, and the chain detail feels premium.",
-      images: ["/assets/product2_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product2_B.png"]
     },
     {
       id: 402,
@@ -100,7 +100,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 28, 2026",
       verified: true,
       comment: "The drape of the split suede is gorgeous. It moves so elegantly. Perfect transitional weather piece.",
-      images: ["/assets/product5_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product5_B.png"]
     },
     {
       id: 502,
@@ -120,7 +120,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 29, 2026",
       verified: true,
       comment: "Extremely comfortable right out of the box. The elastic panels make it easy to slide on, and the welt construction is flawless.",
-      images: ["/assets/product6_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product6_B.png"]
     },
     {
       id: 602,
@@ -140,7 +140,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 26, 2026",
       verified: true,
       comment: "100% pure silk and it shows. The hand-rolled edges are extremely neat. The print matches the online photos perfectly.",
-      images: ["/assets/product7_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product7_B.png"]
     }
   ],
   1780135441890: [
@@ -151,7 +151,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 30, 2026",
       verified: true,
       comment: "A work of art. The abstract design looks incredible in hand. The packaging and details are pristine.",
-      images: ["/assets/product8_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product8_B.png"]
     }
   ],
   1780135554770: [
@@ -162,7 +162,7 @@ const MOCK_REVIEWS_DB = {
       date: "May 30, 2026",
       verified: true,
       comment: "Amazing graphic and excellent quality fabric. Standard size L fits exactly how I wanted. Definite recommendation.",
-      images: ["/assets/product9_B.png"]
+      images: ["https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product9_B.png"]
     }
   ]
 };

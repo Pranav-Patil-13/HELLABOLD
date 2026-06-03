@@ -187,7 +187,7 @@ const OrderStatus = () => {
       {/* Shiprocket Tracker Header */}
       <div className="order-status__header">
         <div className="order-status__brand-shiprocket">
-          <img src="/assets/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
+          <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
           <span>×</span>
           <span className="shiprocket-badge">Shiprocket Fulfillment</span>
         </div>
@@ -255,7 +255,7 @@ const OrderStatus = () => {
               <div key={`${item.id}-${item.size}`} className="sidebar-item-row">
                 <div className="sidebar-item-img-wrap">
                   <img 
-                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? '/assets/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png' : item.image} 
                     alt={item.title} 
                   />
                 </div>

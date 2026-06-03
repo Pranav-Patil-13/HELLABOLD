@@ -220,22 +220,22 @@ const CustomStudio = ({ onAddToCart, userProfile }) => {
   const modelImages = {
     front: {
       male: {
-        black: '/assets/model_male_black.png',
-        white: '/assets/model_male_white.png'
+        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png',
+        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png'
       },
       female: {
-        black: '/assets/Model_Female_Black.png',
-        white: '/assets/Model_Female_White.png'
+        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png',
+        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png'
       }
     },
     back: {
       male: {
-        black: '/assets/Model_Male_Black_BackSide.png',
-        white: '/assets/Model_Male_White_BackSide.png'
+        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png',
+        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png'
       },
       female: {
-        black: '/assets/Model_Female_Black_BackSide.png',
-        white: '/assets/Model_Female_White_BackSide.png'
+        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png',
+        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png'
       }
     }
   };

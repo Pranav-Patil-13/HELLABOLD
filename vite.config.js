@@ -2,6 +2,60 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
+
+function generateCloudinarySignature(params, apiSecret) {
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map(key => `${key}=${params[key]}`)
+    .join('&');
+  return crypto
+    .createHash('sha1')
+    .update(sortedParams + apiSecret)
+    .digest('hex');
+}
+
+async function uploadToCloudinary({ filename, base64, folder }) {
+  const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtx3jvozs';
+  const apiKey = process.env.CLOUDINARY_API_KEY || '387515192585761';
+  const apiSecret = process.env.CLOUDINARY_API_SECRET || 'pGIIw_doA-20spEF26LTuVpsvk0';
+
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const publicId = filename ? path.parse(filename).name : undefined;
+
+  const params = {
+    timestamp,
+    folder,
+  };
+  if (publicId) {
+    params.public_id = publicId;
+  }
+
+  const signature = generateCloudinarySignature(params, apiSecret);
+
+  const fileData = `data:image/png;base64,${base64}`;
+
+  const formData = new URLSearchParams();
+  formData.append('file', fileData);
+  formData.append('api_key', apiKey);
+  formData.append('timestamp', timestamp.toString());
+  formData.append('signature', signature);
+  formData.append('folder', folder);
+  if (publicId) {
+    formData.append('public_id', publicId);
+  }
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error?.message || 'Cloudinary upload failed');
+  }
+  return result;
+}
 
 // ── Helper: collect full body from a Node IncomingMessage ─────────────────────
 function collectBody(req) {
@@ -284,13 +338,36 @@ function adminApiPlugin() {
 
         // ── GET /api/images ────────────────────────────────────────────────────
         if (req.url === '/api/images' && req.method === 'GET') {
-          const dirPath = path.resolve(__dirname, 'public/assets');
-          if (fs.existsSync(dirPath)) {
-            const files = fs.readdirSync(dirPath);
-            const images = files.filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file));
+          try {
+            const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtx3jvozs';
+            const apiKey = process.env.CLOUDINARY_API_KEY || '387515192585761';
+            const apiSecret = process.env.CLOUDINARY_API_SECRET || 'pGIIw_doA-20spEF26LTuVpsvk0';
+            const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+            
+            const clRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/resources/image?type=upload&prefix=hellabold/products&max_results=100`, {
+              headers: { Authorization: `Basic ${auth}` }
+            });
+            
+            let cloudinaryUrls = [];
+            if (clRes.ok) {
+              const data = await clRes.json();
+              cloudinaryUrls = (data.resources || []).map(r => r.secure_url);
+            }
+
+            // Fallback & combine local mock images
+            let localFiles = [];
+            const dirPath = path.resolve(__dirname, 'public/assets');
+            if (fs.existsSync(dirPath)) {
+              localFiles = fs.readdirSync(dirPath)
+                .filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file))
+                .map(file => `/assets/${file}`);
+            }
+
+            const combined = Array.from(new Set([...cloudinaryUrls, ...localFiles]));
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(images));
-          } else {
+            res.end(JSON.stringify(combined));
+          } catch (err) {
+            console.error('[GET /api/images] Error:', err);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify([]));
           }
@@ -299,13 +376,36 @@ function adminApiPlugin() {
 
         // ── GET /api/feedback-images ───────────────────────────────────────────
         if (req.url === '/api/feedback-images' && req.method === 'GET') {
-          const dirPath = path.resolve(__dirname, 'public/assets/feedback_images');
-          if (fs.existsSync(dirPath)) {
-            const files = fs.readdirSync(dirPath);
-            const images = files.filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file));
+          try {
+            const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtx3jvozs';
+            const apiKey = process.env.CLOUDINARY_API_KEY || '387515192585761';
+            const apiSecret = process.env.CLOUDINARY_API_SECRET || 'pGIIw_doA-20spEF26LTuVpsvk0';
+            const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+            
+            const clRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/resources/image?type=upload&prefix=hellabold/feedback_images&max_results=100`, {
+              headers: { Authorization: `Basic ${auth}` }
+            });
+            
+            let cloudinaryUrls = [];
+            if (clRes.ok) {
+              const data = await clRes.json();
+              cloudinaryUrls = (data.resources || []).map(r => r.secure_url);
+            }
+
+            // Fallback & combine local mock images
+            let localFiles = [];
+            const dirPath = path.resolve(__dirname, 'public/assets/feedback_images');
+            if (fs.existsSync(dirPath)) {
+              localFiles = fs.readdirSync(dirPath)
+                .filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file))
+                .map(file => `/assets/feedback_images/${file}`);
+            }
+
+            const combined = Array.from(new Set([...cloudinaryUrls, ...localFiles]));
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(images));
-          } else {
+            res.end(JSON.stringify(combined));
+          } catch (err) {
+            console.error('[GET /api/feedback-images] Error:', err);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify([]));
           }
@@ -316,24 +416,23 @@ function adminApiPlugin() {
         if (req.url === '/api/upload' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
-          req.on('end', () => {
+          req.on('end', async () => {
             try {
               const { filename, base64 } = JSON.parse(body);
-              if (!filename || !base64) {
+              if (!base64) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Missing filename or base64 data' }));
+                res.end(JSON.stringify({ error: 'Missing base64 data' }));
                 return;
               }
-              const buffer = Buffer.from(base64, 'base64');
-              const dirPath = path.resolve(__dirname, 'public/assets');
-              if (!fs.existsSync(dirPath)) {
-                fs.mkdirSync(dirPath, { recursive: true });
-              }
-              const filePath = path.resolve(dirPath, filename);
-              fs.writeFileSync(filePath, buffer);
+              const uploadRes = await uploadToCloudinary({ 
+                filename, 
+                base64, 
+                folder: 'hellabold/products' 
+              });
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, url: `/assets/${filename}` }));
+              res.end(JSON.stringify({ success: true, url: uploadRes.secure_url }));
             } catch (err) {
+              console.error('[POST /api/upload] Error:', err);
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err.message }));
             }
@@ -345,24 +444,23 @@ function adminApiPlugin() {
         if (req.url === '/api/custom-order-upload' && req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
-          req.on('end', () => {
+          req.on('end', async () => {
             try {
               const { filename, base64 } = JSON.parse(body);
-              if (!filename || !base64) {
+              if (!base64) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Missing filename or base64 data' }));
+                res.end(JSON.stringify({ error: 'Missing base64 data' }));
                 return;
               }
-              const buffer = Buffer.from(base64, 'base64');
-              const dirPath = path.resolve(__dirname, 'public/assets/custom_orders');
-              if (!fs.existsSync(dirPath)) {
-                fs.mkdirSync(dirPath, { recursive: true });
-              }
-              const filePath = path.resolve(dirPath, filename);
-              fs.writeFileSync(filePath, buffer);
+              const uploadRes = await uploadToCloudinary({ 
+                filename, 
+                base64, 
+                folder: 'hellabold/custom_orders' 
+              });
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, url: `/assets/custom_orders/${filename}` }));
+              res.end(JSON.stringify({ success: true, url: uploadRes.secure_url }));
             } catch (err) {
+              console.error('[POST /api/custom-order-upload] Error:', err);
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ error: err.message }));
             }

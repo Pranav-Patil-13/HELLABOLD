@@ -213,6 +213,25 @@ function App() {
     }
   }, [cartItems, appliedDiscount]);
 
+  // Scroll to top when switching pages
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [
+    isAboutPage,
+    isPrivacyPage,
+    isTermsPage,
+    isFaqPage,
+    isShippingPage,
+    isReturnsPage,
+    isSizeGuidePage,
+    isCustomStudioPage,
+    isCheckoutPage,
+    isOrderStatusPage,
+    isCollectionsPage,
+    activeProductId,
+    isAdmin
+  ]);
+
   const saveCart = (newItems) => {
     setCartItems(newItems);
     localStorage.setItem('hellabold_cart', JSON.stringify(newItems));
