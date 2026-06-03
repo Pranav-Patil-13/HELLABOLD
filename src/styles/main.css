@@ -5730,7 +5730,7 @@ button {
 .contact-page {
     min-height: 80vh;
     padding: 6rem 2rem;
-    background-color: var(--black);
+    background: radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%);
     color: var(--white);
     display: flex;
     justify-content: center;
@@ -5830,8 +5830,8 @@ button {
 }
 
 .contact-detail-item__icon {
-    color: var(--accent-color, rgb(145, 0, 32));
-    background: rgba(145, 0, 32, 0.15);
+    color: var(--white);
+    background: #910020;
     width: 42px;
     height: 42px;
     border-radius: 50%;
