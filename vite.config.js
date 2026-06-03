@@ -356,18 +356,8 @@ function adminApiPlugin() {
               cloudinaryUrls = (data.resources || []).map(r => r.secure_url);
             }
 
-            // Fallback & combine local mock images
-            let localFiles = [];
-            const dirPath = path.resolve(__dirname, 'public/assets');
-            if (fs.existsSync(dirPath)) {
-              localFiles = fs.readdirSync(dirPath)
-                .filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file))
-                .map(file => `/assets/${file}`);
-            }
-
-            const combined = Array.from(new Set([...cloudinaryUrls, ...localFiles]));
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(combined));
+            res.end(JSON.stringify(cloudinaryUrls));
           } catch (err) {
             console.error('[GET /api/images] Error:', err);
             res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -394,18 +384,8 @@ function adminApiPlugin() {
               cloudinaryUrls = (data.resources || []).map(r => r.secure_url);
             }
 
-            // Fallback & combine local mock images
-            let localFiles = [];
-            const dirPath = path.resolve(__dirname, 'public/assets/feedback_images');
-            if (fs.existsSync(dirPath)) {
-              localFiles = fs.readdirSync(dirPath)
-                .filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file))
-                .map(file => `/assets/feedback_images/${file}`);
-            }
-
-            const combined = Array.from(new Set([...cloudinaryUrls, ...localFiles]));
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(combined));
+            res.end(JSON.stringify(cloudinaryUrls));
           } catch (err) {
             console.error('[GET /api/feedback-images] Error:', err);
             res.writeHead(200, { 'Content-Type': 'application/json' });

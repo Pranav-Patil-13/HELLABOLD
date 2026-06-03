@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -23,22 +20,8 @@ export default async function handler(req, res) {
       cloudinaryUrls = (data.resources || []).map(r => r.secure_url);
     }
 
-    // Fallback & combine local mock images if any
-    let localFiles = [];
-    try {
-      const dirPath = path.resolve(process.cwd(), 'public/assets/feedback_images');
-      if (fs.existsSync(dirPath)) {
-        localFiles = fs.readdirSync(dirPath)
-          .filter(file => /\.(png|jpe?g|svg|webp|gif)$/i.test(file))
-          .map(file => `/assets/feedback_images/${file}`);
-      }
-    } catch (e) {
-      console.warn('Could not read local feedback_images directory in serverless env:', e);
-    }
-
-    const combined = Array.from(new Set([...cloudinaryUrls, ...localFiles]));
     res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
-    res.status(200).json(combined);
+    res.status(200).json(cloudinaryUrls);
   } catch (err) {
     console.error('[Vercel api/feedback-images] Error:', err);
     res.status(500).json({ error: err.message });
