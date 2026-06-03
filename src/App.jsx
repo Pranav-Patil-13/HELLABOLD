@@ -103,7 +103,7 @@ const SplashLoader = ({ onComplete }) => {
 // Simple password barrier for the /admin route. The password is never sent to
 // any server — it's just compared client-side. Upgrade to a proper auth check
 // (e.g., Supabase admin role) when you want stronger security.
-const ADMIN_PASSWORD = 'hellabold@admin';
+const ADMIN_PASSWORD = 'HB#4dM!n@2O26$b0Ld!';
 const ADMIN_SESSION_KEY = 'hb_admin_session_v1';
 
 const AdminLoginGate = ({ onAuthenticated }) => {
