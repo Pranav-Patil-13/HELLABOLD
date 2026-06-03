@@ -189,7 +189,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           }),
         });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok && data.url) {
+          setImages(prev => [data.url, ...prev]);
           fetchImages();
         } else {
           alert(data.error || 'Upload failed');
@@ -201,6 +202,26 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleDeleteImage = async (imgUrl) => {
+    try {
+      const res = await fetch('/api/delete-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: imgUrl })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImages(prev => prev.filter(img => img !== imgUrl));
+        setSelectedImages(prev => prev.filter(img => img !== imgUrl));
+      } else {
+        alert(data.error || 'Failed to delete image');
+      }
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      alert('Error deleting image: ' + err.message);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -724,6 +745,19 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                         <div className="admin-picker-checkbox">
                           {isSelected ? '✓' : ''}
                         </div>
+                        <button
+                          type="button"
+                          className="admin-picker-delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Are you sure you want to delete this image? This will also remove it from Cloudinary.')) {
+                              handleDeleteImage(imgUrl);
+                            }
+                          }}
+                          title="Delete Image"
+                        >
+                          ×
+                        </button>
                       </div>
                     );
                   })}

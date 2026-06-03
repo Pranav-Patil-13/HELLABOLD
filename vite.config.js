@@ -450,6 +450,67 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── POST /api/delete-image ──────────────────────────────────────────────
+        if (pathname === '/api/delete-image' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const { url } = JSON.parse(body);
+              if (!url) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Missing image URL' }));
+                return;
+              }
+
+              const parts = url.split('/upload/');
+              if (parts.length < 2) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid Cloudinary URL structure' }));
+                return;
+              }
+              const pathAndFilename = parts[1].replace(/^v\d+\//, '');
+              const dotIndex = pathAndFilename.lastIndexOf('.');
+              const publicId = dotIndex !== -1 ? pathAndFilename.substring(0, dotIndex) : pathAndFilename;
+
+              const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME || 'dtx3jvozs';
+              const apiKey = process.env.CLOUDINARY_API_KEY || '387515192585761';
+              const apiSecret = process.env.CLOUDINARY_API_SECRET || 'pGIIw_doA-20spEF26LTuVpsvk0';
+
+              const timestamp = Math.round(new Date().getTime() / 1000);
+              const params = {
+                public_id: publicId,
+                timestamp: timestamp.toString()
+              };
+              const signature = generateCloudinarySignature(params, apiSecret);
+
+              const formData = new URLSearchParams();
+              formData.append('public_id', publicId);
+              formData.append('api_key', apiKey);
+              formData.append('timestamp', timestamp.toString());
+              formData.append('signature', signature);
+
+              const destroyRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`, {
+                method: 'POST',
+                body: formData
+              });
+
+              const result = await destroyRes.json();
+              if (!destroyRes.ok) {
+                throw new Error(result.error?.message || 'Cloudinary destroy failed');
+              }
+
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, result }));
+            } catch (err) {
+              console.error('[POST /api/delete-image] Error:', err);
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+          return;
+        }
+
         next();
       });
     }
