@@ -22,6 +22,8 @@ import FaqPage from './components/FaqPage';
 import PolicyPages from './components/PolicyPages';
 import CustomStudio from './components/CustomStudio';
 import ContactUs from './components/ContactUs';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 
 const SplashLoader = ({ onComplete }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -892,6 +894,10 @@ function App() {
         onProfileUpdate={(profile) => setUserProfile(profile)}
         onSignOut={() => setUserProfile(null)}
       />
+
+      {/* Vercel Observability */}
+      <SpeedInsights />
+      <Analytics />
     </>
   );
 }
