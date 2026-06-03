@@ -41,7 +41,7 @@ const SplashLoader = ({ onComplete }) => {
       justifyContent: 'center',
       alignItems: 'center',
       height: '100vh',
-      backgroundColor: 'rgb(145, 0, 32)', // rich cherry red background
+      background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)',
       color: '#ffffff',
       fontFamily: 'Montserrat, sans-serif',
       overflow: 'hidden',
