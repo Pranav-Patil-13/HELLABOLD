@@ -22,6 +22,81 @@ import FaqPage from './components/FaqPage';
 import PolicyPages from './components/PolicyPages';
 import CustomStudio from './components/CustomStudio';
 
+const SplashLoader = ({ onComplete }) => {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  useEffect(() => {
+    if (imgLoaded) {
+      const timeout = setTimeout(() => {
+        onComplete();
+      }, 1500); // 1.5 second display duration after image loads
+      return () => clearTimeout(timeout);
+    }
+  }, [imgLoaded, onComplete]);
+
+  return (
+    <div style={{
+      display: imgLoaded ? 'flex' : 'none',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      backgroundColor: 'rgb(145, 0, 32)', // rich cherry red background
+      color: '#ffffff',
+      fontFamily: 'Montserrat, sans-serif',
+      overflow: 'hidden',
+      position: 'relative'
+    }}>
+      <style>{`
+        .clean-loader-line {
+          width: 80px;
+          height: 2px;
+          background-color: rgba(255, 255, 255, 0.2);
+          position: relative;
+          overflow: hidden;
+          border-radius: 4px;
+          margin-top: 2rem;
+        }
+        .clean-loader-progress {
+          position: absolute;
+          height: 100%;
+          width: 40px;
+          background-color: #ffffff;
+          animation: lineLoad 1.2s infinite linear;
+        }
+        @keyframes lineLoad {
+          0% { left: -50px; }
+          100% { left: 90px; }
+        }
+      `}</style>
+
+      <img
+        src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1780463490/hellabold/products/hella_loading.png"
+        alt="HELLABOLD Mascot"
+        onLoad={() => setImgLoaded(true)}
+        style={{
+          height: '180px',
+          width: 'auto',
+          marginBottom: '1.8rem'
+        }}
+      />
+      <div style={{
+        fontSize: '2.4rem',
+        letterSpacing: '8px',
+        textTransform: 'uppercase',
+        color: '#ffffff',
+        fontWeight: 900,
+        textAlign: 'center'
+      }}>
+        HELLABOLD
+      </div>
+      <div className="clean-loader-line">
+        <div className="clean-loader-progress"></div>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState(() => {
@@ -49,7 +124,9 @@ function App() {
   const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
-  
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [typewriterDone, setTypewriterDone] = useState(false);
+
   // Auth & Profile states
   const [userProfile, setUserProfile] = useState(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -133,11 +210,11 @@ function App() {
     getProducts()
       .then(data => {
         setProducts(data);
-        setLoading(false);
+        setProductsLoaded(true);
       })
       .catch(err => {
         console.error('Error loading products:', err);
-        setLoading(false);
+        setProductsLoaded(true);
       });
 
     // Fetch reviews from our Database client (with auto-fallback to local files)
@@ -182,6 +259,12 @@ function App() {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
+
+  useEffect(() => {
+    if (productsLoaded && typewriterDone) {
+      setLoading(false);
+    }
+  }, [productsLoaded, typewriterDone]);
 
   // Listen to other tabs' storage changes for real-time synchronization
   useEffect(() => {
@@ -281,7 +364,7 @@ function App() {
 
     let newItems;
     if (existingIndex > -1) {
-      newItems = cartItems.map((item, idx) => 
+      newItems = cartItems.map((item, idx) =>
         idx === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
       );
     } else {
@@ -305,7 +388,7 @@ function App() {
   };
 
   const handleUpdateQuantity = (productId, size, newQty) => {
-    const newItems = cartItems.map(item => 
+    const newItems = cartItems.map(item =>
       item.id === productId && item.size === size ? { ...item, quantity: newQty } : item
     );
     saveCart(newItems);
@@ -318,8 +401,8 @@ function App() {
 
   const handleToggleLike = (productId) => {
     setLikedIds(prev => {
-      const updated = prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
+      const updated = prev.includes(productId)
+        ? prev.filter(id => id !== productId)
         : [...prev, productId];
       localStorage.setItem('hellabold_likes', JSON.stringify(updated));
       return updated;
@@ -331,17 +414,17 @@ function App() {
   };
 
   const handleCategoryChange = (category) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category) 
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
         : [...prev, category]
     );
   };
 
   const handleSizeChange = (size) => {
-    setSelectedSizes(prev => 
-      prev.includes(size) 
-        ? prev.filter(s => s !== size) 
+    setSelectedSizes(prev =>
+      prev.includes(size)
+        ? prev.filter(s => s !== size)
         : [...prev, size]
     );
   };
@@ -389,8 +472,8 @@ function App() {
     const matchesSize = selectedSizes.length === 0 || product.sizes?.some(size => selectedSizes.includes(size));
     const priceNum = parseFloat(product.price.replace(/[^0-9.]/g, ''));
     const matchesPrice = priceNum >= priceRange[0] && priceNum <= priceRange[1];
-    const matchesSearch = !searchQuery || 
-      product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = !searchQuery ||
+      product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSize && matchesPrice && matchesSearch;
   });
@@ -414,15 +497,15 @@ function App() {
   const activeProduct = products.find(p => p.id === activeProductId);
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'Montserrat, sans-serif', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '0.9rem' }}>Loading HELLABOLD...</div>;
+    return <SplashLoader onComplete={() => setTypewriterDone(true)} />;
   }
 
   if (isAdmin) {
     return (
-      <AdminPanel 
-        onProductsUpdated={(updated) => setProducts(updated)} 
-        reviews={reviews} 
-        onReviewsUpdated={setReviews} 
+      <AdminPanel
+        onProductsUpdated={(updated) => setProducts(updated)}
+        reviews={reviews}
+        onReviewsUpdated={setReviews}
         userProfile={userProfile}
       />
     );
@@ -432,9 +515,9 @@ function App() {
 
   return (
     <>
-      <Header 
-        cartCount={cartCount} 
-        onOpenCart={() => setIsCartOpen(true)} 
+      <Header
+        cartCount={cartCount}
+        onOpenCart={() => setIsCartOpen(true)}
         favoritesCount={likedIds.length}
         onOpenFavorites={() => setIsFavoritesOpen(true)}
         searchQuery={searchQuery}
@@ -445,11 +528,11 @@ function App() {
         onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); setIsCustomStudioPage(false); }}
         activeTab={isCustomStudioPage ? "custom-studio" : (isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : "shop")))))}
       />
-      
+
       {isCheckoutPage ? (
-        <CheckoutPage 
-          cartItems={cartItems} 
-          onOrderSuccess={handleOrderSuccess} 
+        <CheckoutPage
+          cartItems={cartItems}
+          onOrderSuccess={handleOrderSuccess}
           appliedDiscount={appliedDiscount}
           onApplyDiscount={saveDiscount}
           userProfile={userProfile}
@@ -504,11 +587,11 @@ function App() {
         </>
       ) : activeProduct ? (
         <>
-          <ProductDetails 
-            product={activeProduct} 
-            products={products} 
+          <ProductDetails
+            product={activeProduct}
+            products={products}
             reviews={reviews}
-            onAddToCart={(size) => handleAddToCart(activeProduct, size)} 
+            onAddToCart={(size) => handleAddToCart(activeProduct, size)}
             isLiked={likedIds.includes(activeProduct.id)}
             onToggleLike={handleToggleLike}
           />
@@ -518,7 +601,7 @@ function App() {
         <>
           <Hero />
           <main className="shop">
-            <Filters 
+            <Filters
               selectedCategories={selectedCategories}
               selectedSizes={selectedSizes}
               priceRange={priceRange}
@@ -532,9 +615,9 @@ function App() {
                 <span className="products-count">{sortedProducts.length} Products</span>
                 <div className="sort-selector">
                   <label htmlFor="sort-select">Sort by:</label>
-                  <select 
-                    id="sort-select" 
-                    value={sortBy} 
+                  <select
+                    id="sort-select"
+                    value={sortBy}
                     onChange={e => setSortBy(e.target.value)}
                     className="sort-select"
                   >
@@ -548,8 +631,8 @@ function App() {
                 <div className="shop__products-empty">
                   <h3 className="empty-state-title">Hella Empty</h3>
                   <p className="empty-state-text">You've filtered into a void. Reset your options to restore the bold.</p>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn btn--primary empty-state-btn"
                     onClick={handleResetFilters}
                   >
@@ -576,7 +659,7 @@ function App() {
       )}
 
       {/* Cart Drawer */}
-      <CartDrawer 
+      <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
@@ -592,7 +675,7 @@ function App() {
       />
 
       {/* Favorites Drawer */}
-      <FavoritesDrawer 
+      <FavoritesDrawer
         isOpen={isFavoritesOpen}
         onClose={() => setIsFavoritesOpen(false)}
         likedProducts={products.filter(p => likedIds.includes(p.id))}
@@ -605,23 +688,23 @@ function App() {
 
       {/* Floating Cart Island Summary */}
       {!isCartOpen && !isCheckoutPage && !isOrderStatusPage && !isCustomStudioPage && (
-        <CartIsland 
-          cartItems={cartItems} 
-          onOpenCart={() => setIsCartOpen(true)} 
+        <CartIsland
+          cartItems={cartItems}
+          onOpenCart={() => setIsCartOpen(true)}
         />
       )}
 
 
 
       {/* Auth Modal Overlay */}
-      <AuthModal 
+      <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onAuthSuccess={(profile) => setUserProfile(profile)}
       />
 
       {/* Profile/Address Manager Drawer */}
-      <ProfileDrawer 
+      <ProfileDrawer
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         userProfile={userProfile}
