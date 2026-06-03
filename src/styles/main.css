@@ -5991,7 +5991,7 @@ button {
 
 .contact-form__submit-btn:hover {
     background-color: var(--white);
-    color: var(--black);
+    color: var(--accent-color);
 }
 
 .contact-form__submit-btn.sending {
