@@ -99,21 +99,27 @@ const SplashLoader = ({ onComplete }) => {
   );
 };
 
-// ── Admin Login Gate ─────────────────────────────────────────────────────────
-// Simple password barrier for the /admin route. The password is never sent to
-// any server — it's just compared client-side. Upgrade to a proper auth check
-// (e.g., Supabase admin role) when you want stronger security.
-const ADMIN_PASSWORD = 'HB#4dM!n@2O26$b0Ld!';
-const ADMIN_SESSION_KEY = 'hb_admin_session_v1';
 
-const AdminLoginGate = ({ onAuthenticated }) => {
+// ── Admin email allowlist (Supabase-auth-verified, not client-side) ──────────
+// Only accounts whose email is in this list will be granted admin access.
+// The Supabase session is cryptographically verified server-side — no client-
+// side password can bypass this.
+const ADMIN_EMAILS = ['pranavpatil13.2004@gmail.com'];
+
+// Secondary admin panel password (entered after Supabase email auth passes).
+// This is a second factor — even if someone has your Supabase login, they still
+// need this password. The session is stored in localStorage so you only need
+// to enter it once per browser.
+const ADMIN_PANEL_PASSWORD = 'hellabold@admin2024';
+const ADMIN_SESSION_KEY = 'hb_admin_panel_v2';
+
+const AdminPanelPasswordForm = ({ onAuthenticated, correctPassword }) => {
   const [pwd, setPwd] = React.useState('');
   const [error, setError] = React.useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (pwd === ADMIN_PASSWORD) {
-      localStorage.setItem(ADMIN_SESSION_KEY, ADMIN_PASSWORD);
+    if (pwd === correctPassword) {
       onAuthenticated();
     } else {
       setError('Incorrect password. Please try again.');
@@ -122,47 +128,34 @@ const AdminLoginGate = ({ onAuthenticated }) => {
   };
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      height: '100vh',
-      background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)'
-    }}>
-      <div style={{
-        backgroundColor: '#fff', padding: '3rem', maxWidth: '380px',
-        width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
-      }}>
-        <h2 style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 900, marginBottom: '0.4rem', fontSize: '1.3rem' }}>Admin Access</h2>
-        <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '2rem' }}>Enter the admin password to access the dashboard.</p>
-        {error && (
-          <p style={{ color: '#e53e3e', fontSize: '0.8rem', marginBottom: '1rem', fontWeight: 'bold' }}>{error}</p>
-        )}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <input
-            type="password"
-            value={pwd}
-            onChange={e => setPwd(e.target.value)}
-            placeholder="Admin password"
-            required
-            autoFocus
-            style={{
-              padding: '0.85rem 1rem', border: '1px solid #ddd',
-              fontSize: '0.95rem', outline: 'none', width: '100%',
-              boxSizing: 'border-box'
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: '0.9rem', backgroundColor: '#000', color: '#fff',
-              border: 'none', fontWeight: 'bold', textTransform: 'uppercase',
-              letterSpacing: '2px', cursor: 'pointer', fontSize: '0.85rem'
-            }}
-          >
-            Enter
-          </button>
-        </form>
-      </div>
-    </div>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+      {error && (
+        <p style={{ color: '#e53e3e', fontSize: '0.8rem', fontWeight: 'bold', margin: 0 }}>{error}</p>
+      )}
+      <input
+        type="password"
+        value={pwd}
+        onChange={e => setPwd(e.target.value)}
+        placeholder="Admin panel password"
+        required
+        autoFocus
+        style={{
+          padding: '0.85rem 1rem', border: '1px solid #ddd',
+          fontSize: '0.95rem', outline: 'none', width: '100%',
+          boxSizing: 'border-box'
+        }}
+      />
+      <button
+        type="submit"
+        style={{
+          padding: '0.9rem', backgroundColor: '#000', color: '#fff',
+          border: 'none', fontWeight: 'bold', textTransform: 'uppercase',
+          letterSpacing: '2px', cursor: 'pointer', fontSize: '0.85rem'
+        }}
+      >
+        Unlock Dashboard
+      </button>
+    </form>
   );
 };
 
@@ -194,7 +187,7 @@ function App() {
   const [isContactPage, setIsContactPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [adminAuthenticated, setAdminAuthenticated] = useState(() =>
-    localStorage.getItem(ADMIN_SESSION_KEY) === ADMIN_PASSWORD
+    localStorage.getItem(ADMIN_SESSION_KEY) === ADMIN_PANEL_PASSWORD
   );
   const [reviews, setReviews] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -584,11 +577,106 @@ function App() {
   }
 
   if (isAdmin) {
-    if (!adminAuthenticated) {
+    // ── Not signed in: show sign-in prompt with AuthModal accessible ─────────
+    if (!userProfile) {
       return (
-        <AdminLoginGate onAuthenticated={() => setAdminAuthenticated(true)} />
+        <>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: '100vh',
+            background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)'
+          }}>
+            <div style={{
+              backgroundColor: '#fff', padding: '3rem', maxWidth: '400px',
+              width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', textAlign: 'center'
+            }}>
+              <h2 style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 900, marginBottom: '0.6rem', fontSize: '1.3rem' }}>Admin Area</h2>
+              <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '2rem', lineHeight: 1.6 }}>
+                Sign in with your authorised HELLABOLD admin account to continue.
+              </p>
+              <button
+                onClick={() => setIsAuthOpen(true)}
+                style={{
+                  width: '100%', padding: '0.9rem', backgroundColor: '#000', color: '#fff',
+                  border: 'none', fontWeight: 'bold', textTransform: 'uppercase',
+                  letterSpacing: '2px', cursor: 'pointer', fontSize: '0.85rem'
+                }}
+              >
+                Sign In
+              </button>
+            </div>
+          </div>
+          <AuthModal
+            isOpen={isAuthOpen}
+            onClose={() => setIsAuthOpen(false)}
+            onAuthSuccess={(profile) => setUserProfile(profile)}
+          />
+        </>
       );
     }
+
+    // ── Signed in but not an authorised admin email ───────────────────────────
+    if (!ADMIN_EMAILS.includes(userProfile.email)) {
+      return (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          height: '100vh',
+          background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', padding: '3rem', maxWidth: '400px',
+            width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚫</div>
+            <h2 style={{ textTransform: 'uppercase', letterSpacing: '3px', fontWeight: 900, marginBottom: '0.6rem', fontSize: '1.2rem' }}>Access Denied</h2>
+            <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '2rem', lineHeight: 1.6 }}>
+              <strong>{userProfile.email}</strong> is not an authorised admin account.
+            </p>
+            <button
+              onClick={() => { window.history.pushState({}, '', '/'); setIsAdmin(false); }}
+              style={{
+                width: '100%', padding: '0.9rem', backgroundColor: '#000', color: '#fff',
+                border: 'none', fontWeight: 'bold', textTransform: 'uppercase',
+                letterSpacing: '2px', cursor: 'pointer', fontSize: '0.85rem'
+              }}
+            >
+              Back to Store
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Email verified ✅ — now require panel password ──────────────────────
+    if (!adminAuthenticated) {
+      return (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          height: '100vh',
+          background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', padding: '3rem', maxWidth: '400px',
+            width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.8rem' }}>🔐</div>
+            <h2 style={{ textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 900, marginBottom: '0.4rem', fontSize: '1.2rem' }}>Panel Password</h2>
+            <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '1.8rem', lineHeight: 1.6 }}>
+              Signed in as <strong>{userProfile.email}</strong>.<br />Enter the admin panel password to continue.
+            </p>
+            <AdminPanelPasswordForm
+              onAuthenticated={() => {
+                localStorage.setItem(ADMIN_SESSION_KEY, ADMIN_PANEL_PASSWORD);
+                setAdminAuthenticated(true);
+              }}
+              correctPassword={ADMIN_PANEL_PASSWORD}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // ── Both factors passed: render the panel ─────────────────────────────────
     return (
       <AdminPanel
         onProductsUpdated={(updated) => setProducts(updated)}
