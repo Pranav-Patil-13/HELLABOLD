@@ -137,7 +137,7 @@ function App() {
   // Filters, Search, and Discount States
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 3000]);
+  const [priceRange, setPriceRange] = useState([499, 1000]);
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(() => {
@@ -259,6 +259,11 @@ function App() {
         setSelectedCategories([]);
       }
     };
+
+    const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
+    if (!isMainHome) {
+      setTypewriterDone(true);
+    }
 
     window.addEventListener('popstate', handlePopState);
     return () => {
@@ -438,7 +443,7 @@ function App() {
   const handleResetFilters = () => {
     setSelectedCategories([]);
     setSelectedSizes([]);
-    setPriceRange([0, 3000]);
+    setPriceRange([499, 1000]);
   };
 
   const handleFooterNavigation = (path) => {

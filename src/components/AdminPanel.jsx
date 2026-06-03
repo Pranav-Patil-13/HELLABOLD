@@ -57,7 +57,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   const [details, setDetails] = useState('');
   const [sizes, setSizes] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
-  const [category, setCategory] = useState('Outerwear');
+  const [category, setCategory] = useState('Tops');
   const [label, setLabel] = useState('');
 
   // Upload state
@@ -686,10 +686,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               <div className="form-group">
                 <label>Category *</label>
                 <select value={category} onChange={e => setCategory(e.target.value)} className="form-select" style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem' }} required>
-                  <option value="Outerwear">Outerwear</option>
-                  <option value="Accessories">Accessories</option>
                   <option value="Tops">Tops</option>
-                  <option value="Bottoms">Bottoms</option>
                 </select>
               </div>
 

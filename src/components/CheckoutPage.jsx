@@ -389,7 +389,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       currency: 'INR',
       name: 'HELLABOLD',
       description: `Purchase for Order ${orderId}`,
-      image: '/logo.png',
+      image: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png',
       handler: async function (response) {
         const completedOrder = {
           ...newOrder,
