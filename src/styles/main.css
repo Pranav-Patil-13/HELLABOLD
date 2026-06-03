@@ -5974,7 +5974,7 @@ button {
 }
 
 .contact-form__submit-btn {
-    background-color: var(--white);
+    background-color: var(--accent-color);
     color: var(--black);
     border: none;
     padding: 1rem 2rem;
@@ -5990,9 +5990,8 @@ button {
 }
 
 .contact-form__submit-btn:hover {
-    background-color: var(--accent-color, rgb(145, 0, 32));
-    color: var(--white);
-    box-shadow: 0 0 15px rgba(145, 0, 32, 0.3);
+    background-color: var(--white);
+    color: var(--black);
 }
 
 .contact-form__submit-btn.sending {
