@@ -110,20 +110,24 @@ function App() {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
-  const [isCheckoutPage, setIsCheckoutPage] = useState(false);
-  const [isOrderStatusPage, setIsOrderStatusPage] = useState(false);
-  const [activeProductId, setActiveProductId] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isCollectionsPage, setIsCollectionsPage] = useState(false);
-  const [isAboutPage, setIsAboutPage] = useState(false);
-  const [isPrivacyPage, setIsPrivacyPage] = useState(false);
-  const [isTermsPage, setIsTermsPage] = useState(false);
-  const [isFaqPage, setIsFaqPage] = useState(false);
-  const [isShippingPage, setIsShippingPage] = useState(false);
-  const [isReturnsPage, setIsReturnsPage] = useState(false);
-  const [isSizeGuidePage, setIsSizeGuidePage] = useState(false);
-  const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
-  const [isContactPage, setIsContactPage] = useState(false);
+  const [isCheckoutPage, setIsCheckoutPage] = useState(() => window.location.pathname === '/checkout');
+  const [isOrderStatusPage, setIsOrderStatusPage] = useState(() => window.location.pathname === '/order-status');
+  const [activeProductId, setActiveProductId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product');
+    return productId ? parseInt(productId, 10) : null;
+  });
+  const [isAdmin, setIsAdmin] = useState(() => window.location.pathname === '/admin');
+  const [isCollectionsPage, setIsCollectionsPage] = useState(() => window.location.pathname === '/collections');
+  const [isAboutPage, setIsAboutPage] = useState(() => window.location.pathname === '/about');
+  const [isPrivacyPage, setIsPrivacyPage] = useState(() => window.location.pathname === '/privacy');
+  const [isTermsPage, setIsTermsPage] = useState(() => window.location.pathname === '/terms');
+  const [isFaqPage, setIsFaqPage] = useState(() => window.location.pathname === '/faqs');
+  const [isShippingPage, setIsShippingPage] = useState(() => window.location.pathname === '/shipping-policy');
+  const [isReturnsPage, setIsReturnsPage] = useState(() => window.location.pathname === '/returns-exchanges');
+  const [isSizeGuidePage, setIsSizeGuidePage] = useState(() => window.location.pathname === '/size-guide');
+  const [isCustomStudioPage, setIsCustomStudioPage] = useState(() => window.location.pathname === '/custom-studio');
+  const [isContactPage, setIsContactPage] = useState(() => window.location.pathname === '/contact');
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -138,7 +142,11 @@ function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Filters, Search, and Discount States
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const categoryParam = params.get('category');
+    return categoryParam ? categoryParam.split(',').filter(Boolean) : [];
+  });
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [priceRange, setPriceRange] = useState([499, 1000]);
   const [sortBy, setSortBy] = useState('default');
