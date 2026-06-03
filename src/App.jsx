@@ -110,7 +110,7 @@ const ADMIN_EMAILS = ['pranavpatil13.2004@gmail.com'];
 // This is a second factor — even if someone has your Supabase login, they still
 // need this password. The session is stored in localStorage so you only need
 // to enter it once per browser.
-const ADMIN_PANEL_PASSWORD = 'hellabold@admin2024';
+const ADMIN_PANEL_PASSWORD = '123123';
 const ADMIN_SESSION_KEY = 'hb_admin_panel_v2';
 
 const AdminPanelPasswordForm = ({ onAuthenticated, correctPassword }) => {
