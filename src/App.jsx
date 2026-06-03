@@ -21,6 +21,7 @@ import TermsOfService from './components/TermsOfService';
 import FaqPage from './components/FaqPage';
 import PolicyPages from './components/PolicyPages';
 import CustomStudio from './components/CustomStudio';
+import ContactUs from './components/ContactUs';
 
 const SplashLoader = ({ onComplete }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -122,6 +123,7 @@ function App() {
   const [isReturnsPage, setIsReturnsPage] = useState(false);
   const [isSizeGuidePage, setIsSizeGuidePage] = useState(false);
   const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
+  const [isContactPage, setIsContactPage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
@@ -194,6 +196,9 @@ function App() {
     if (window.location.pathname === '/custom-studio') {
       setIsCustomStudioPage(true);
     }
+    if (window.location.pathname === '/contact') {
+      setIsContactPage(true);
+    }
 
     // Resolve active Supabase or mock user session
     getCurrentUser()
@@ -245,6 +250,7 @@ function App() {
       setIsReturnsPage(path === '/returns-exchanges');
       setIsSizeGuidePage(path === '/size-guide');
       setIsCustomStudioPage(path === '/custom-studio');
+      setIsContactPage(path === '/contact');
       setActiveProductId(productId ? parseInt(productId, 10) : null);
 
       if (categoryParam) {
@@ -454,6 +460,7 @@ function App() {
     setIsReturnsPage(path.startsWith('/returns-exchanges'));
     setIsSizeGuidePage(path.startsWith('/size-guide'));
     setIsCustomStudioPage(path.startsWith('/custom-studio'));
+    setIsContactPage(path.startsWith('/contact'));
     setActiveProductId(productId ? parseInt(productId, 10) : null);
 
     if (categoryParam) {
@@ -525,8 +532,8 @@ function App() {
         userProfile={userProfile}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); setIsCustomStudioPage(false); }}
-        activeTab={isCustomStudioPage ? "custom-studio" : (isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : "shop")))))}
+        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); setIsCustomStudioPage(false); setIsContactPage(false); }}
+        activeTab={isCustomStudioPage ? "custom-studio" : (isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : (isContactPage ? "contact" : "shop"))))))}
       />
 
       {isCheckoutPage ? (
@@ -583,6 +590,11 @@ function App() {
       ) : isCustomStudioPage ? (
         <>
           <CustomStudio onAddToCart={handleAddToCart} userProfile={userProfile} />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
+      ) : isContactPage ? (
+        <>
+          <ContactUs />
           <Footer onNavigate={handleFooterNavigation} />
         </>
       ) : activeProduct ? (
