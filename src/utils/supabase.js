@@ -430,7 +430,7 @@ export const signUpUser = async (email, password, fullName, phone) => {
       console.warn('Could not load profile instantly on signup:', e);
       profile = { id: data.user.id, fullName: fullName, phone: phone, role: 'customer' };
     }
-    return { user: data.user, session: data.session, profile };
+    return { user: data.user, session: data.session, profile: { ...profile, email: data.user.email } };
   } else {
     // Local fallback: create mock user session
     const mockUser = {
@@ -461,7 +461,7 @@ export const signInUser = async (email, password) => {
     }
 
     const profile = await getProfileById(data.user.id);
-    return { user: data.user, profile };
+    return { user: data.user, profile: { ...profile, email: data.user.email } };
   } else {
     // Local fallback logic
     const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user'));
@@ -510,7 +510,7 @@ export const getCurrentUser = async () => {
         return null;
       }
       const profile = await getProfileById(user.id);
-      return { user, profile };
+      return { user, profile: { ...profile, email: user.email } };
     } catch (e) {
       // Fallback if network fails
       const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user'));
@@ -591,6 +591,7 @@ const getProfileById = async (userId) => {
     id: data.id,
     fullName: data.full_name,
     phone: data.phone,
+    email: data.email || null, // may be null if profiles table doesn't store it; caller attaches auth email
     address: data.address,
     city: data.city,
     zipCode: data.zip_code,
