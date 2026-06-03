@@ -5784,7 +5784,7 @@ button {
 
 /* Info Panel */
 .contact-info-card {
-    background: rgba(145, 0, 32, 0.05);
+    background: #ffffff21;
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 3rem 2.5rem;
     border-radius: 4px;
@@ -5874,7 +5874,7 @@ button {
 
 /* Contact Form Panel */
 .contact-form {
-    background: rgba(255, 255, 255, 0.02);
+    background: #ffffff21;
     border: 1px solid rgba(255, 255, 255, 0.05);
     padding: 3rem 2.5rem;
     border-radius: 4px;
