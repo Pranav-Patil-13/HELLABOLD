@@ -1,4 +1,5 @@
 import React from 'react';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const collections = [
   {
@@ -6,7 +7,7 @@ const collections = [
     title: 'Outerwear',
     subtitle: 'Jackets & Coats That Define You',
     description: 'From premium lambskin leather to durable cowhide, each piece is built to develop a distinct character over time.',
-    image: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product1_A.png',
+    image: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product1_A.png'),
     count: 3,
     category: 'Outerwear'
   },
@@ -15,7 +16,7 @@ const collections = [
     title: 'Accessories',
     subtitle: 'Bags & Beyond',
     description: 'Signature saddle bags, crossbody minis, and silk scarves — every detail hand-finished, every piece a statement.',
-    image: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product4_B.png',
+    image: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product4_B.png'),
     count: 4,
     category: 'Accessories'
   },
@@ -24,7 +25,7 @@ const collections = [
     title: 'Essentials',
     subtitle: 'Tops & Bottoms',
     description: 'Bold boots and striking tops that bridge edge and elegance. Foundation pieces engineered to command attention.',
-    image: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product6_A.png',
+    image: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product6_A.png'),
     count: 2,
     category: 'Tops,Bottoms'
   },
@@ -33,7 +34,7 @@ const collections = [
     title: 'The Full Collection',
     subtitle: 'Every Piece. Every Statement.',
     description: 'Explore the complete HELLABOLD universe — all categories, all styles, one destination.',
-    image: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/hero_section_banner.png',
+    image: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/hero_section_banner.png'),
     count: 9,
     category: ''
   }
@@ -52,9 +53,11 @@ const CollectionsPage = () => {
     <div className="collections-page">
       <section className="collections-hero">
         <img
-          src="https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/hero_section_banner.png"
+          src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/hero_section_banner.png')}
           alt="HELLABOLD Collections"
           className="collections-hero__bg"
+          fetchPriority="high"
+          loading="eager"
         />
         <div className="collections-hero__overlay" />
         <div className="collections-hero__content">
@@ -76,6 +79,7 @@ const CollectionsPage = () => {
                 src={collection.image}
                 alt={collection.title}
                 className="collection-card__image"
+                loading={index === 0 ? 'eager' : 'lazy'}
               />
             </div>
             <div className="collection-card__content">

@@ -1,10 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
 import { createOrder, updateProfile } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
-const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDiscount, userProfile, onProfileUpdate }) => {
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", 
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", 
+  "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", 
+  "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", 
+  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
+
+const CheckoutPage = ({ 
+  cartItems, 
+  onOrderSuccess, 
+  appliedDiscount, 
+  onApplyDiscount, 
+  userProfile, 
+  onProfileUpdate,
+  onUpdateQuantity,
+  onRemoveItem
+}) => {
   const [step, setStep] = useState('form'); // form, success
+  useEffect(() => {
+    if (cartItems.length === 0 && step !== 'success') {
+      window.history.pushState({}, '', '/');
+      window.location.reload();
+    }
+  }, [cartItems, step]);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -12,6 +39,21 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
+  
+  // Custom Searchable Dropdown States for State Selector
+  const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
+  const [stateSearchQuery, setStateSearchQuery] = useState('');
+  const stateDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (stateDropdownRef.current && !stateDropdownRef.current.contains(event.target)) {
+        setIsStateDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Payment Selection State
   const [paymentMethod, setPaymentMethod] = useState('razorpay'); // razorpay, cod
@@ -70,7 +112,13 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
     return acc + (numericalPrice * item.quantity);
   }, 0);
 
-  const discountAmount = appliedDiscount ? Math.round(subtotal * appliedDiscount.percent / 100) : 0;
+  const unbargainedSubtotal = cartItems.reduce((acc, item) => {
+    if (item.customMeta?.isBargained) return acc;
+    const numericalPrice = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+    return acc + (numericalPrice * item.quantity);
+  }, 0);
+
+  const discountAmount = appliedDiscount ? Math.round(unbargainedSubtotal * appliedDiscount.percent / 100) : 0;
   const shipping = paymentMethod === 'razorpay' ? 0 : 50; // WAIVE shipping for online payments (incentive)
   const total = subtotal - discountAmount + shipping;
 
@@ -85,6 +133,11 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
 
   const handleApplyPromo = (e) => {
     e.preventDefault();
+    if (unbargainedSubtotal === 0) {
+      setPromoError('Promo codes cannot be applied to bargained items.');
+      return;
+    }
+
     const code = promoCode.trim().toUpperCase();
     if (code === 'BOLD10') {
       onApplyDiscount({ code, percent: 10 });
@@ -92,9 +145,9 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       setPromoCode('');
       triggerConfettiBurst(e.target);
     } else if (code === 'BOLD20') {
-      if (subtotal < 899) {
-        const diff = 899 - subtotal;
-        setPromoError(`Add items worth ₹${Math.round(diff)} more to redeem this offer`);
+      if (unbargainedSubtotal < 899) {
+        const diff = 899 - unbargainedSubtotal;
+        setPromoError(`Add eligible items worth ₹${Math.round(diff)} more to redeem this offer`);
       } else {
         onApplyDiscount({ code, percent: 20 });
         setPromoError('');
@@ -102,9 +155,9 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
         triggerConfettiBurst(e.target);
       }
     } else if (code === 'HELLA50') {
-      if (subtotal < 1299) {
-        const diff = 1299 - subtotal;
-        setPromoError(`Add items worth ₹${Math.round(diff)} more to redeem this offer`);
+      if (unbargainedSubtotal < 1299) {
+        const diff = 1299 - unbargainedSubtotal;
+        setPromoError(`Add eligible items worth ₹${Math.round(diff)} more to redeem this offer`);
       } else {
         onApplyDiscount({ code, percent: 50 });
         setPromoError('');
@@ -389,7 +442,7 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
       currency: 'INR',
       name: 'HELLABOLD',
       description: `Purchase for Order ${orderId}`,
-      image: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png',
+      image: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png'),
       handler: async function (response) {
         const completedOrder = {
           ...newOrder,
@@ -617,52 +670,105 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
                     placeholder="e.g. Mumbai"
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ position: 'relative' }} ref={stateDropdownRef}>
                   <label>State</label>
-                  <select
-                    value={state}
-                    onChange={(e) => { setState(e.target.value); setSelectedAddressId(null); }}
-                    required
-                    style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem', width: '100%', backgroundColor: 'var(--white)' }}
+                  <div 
+                    className={`custom-select-trigger ${isStateDropdownOpen ? 'active' : ''}`}
+                    onClick={() => {
+                      setIsStateDropdownOpen(!isStateDropdownOpen);
+                      setStateSearchQuery('');
+                    }}
+                    style={{
+                      padding: '0.8rem 1rem',
+                      border: '1px solid var(--border-color)',
+                      fontFamily: 'inherit',
+                      fontSize: '0.95rem',
+                      width: '100%',
+                      backgroundColor: 'var(--white)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'border-color var(--transition-fast)'
+                    }}
                   >
-                    <option value="">Select State</option>
-                    <option>Andhra Pradesh</option>
-                    <option>Arunachal Pradesh</option>
-                    <option>Assam</option>
-                    <option>Bihar</option>
-                    <option>Chhattisgarh</option>
-                    <option>Goa</option>
-                    <option>Gujarat</option>
-                    <option>Haryana</option>
-                    <option>Himachal Pradesh</option>
-                    <option>Jharkhand</option>
-                    <option>Karnataka</option>
-                    <option>Kerala</option>
-                    <option>Madhya Pradesh</option>
-                    <option>Maharashtra</option>
-                    <option>Manipur</option>
-                    <option>Meghalaya</option>
-                    <option>Mizoram</option>
-                    <option>Nagaland</option>
-                    <option>Odisha</option>
-                    <option>Punjab</option>
-                    <option>Rajasthan</option>
-                    <option>Sikkim</option>
-                    <option>Tamil Nadu</option>
-                    <option>Telangana</option>
-                    <option>Tripura</option>
-                    <option>Uttar Pradesh</option>
-                    <option>Uttarakhand</option>
-                    <option>West Bengal</option>
-                    <option>Andaman and Nicobar Islands</option>
-                    <option>Chandigarh</option>
-                    <option>Dadra and Nagar Haveli and Daman and Diu</option>
-                    <option>Delhi</option>
-                    <option>Jammu and Kashmir</option>
-                    <option>Ladakh</option>
-                    <option>Lakshadweep</option>
-                    <option>Puducherry</option>
-                  </select>
+                    <span>{state || 'Select State'}</span>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      transform: isStateDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform var(--transition-fast)',
+                      opacity: 0.6
+                    }}>▼</span>
+                  </div>
+
+                  {isStateDropdownOpen && (
+                    <div 
+                      className="custom-select-dropdown"
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        width: '100%',
+                        zIndex: 100,
+                        backgroundColor: 'var(--white)',
+                        border: '1px solid var(--border-color)',
+                        borderTop: 'none',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                        maxHeight: '260px',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}
+                    >
+                      <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                        <input 
+                          type="text"
+                          placeholder="Search state..."
+                          value={stateSearchQuery}
+                          onChange={(e) => setStateSearchQuery(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem 0.8rem',
+                            border: '1px solid var(--border-color)',
+                            outline: 'none',
+                            fontSize: '0.85rem',
+                            fontFamily: 'inherit'
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      </div>
+                      <div style={{ overflowY: 'auto', flex: 1 }}>
+                        {INDIAN_STATES.filter(s => s.toLowerCase().includes(stateSearchQuery.toLowerCase())).length === 0 ? (
+                          <div style={{ padding: '0.8rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                            No states matched
+                          </div>
+                        ) : (
+                          INDIAN_STATES.filter(s => s.toLowerCase().includes(stateSearchQuery.toLowerCase())).map(s => (
+                            <div 
+                              key={s}
+                              className={`custom-select-option ${state === s ? 'selected' : ''}`}
+                              onClick={() => {
+                                setState(s);
+                                setSelectedAddressId(null);
+                                setIsStateDropdownOpen(false);
+                              }}
+                              style={{
+                                padding: '0.7rem 1rem',
+                                fontSize: '0.85rem',
+                                cursor: 'pointer',
+                                transition: 'background-color var(--transition-fast)',
+                                backgroundColor: state === s ? 'var(--border-color)' : 'transparent',
+                                fontWeight: state === s ? 'bold' : 'normal'
+                              }}
+                            >
+                              {s}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <input type="hidden" value={state} name="state" required />
                 </div>
               </div>
 
@@ -751,17 +857,56 @@ const CheckoutPage = ({ cartItems, onOrderSuccess, appliedDiscount, onApplyDisco
             <h2 className="checkout-page-section-title">Order Summary</h2>
             <div className="checkout-summary__list">
               {cartItems.map(item => (
-                <div key={`${item.id}-${item.size}`} className="summary-item">
+                <div key={`${item.id}-${item.size}`} className="summary-item" style={{ alignItems: 'flex-start' }}>
                   <img 
-                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png') : cloudinaryOptimize(item.image)} 
                     alt={item.title} 
                     className="summary-item__img" 
+                    loading="lazy"
                   />
-                  <div className="summary-item__info">
-                    <h4>{item.title}</h4>
-                    <p>Size: {item.size} × {item.quantity}</p>
+                  <div className="summary-item__info" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                    <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 'bold' }}>{item.title}</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Size: {item.size}</p>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.3rem' }}>
+                      <div className="qty-selector" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', height: '28px', padding: '0 4px', background: '#fff' }}>
+                        <button 
+                          type="button"
+                          className="qty-btn" 
+                          onClick={() => item.quantity > 1 ? onUpdateQuantity(item.id, item.size, item.quantity - 1) : onRemoveItem(item.id, item.size)}
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '0 8px', fontSize: '0.9rem' }}
+                        >-</button>
+                        <span className="qty-val" style={{ minWidth: '20px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 'bold' }}>{item.quantity}</span>
+                        <button 
+                          type="button"
+                          className="qty-btn" 
+                          onClick={() => onUpdateQuantity(item.id, item.size, item.quantity + 1)}
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '0 8px', fontSize: '0.9rem' }}
+                        >+</button>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => onRemoveItem(item.id, item.size)}
+                        style={{ border: 'none', background: 'none', color: 'var(--accent-red)', cursor: 'pointer', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', padding: 0 }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                  <span className="summary-item__price">{item.price}</span>
+                  {(() => {
+                    const isBargained = item.customMeta?.isBargained;
+                    if (appliedDiscount && !isBargained) {
+                      const numericalPrice = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+                      const discountedVal = Math.round(numericalPrice * (100 - appliedDiscount.percent) / 100);
+                      return (
+                        <span className="summary-item__price" style={{ fontWeight: 'bold', marginLeft: '1rem' }}>
+                          <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginRight: '6px', fontWeight: 'normal' }}>{item.price}</span>
+                          <span>₹{discountedVal}</span>
+                        </span>
+                      );
+                    }
+                    return <span className="summary-item__price" style={{ fontWeight: 'bold', marginLeft: '1rem' }}>{item.price}</span>;
+                  })()}
                 </div>
               ))}
             </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const Header = ({ 
   cartCount, 
@@ -121,7 +122,13 @@ const Header = ({
         </button>
 
         <div className="header__logo" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
-          <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" />
+          <img
+            src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png')}
+            alt="HELLABOLD"
+            className="header__logo-img"
+            fetchPriority="high"
+            loading="eager"
+          />
         </div>
 
         <nav className={`header__nav ${isMobileNavOpen ? 'header__nav--open' : ''}`}>

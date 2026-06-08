@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const FavoritesDrawer = ({ 
   isOpen, 
@@ -58,7 +59,7 @@ const FavoritesDrawer = ({
 
                 return (
                   <div key={product.id} className="cart-item fav-item" style={{ position: 'relative' }}>
-                    <img src={product.images?.[0]} alt={product.title} className="cart-item__img" />
+                    <img src={cloudinaryOptimize(product.images?.[0])} alt={product.title} className="cart-item__img" loading="lazy" />
                     <div className="cart-item__info" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
                       <h3 className="cart-item__title">{product.title}</h3>
                       <p className="cart-item__price" style={{ fontWeight: 'bold' }}>{product.price}</p>

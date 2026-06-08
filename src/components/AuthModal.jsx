@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signInUser, signUpUser } from '../utils/supabase';
 import { triggerConfettiBurst } from '../utils/confetti';
 
@@ -12,6 +12,17 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmationInfo, setShowConfirmationInfo] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -24,7 +35,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
         const { user, profile } = await signInUser(email, password);
         triggerConfettiBurst(e.target);
         onAuthSuccess(profile);
-        onClose();
+        onClose(true);
       } else {
         const { user, session, profile } = await signUpUser(email, password, fullName, phone);
         // If session is null, email confirmation is active in Supabase
@@ -33,7 +44,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
         } else {
           triggerConfettiBurst(e.target);
           onAuthSuccess(profile);
-          onClose();
+          onClose(true);
         }
       }
     } catch (err) {
@@ -64,7 +75,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
         triggerConfettiBurst(e.target);
         onAuthSuccess(profile);
       }
-      onClose();
+      onClose(true);
     } catch (err) {
       console.warn('Supabase Auth failed for guest. Falling back to local mock guest session:', err);
       // Fallback to local guest profile so the user is never blocked
@@ -80,7 +91,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
       localStorage.setItem('hellabold_mock_user', JSON.stringify(mockProfile));
       triggerConfettiBurst(e.target);
       onAuthSuccess(mockProfile);
-      onClose();
+      onClose(true);
     } finally {
       setLoading(false);
     }

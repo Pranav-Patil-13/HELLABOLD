@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import Header from './components/Header';
 import { getProducts, getReviews, getCurrentUser } from './utils/supabase';
+import { cloudinaryOptimize } from './utils/cloudinary';
 import Hero from './components/Hero';
 import Filters from './components/Filters';
 import ProductCard from './components/ProductCard';
 import ProductDetails from './components/ProductDetails';
+import { GridSkeleton, DetailsSkeleton } from './components/ProductSkeleton';
 import AdminPanel from './components/AdminPanel';
 import CartDrawer from './components/CartDrawer';
 import CartIsland from './components/CartIsland';
@@ -74,7 +77,7 @@ const SplashLoader = ({ onComplete }) => {
       `}</style>
 
       <img
-        src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1780463490/hellabold/products/hella_loading.png"
+        src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1780463490/hellabold/products/hella_loading.png')}
         alt="HELLABOLD Mascot"
         onLoad={() => setImgLoaded(true)}
         onError={() => setImgLoaded(true)}
@@ -165,7 +168,18 @@ function App() {
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState(() => {
     const saved = localStorage.getItem('hellabold_cart');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed.map(item => {
+        if (typeof item.size === 'object' && item.size !== null) {
+          return { ...item, size: 'M' }; // recover or default
+        }
+        return item;
+      });
+    } catch (e) {
+      return [];
+    }
   });
   const [likedIds, setLikedIds] = useState(() => {
     const saved = localStorage.getItem('hellabold_likes');
@@ -176,6 +190,8 @@ function App() {
   const [isCheckoutPage, setIsCheckoutPage] = useState(false);
   const [isOrderStatusPage, setIsOrderStatusPage] = useState(false);
   const [activeProductId, setActiveProductId] = useState(null);
+  const [prevActiveProductId, setPrevActiveProductId] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCollectionsPage, setIsCollectionsPage] = useState(false);
   const [isAboutPage, setIsAboutPage] = useState(false);
@@ -199,6 +215,17 @@ function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState(false);
+
+  const handleAuthSuccess = (profile) => {
+    setUserProfile(profile);
+    if (pendingCheckout) {
+      setPendingCheckout(false);
+      setIsCartOpen(false);
+      window.history.pushState({}, '', '/checkout');
+      setIsCheckoutPage(true);
+    }
+  };
 
   // Filters, Search, and Discount States
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -225,6 +252,10 @@ function App() {
 
     if (productId) {
       setActiveProductId(parseInt(productId, 10));
+      const imageIndexParam = params.get('img');
+      if (imageIndexParam) {
+        setActiveImageIndex(parseInt(imageIndexParam, 10));
+      }
     }
     if (window.location.pathname === '/admin') {
       setIsAdmin(true);
@@ -271,6 +302,9 @@ function App() {
       .then(sessionData => {
         if (sessionData) {
           setUserProfile(sessionData.profile);
+        } else if (window.location.pathname === '/checkout') {
+          setPendingCheckout(true);
+          setIsAuthOpen(true);
         }
       })
       .catch(err => {
@@ -304,25 +338,45 @@ function App() {
       const productId = params.get('product');
       const categoryParam = params.get('category');
 
-      setIsAdmin(path === '/admin');
-      setIsCheckoutPage(path === '/checkout');
-      setIsOrderStatusPage(path === '/order-status');
-      setIsCollectionsPage(path === '/collections');
-      setIsAboutPage(path === '/about');
-      setIsPrivacyPage(path === '/privacy');
-      setIsTermsPage(path === '/terms');
-      setIsFaqPage(path === '/faqs');
-      setIsShippingPage(path === '/shipping-policy');
-      setIsReturnsPage(path === '/returns-exchanges');
-      setIsSizeGuidePage(path === '/size-guide');
-      setIsCustomStudioPage(path === '/custom-studio');
-      setIsContactPage(path === '/contact');
-      setActiveProductId(productId ? parseInt(productId, 10) : null);
+      const updateState = () => {
+        setIsAdmin(path === '/admin');
+        setIsCheckoutPage(path === '/checkout');
+        setIsOrderStatusPage(path === '/order-status');
+        setIsCollectionsPage(path === '/collections');
+        setIsAboutPage(path === '/about');
+        setIsPrivacyPage(path === '/privacy');
+        setIsTermsPage(path === '/terms');
+        setIsFaqPage(path === '/faqs');
+        setIsShippingPage(path === '/shipping-policy');
+        setIsReturnsPage(path === '/returns-exchanges');
+        setIsSizeGuidePage(path === '/size-guide');
+        setIsCustomStudioPage(path === '/custom-studio');
+        setIsContactPage(path === '/contact');
+        setPrevActiveProductId(activeProductId);
+        setActiveProductId(productId ? parseInt(productId, 10) : null);
+        const imageIndexParam = params.get('img');
+        setActiveImageIndex(imageIndexParam ? parseInt(imageIndexParam, 10) : 0);
 
-      if (categoryParam) {
-        setSelectedCategories([categoryParam]);
+        if (categoryParam) {
+          setSelectedCategories([categoryParam]);
+        } else {
+          setSelectedCategories([]);
+        }
+
+        window.scrollTo(0, 0);
+      };
+
+      if (document.startViewTransition) {
+        const transition = document.startViewTransition(() => {
+          flushSync(() => {
+            updateState();
+          });
+        });
+        transition.finished.then(() => {
+          setPrevActiveProductId(null);
+        }).catch(() => {});
       } else {
-        setSelectedCategories([]);
+        updateState();
       }
     };
 
@@ -338,16 +392,31 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (productsLoaded && typewriterDone) {
+    if (typewriterDone) {
       setLoading(false);
     }
-  }, [productsLoaded, typewriterDone]);
+  }, [typewriterDone]);
 
   // Listen to other tabs' storage changes for real-time synchronization
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'hellabold_cart') {
-        setCartItems(e.newValue ? JSON.parse(e.newValue) : []);
+        if (e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            const sanitized = parsed.map(item => {
+              if (typeof item.size === 'object' && item.size !== null) {
+                return { ...item, size: 'M' };
+              }
+              return item;
+            });
+            setCartItems(sanitized);
+          } catch (err) {
+            setCartItems([]);
+          }
+        } else {
+          setCartItems([]);
+        }
       }
       if (e.key === 'hellabold_discount') {
         setAppliedDiscount(e.newValue ? JSON.parse(e.newValue) : null);
@@ -360,14 +429,17 @@ function App() {
   // Auto-invalidate applied discount if subtotal drops below thresholds
   useEffect(() => {
     if (appliedDiscount) {
-      const subtotal = cartItems.reduce((acc, item) => {
+      const unbargainedSubtotal = cartItems.reduce((acc, item) => {
+        if (item.customMeta?.isBargained) return acc;
         const numericalPrice = parseFloat(item.price.replace(/[^0-9.]/g, ''));
         return acc + (numericalPrice * item.quantity);
       }, 0);
 
-      if (appliedDiscount.code === 'BOLD20' && subtotal < 899) {
+      if (unbargainedSubtotal === 0) {
         saveDiscount(null);
-      } else if (appliedDiscount.code === 'HELLA50' && subtotal < 1299) {
+      } else if (appliedDiscount.code === 'BOLD20' && unbargainedSubtotal < 899) {
+        saveDiscount(null);
+      } else if (appliedDiscount.code === 'HELLA50' && unbargainedSubtotal < 1299) {
         saveDiscount(null);
       }
     }
@@ -394,7 +466,11 @@ function App() {
 
   const saveCart = (newItems) => {
     setCartItems(newItems);
-    localStorage.setItem('hellabold_cart', JSON.stringify(newItems));
+    try {
+      localStorage.setItem('hellabold_cart', JSON.stringify(newItems));
+    } catch (e) {
+      console.warn('Unable to persist cart to localStorage due to browser storage limits (often on Safari with large custom image uploads). App will fall back to memory-only state for this session.', e);
+    }
   };
 
   const saveDiscount = (discount) => {
@@ -410,13 +486,41 @@ function App() {
     setSearchQuery(query);
     // Auto-redirect back to the main catalog if the user is on the details or admin panel
     if (activeProductId !== null) {
-      setActiveProductId(null);
+      const updateState = () => {
+        setPrevActiveProductId(activeProductId);
+        setActiveProductId(null);
+        window.scrollTo(0, 0);
+      };
+      if (document.startViewTransition) {
+        const transition = document.startViewTransition(() => {
+          flushSync(() => {
+            updateState();
+          });
+        });
+        transition.finished.then(() => {
+          setPrevActiveProductId(null);
+        }).catch(() => {});
+      } else {
+        updateState();
+      }
       const params = new URLSearchParams(window.location.search);
       params.delete('product');
       window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
     }
     if (isAdmin) {
-      setIsAdmin(false);
+      const updateState = () => {
+        setIsAdmin(false);
+        window.scrollTo(0, 0);
+      };
+      if (document.startViewTransition) {
+        document.startViewTransition(() => {
+          flushSync(() => {
+            updateState();
+          });
+        });
+      } else {
+        updateState();
+      }
       window.history.pushState({}, '', '/');
     }
     if (query) {
@@ -436,6 +540,7 @@ function App() {
   };
 
   const handleAddToCart = (product, selectedSize) => {
+    console.log('App: handleAddToCart called for:', product.title, 'with size:', selectedSize);
     const size = selectedSize || product.sizes?.[0] || 'One Size';
     const existingIndex = cartItems.findIndex(item => item.id === product.id && item.size === size);
 
@@ -532,7 +637,10 @@ function App() {
     setIsSizeGuidePage(path.startsWith('/size-guide'));
     setIsCustomStudioPage(path.startsWith('/custom-studio'));
     setIsContactPage(path.startsWith('/contact'));
+    setPrevActiveProductId(activeProductId);
     setActiveProductId(productId ? parseInt(productId, 10) : null);
+    const imageIndexParam = params.get('img');
+    setActiveImageIndex(imageIndexParam ? parseInt(imageIndexParam, 10) : 0);
 
     if (categoryParam) {
       setSelectedCategories([categoryParam]);
@@ -703,7 +811,37 @@ function App() {
         userProfile={userProfile}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
-        onGoHome={() => { setActiveProductId(null); setIsCheckoutPage(false); setIsOrderStatusPage(false); setIsCollectionsPage(false); setIsAboutPage(false); setIsPrivacyPage(false); setIsTermsPage(false); setIsFaqPage(false); setIsShippingPage(false); setIsReturnsPage(false); setIsSizeGuidePage(false); setIsCustomStudioPage(false); setIsContactPage(false); }}
+        onGoHome={() => {
+          const updateState = () => {
+            setPrevActiveProductId(activeProductId);
+            setActiveProductId(null);
+            setIsCheckoutPage(false);
+            setIsOrderStatusPage(false);
+            setIsCollectionsPage(false);
+            setIsAboutPage(false);
+            setIsPrivacyPage(false);
+            setIsTermsPage(false);
+            setIsFaqPage(false);
+            setIsShippingPage(false);
+            setIsReturnsPage(false);
+            setIsSizeGuidePage(false);
+            setIsCustomStudioPage(false);
+            setIsContactPage(false);
+            window.scrollTo(0, 0);
+          };
+          if (document.startViewTransition) {
+            const transition = document.startViewTransition(() => {
+              flushSync(() => {
+                updateState();
+              });
+            });
+            transition.finished.then(() => {
+              setPrevActiveProductId(null);
+            }).catch(() => {});
+          } else {
+            updateState();
+          }
+        }}
         activeTab={isCustomStudioPage ? "custom-studio" : (isCollectionsPage ? "collections" : (isAboutPage ? "about" : (isPrivacyPage ? "privacy" : (isTermsPage ? "terms" : (isFaqPage ? "faqs" : (isContactPage ? "contact" : "shop"))))))}
       />
 
@@ -715,6 +853,8 @@ function App() {
           onApplyDiscount={saveDiscount}
           userProfile={userProfile}
           onProfileUpdate={(profile) => setUserProfile(profile)}
+          onUpdateQuantity={handleUpdateQuantity}
+          onRemoveItem={handleRemoveItem}
         />
       ) : isOrderStatusPage ? (
         <OrderStatus />
@@ -768,18 +908,35 @@ function App() {
           <ContactUs />
           <Footer onNavigate={handleFooterNavigation} />
         </>
-      ) : activeProduct ? (
-        <>
-          <ProductDetails
-            product={activeProduct}
-            products={products}
-            reviews={reviews}
-            onAddToCart={(size) => handleAddToCart(activeProduct, size)}
-            isLiked={likedIds.includes(activeProduct.id)}
-            onToggleLike={handleToggleLike}
-          />
-          <Footer onNavigate={handleFooterNavigation} />
-        </>
+      ) : activeProductId ? (
+        !productsLoaded ? (
+          <>
+            <DetailsSkeleton />
+            <Footer onNavigate={handleFooterNavigation} />
+          </>
+        ) : activeProduct ? (
+          <>
+            <ProductDetails
+              key={activeProduct.id}
+              product={activeProduct}
+              products={products}
+              reviews={reviews}
+              onAddToCart={(size) => handleAddToCart(activeProduct, size)}
+              onAddBargainedToCart={(bargainedProduct, size) => handleAddToCart(bargainedProduct, size)}
+              isLiked={likedIds.includes(activeProduct.id)}
+              onToggleLike={handleToggleLike}
+              initialImageIndex={activeImageIndex}
+              cartItems={cartItems}
+              onOpenCart={() => setIsCartOpen(true)}
+            />
+            <Footer onNavigate={handleFooterNavigation} />
+          </>
+        ) : (
+          <div className="pdp-error" style={{ textAlign: 'center', padding: '5rem' }}>
+            <h2>Product not found.</h2>
+            <a href="/" className="btn btn--primary" style={{ marginTop: '1rem' }}>Back to Shop</a>
+          </div>
+        )
       ) : (
         <>
           <Hero />
@@ -810,7 +967,9 @@ function App() {
                   </select>
                 </div>
               </div>
-              {sortedProducts.length === 0 ? (
+              {!productsLoaded ? (
+                <GridSkeleton count={6} />
+              ) : sortedProducts.length === 0 ? (
                 <div className="shop__products-empty">
                   <h3 className="empty-state-title">Hella Empty</h3>
                   <p className="empty-state-text">You've filtered into a void. Reset your options to restore the bold.</p>
@@ -824,13 +983,17 @@ function App() {
                 </div>
               ) : (
                 <div className="shop__products-grid">
-                  {sortedProducts.map(product => (
+                  {sortedProducts.map((product, idx) => (
                     <ProductCard
                       key={product.id}
                       product={product}
                       onAddToCart={() => handleAddToCart(product)}
                       isLiked={likedIds.includes(product.id)}
                       onToggleLike={handleToggleLike}
+                      cardIndex={idx}
+                      isTransitionTarget={product.id === activeProductId || product.id === prevActiveProductId}
+                      isInCart={cartItems.some(item => String(item.id) === String(product.id))}
+                      onOpenCart={() => setIsCartOpen(true)}
                     />
                   ))}
                 </div>
@@ -851,9 +1014,14 @@ function App() {
         appliedDiscount={appliedDiscount}
         onApplyDiscount={saveDiscount}
         onCheckout={() => {
-          setIsCartOpen(false);
-          window.history.pushState({}, '', '/checkout');
-          setIsCheckoutPage(true);
+          if (!userProfile) {
+            setPendingCheckout(true);
+            setIsAuthOpen(true);
+          } else {
+            setIsCartOpen(false);
+            window.history.pushState({}, '', '/checkout');
+            setIsCheckoutPage(true);
+          }
         }}
       />
 
@@ -882,8 +1050,15 @@ function App() {
       {/* Auth Modal Overlay */}
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onAuthSuccess={(profile) => setUserProfile(profile)}
+        onClose={(wasSuccessful) => {
+          setIsAuthOpen(false);
+          setPendingCheckout(false);
+          if (window.location.pathname === '/checkout' && !wasSuccessful && !userProfile) {
+            window.history.pushState({}, '', '/');
+            setIsCheckoutPage(false);
+          }
+        }}
+        onAuthSuccess={handleAuthSuccess}
       />
 
       {/* Profile/Address Manager Drawer */}

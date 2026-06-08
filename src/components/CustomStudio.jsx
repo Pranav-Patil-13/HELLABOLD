@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const CustomStudio = ({ onAddToCart, userProfile }) => {
   const [gender, setGender] = useState('male'); // male, female
@@ -27,6 +28,18 @@ const CustomStudio = ({ onAddToCart, userProfile }) => {
   const [backOpacity, setBackOpacity] = useState(100);
 
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
+  
+  useEffect(() => {
+    if (isSizeChartOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSizeChartOpen]);
+
   const [errorMessage, setErrorMessage] = useState('');
   const [instructionText, setInstructionText] = useState('');
   const [currentPlaceholder, setCurrentPlaceholder] = useState('');
@@ -220,22 +233,22 @@ const CustomStudio = ({ onAddToCart, userProfile }) => {
   const modelImages = {
     front: {
       male: {
-        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png',
-        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png'
+        black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png'),
+        white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png')
       },
       female: {
-        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png',
-        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png'
+        black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png'),
+        white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png')
       }
     },
     back: {
       male: {
-        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png',
-        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png'
+        black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png'),
+        white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png')
       },
       female: {
-        black: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png',
-        white: 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png'
+        black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png'),
+        white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png')
       }
     }
   };
@@ -468,6 +481,7 @@ const CustomStudio = ({ onAddToCart, userProfile }) => {
                 src={modelImages[currentSide][gender][color]} 
                 alt="HELLA-LAB Garment Preview" 
                 className="canvas-model-img"
+                loading="lazy"
               />
 
               {/* Uploaded Design Graphic Overlay */}

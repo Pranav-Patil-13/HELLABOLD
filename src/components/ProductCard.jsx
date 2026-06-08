@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
-const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike }) => {
+const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, cardIndex = 99, isTransitionTarget = false, isInCart = false, onOpenCart }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
+  const isAboveFold = cardIndex < 3;
 
   const handleNextImage = (e) => {
     e.preventDefault();
@@ -23,6 +25,12 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike }) =>
 
   const handleAddToCartClick = (e) => {
     e.preventDefault();
+    if (isInCart) {
+      if (onOpenCart) {
+        onOpenCart();
+      }
+      return;
+    }
     onAddToCart();
     setIsAdded(true);
     setTimeout(() => {
@@ -45,7 +53,16 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike }) =>
     ) {
       return;
     }
-    window.open(`/?product=${product.id}`, '_blank');
+    const imgEl = e.currentTarget.querySelector('.product-card__img.active');
+    if (imgEl) {
+      imgEl.style.viewTransitionName = `product-image-${product.id}`;
+    }
+    const currentMainImg = document.querySelector('.pdp-gallery__main-img');
+    if (currentMainImg) {
+      currentMainImg.style.viewTransitionName = 'none';
+    }
+    window.history.pushState({}, '', `/?product=${product.id}&img=${currentImageIndex}`);
+    window.dispatchEvent(new Event('popstate'));
   };
 
   const renderProductBadge = () => {
@@ -95,9 +112,12 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike }) =>
               {product.images.map((imgSrc, index) => (
                 <img 
                   key={index}
-                  src={imgSrc} 
+                  src={cloudinaryOptimize(imgSrc)} 
                   alt={`${product.title} view ${index + 1}`} 
-                  className={`product-card__img ${index === currentImageIndex ? 'active' : ''}`} 
+                  className={`product-card__img ${index === currentImageIndex ? 'active' : ''}`}
+                  loading={isAboveFold && index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={isAboveFold && index === 0 ? 'high' : 'auto'}
+                  style={isTransitionTarget && index === currentImageIndex ? { viewTransitionName: `product-image-${product.id}` } : {}}
                 />
               ))}
             </div>
@@ -141,12 +161,12 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike }) =>
             </p>
         </div>
         <button 
-          className="btn btn--primary add-to-cart-btn" 
+          className={`btn add-to-cart-btn ${isInCart ? 'btn--outline' : 'btn--primary'}`} 
           onClick={handleAddToCartClick}
           disabled={product.label === 'out-of-stock'}
           style={isAdded ? { backgroundColor: 'var(--text-primary)' } : product.label === 'out-of-stock' ? { backgroundColor: '#e2e8f0', color: '#a0aec0', cursor: 'not-allowed', borderColor: '#e2e8f0' } : {}}
         >
-          {product.label === 'out-of-stock' ? 'Sold Out' : isAdded ? 'Added' : 'Add to Cart'}
+          {product.label === 'out-of-stock' ? 'Sold Out' : isAdded ? 'Added' : isInCart ? 'View Cart' : 'Add to Cart'}
         </button>
     </article>
   );

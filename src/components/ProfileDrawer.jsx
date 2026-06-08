@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { signOutUser, updateProfile, getOrders } from '../utils/supabase';
 
 const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOut }) => {
+  const [activeTab, setActiveTab] = useState('settings'); // settings, addresses, orders
   const [fullName, setFullName] = useState('');
   const [userOrders, setUserOrders] = useState([]);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
@@ -148,251 +149,278 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
       >
         {/* Drawer Header */}
         <div className="cart-drawer__header">
-          <h2>User Profile</h2>
+          <h2>Your Profile</h2>
           <button className="cart-drawer__close" onClick={onClose} aria-label="Close profile drawer">×</button>
         </div>
 
+        {/* User Card (Header Banner) */}
+        <div className="profile-user-card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', borderRadius: 0 }}>
+          <div className="profile-avatar-large">
+            {userProfile?.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'U'}
+          </div>
+          <div className="profile-user-card__info" style={{ flex: 1 }}>
+            <h3>{userProfile?.fullName || 'User'}</h3>
+            <p>{userProfile?.email}</p>
+          </div>
+        </div>
+
+        {/* Tab Navigation strip */}
+        <div className="profile-drawer__tabs">
+          <button 
+            className={`profile-drawer__tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </button>
+          <button 
+            className={`profile-drawer__tab-btn ${activeTab === 'addresses' ? 'active' : ''}`}
+            onClick={() => setActiveTab('addresses')}
+          >
+            Addresses ({savedAddresses.length})
+          </button>
+          <button 
+            className={`profile-drawer__tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            Orders ({userOrders.length})
+          </button>
+        </div>
+
         {/* Drawer Scrollable Content */}
-        <div className="drawer__content" style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        <div className="drawer__content" style={{ flex: 1, overflowY: 'auto', padding: '0 1.5rem 2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
           
-          {/* User Meta Card */}
-          <div className="profile-user-card" style={{ padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: '#fafafa' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <div className="profile-avatar-large" style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--accent-color)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                {userProfile?.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'U'}
+          {/* TAB 1: SETTINGS */}
+          {activeTab === 'settings' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div className="profile-section">
+                <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  Account Settings
+                </h3>
+                {nameUpdateSuccess && (
+                  <p style={{ color: '#38a169', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.8rem', fontWeight: 'bold' }}>✓ Display name saved</p>
+                )}
+                <form onSubmit={handleUpdateName}>
+                  <div className="profile-form-group">
+                    <label>Display Name</label>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input 
+                        type="text" 
+                        value={fullName}
+                        onChange={e => setFullName(e.target.value)}
+                        required
+                        className="profile-input"
+                      />
+                      <button 
+                        type="submit" 
+                        className="btn btn--primary" 
+                        disabled={isUpdatingName}
+                        style={{ padding: '0.9rem 1.5rem', fontSize: '0.8rem', textTransform: 'uppercase' }}
+                      >
+                        {isUpdatingName ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '900', textTransform: 'uppercase' }}>{userProfile?.fullName || 'User'}</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{userProfile?.email}</span>
+
+              <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+                <button 
+                  onClick={handleSignOutClick}
+                  className="btn btn--outline"
+                  style={{ width: '100%', padding: '1rem', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px' }}
+                >
+                  Sign Out Account
+                </button>
               </div>
             </div>
-            <button 
-              onClick={handleSignOutClick}
-              className="btn btn--outline"
-              style={{ width: '100%', padding: '0.6rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}
-            >
-              Sign Out
-            </button>
-          </div>
+          )}
 
-          {/* Display Name / Basic Info Section */}
-          <div className="profile-section">
-            <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-              Account Settings
-            </h3>
-            {nameUpdateSuccess && (
-              <p style={{ color: '#38a169', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.8rem', fontWeight: 'bold' }}>✓ Display name saved</p>
-            )}
-            <form onSubmit={handleUpdateName} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.2rem', display: 'block' }}>Display Name</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="text" 
-                    value={fullName}
-                    onChange={e => setFullName(e.target.value)}
-                    required
-                    style={{ flex: 1, padding: '0.6rem 0.8rem', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
-                  />
-                  <button 
-                    type="submit" 
-                    className="btn btn--primary" 
-                    disabled={isUpdatingName}
-                    style={{ padding: '0.6rem 1rem', fontSize: '0.75rem', textTransform: 'uppercase' }}
-                  >
-                    {isUpdatingName ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
+          {/* TAB 2: ADDRESSES */}
+          {activeTab === 'addresses' && (
+            <div className="profile-section address-manager-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.85rem', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                Saved Addresses
+              </h3>
 
-          {/* Address Manager Section */}
-          <div className="profile-section address-manager-section">
-            <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-              Saved Addresses ({savedAddresses.length})
-            </h3>
+              {addressActionSuccess && (
+                <p style={{ color: '#38a169', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '0.5rem' }}>{addressActionSuccess}</p>
+              )}
 
-            {addressActionSuccess && (
-              <p style={{ color: '#38a169', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '0.5rem' }}>{addressActionSuccess}</p>
-            )}
-
-            {/* List of Saved Addresses */}
-            <div className="profile-addresses-list">
-              {savedAddresses.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '0.5rem 0' }}>No saved addresses yet.</p>
-              ) : (
-                savedAddresses.map(addr => (
-                  <div key={addr.id} className="profile-address-card">
-                    <div className="profile-address-card__content">
-                      <span className="profile-address-card__label">{addr.label}</span>
-                      <span className="profile-address-card__name">{addr.fullName}</span>
-                      <span className="profile-address-card__details">
-                        {addr.address}, {addr.city} - {addr.zipCode}
-                      </span>
+              {/* List of Saved Addresses */}
+              <div className="profile-addresses-list" style={{ overflowY: 'visible', maxHeight: 'none' }}>
+                {savedAddresses.length === 0 ? (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '0.5rem 0', textAlign: 'center' }}>No saved addresses yet.</p>
+                ) : (
+                  savedAddresses.map(addr => (
+                    <div key={addr.id} className="profile-address-card" style={{ borderRadius: 0 }}>
+                      <div className="profile-address-card__content">
+                        <span className="profile-address-card__label">{addr.label}</span>
+                        <span className="profile-address-card__name">{addr.fullName}</span>
+                        <span className="profile-address-card__details">
+                          {addr.address}, {addr.city} - {addr.zipCode}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteAddress(addr.id)}
+                        className="profile-address-card__delete-btn"
+                        title="Delete address"
+                        aria-label={`Delete address ${addr.label}`}
+                      >
+                        🗑
+                      </button>
                     </div>
+                  ))
+                )}
+              </div>
+
+              {/* Expandable Add Address Form */}
+              {!showAddForm ? (
+                <button 
+                  className="add-address-toggle-btn"
+                  onClick={() => setShowAddForm(true)}
+                  style={{ borderRadius: 0 }}
+                >
+                  + Add New Address
+                </button>
+              ) : (
+                <form onSubmit={handleAddAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', border: '1px solid var(--border-color)', padding: '1.5rem', backgroundColor: '#fafafa' }}>
+                  <h4 style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.3rem' }}>New Address Details</h4>
+                  
+                  <div className="profile-form-group">
+                    <label>Address Label</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Home, Office, Work"
+                      value={newLabel}
+                      onChange={e => setNewLabel(e.target.value)}
+                      required
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="profile-form-group">
+                    <label>Recipient Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="Full name of recipient"
+                      value={newName}
+                      onChange={e => setNewName(e.target.value)}
+                      required
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="profile-form-group">
+                    <label>Street Address</label>
+                    <input 
+                      type="text" 
+                      placeholder="Apartment, building, street name"
+                      value={newAddress}
+                      onChange={e => setNewAddress(e.target.value)}
+                      required
+                      className="profile-input"
+                    />
+                  </div>
+
+                  <div className="form-group-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="profile-form-group">
+                      <label>City</label>
+                      <input 
+                        type="text" 
+                        placeholder="City"
+                        value={newCity}
+                        onChange={e => setNewCity(e.target.value)}
+                        required
+                        className="profile-input"
+                      />
+                    </div>
+                    <div className="profile-form-group">
+                      <label>ZIP Code</label>
+                      <input 
+                        type="text" 
+                        placeholder="Zip Code"
+                        value={newZipCode}
+                        onChange={e => setNewZipCode(e.target.value)}
+                        required
+                        className="profile-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <button 
-                      onClick={() => handleDeleteAddress(addr.id)}
-                      className="profile-address-card__delete-btn"
-                      title="Delete address"
-                      aria-label={`Delete address ${addr.label}`}
+                      type="submit" 
+                      className="btn btn--primary" 
+                      disabled={isAddingAddress}
+                      style={{ flex: 1, padding: '0.9rem', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 'bold' }}
                     >
-                      🗑
+                      {isAddingAddress ? 'Adding...' : 'Add Address'}
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn--outline"
+                      onClick={() => {
+                        setShowAddForm(false);
+                        setNewLabel('');
+                        setNewName('');
+                        setNewAddress('');
+                        setNewCity('');
+                        setNewZipCode('');
+                      }}
+                      style={{ padding: '0.9rem', fontSize: '0.8rem', textTransform: 'uppercase' }}
+                    >
+                      Cancel
                     </button>
                   </div>
-                ))
+                </form>
               )}
             </div>
+          )}
 
-            {/* Expandable Add Address Form */}
-            {!showAddForm ? (
-              <button 
-                className="add-address-toggle-btn"
-                onClick={() => setShowAddForm(true)}
-              >
-                + Add New Address
-              </button>
-            ) : (
-              <form onSubmit={handleAddAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-color)', padding: '1.2rem', backgroundColor: '#fafafa' }}>
-                <h4 style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.2rem' }}>New Address Details</h4>
-                
-                <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.2rem', display: 'block' }}>Address Label</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Home, Office, Work"
-                    value={newLabel}
-                    onChange={e => setNewLabel(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-color)', fontSize: '0.85rem', backgroundColor: '#fff' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.2rem', display: 'block' }}>Recipient Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Full name of recipient"
-                    value={newName}
-                    onChange={e => setNewName(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-color)', fontSize: '0.85rem', backgroundColor: '#fff' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.2rem', display: 'block' }}>Street Address</label>
-                  <input 
-                    type="text" 
-                    placeholder="Apartment, building, street name"
-                    value={newAddress}
-                    onChange={e => setNewAddress(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-color)', fontSize: '0.85rem', backgroundColor: '#fff' }}
-                  />
-                </div>
-
-                <div className="form-group-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.2rem', display: 'block' }}>City</label>
-                    <input 
-                      type="text" 
-                      placeholder="City"
-                      value={newCity}
-                      onChange={e => setNewCity(e.target.value)}
-                      required
-                      style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-color)', fontSize: '0.85rem', backgroundColor: '#fff' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.2rem', display: 'block' }}>ZIP Code</label>
-                    <input 
-                      type="text" 
-                      placeholder="Zip Code"
-                      value={newZipCode}
-                      onChange={e => setNewZipCode(e.target.value)}
-                      required
-                      style={{ width: '100%', padding: '0.6rem 0.8rem', border: '1px solid var(--border-color)', fontSize: '0.85rem', backgroundColor: '#fff' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <button 
-                    type="submit" 
-                    className="btn btn--primary" 
-                    disabled={isAddingAddress}
-                    style={{ flex: 1, padding: '0.75rem', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 'bold' }}
-                  >
-                    {isAddingAddress ? 'Adding...' : 'Add Address'}
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn--outline"
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setNewLabel('');
-                      setNewName('');
-                      setNewAddress('');
-                      setNewCity('');
-                      setNewZipCode('');
-                    }}
-                    style={{ padding: '0.75rem', fontSize: '0.8rem', textTransform: 'uppercase' }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {/* User Historic Orders */}
-          <div className="profile-section" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-              Your Orders ({userOrders.length})
-            </h3>
-            
-            <div className="profile-orders-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
-              {loadingOrders ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Loading historical orders...</p>
-              ) : userOrders.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>No orders placed yet.</p>
-              ) : (
-                userOrders.map(order => (
-                  <div 
-                    key={order.id} 
-                    className="profile-order-card"
-                    style={{ padding: '1rem', border: '1px solid var(--border-color)', fontSize: '0.85rem' }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontWeight: 'bold' }}>
-                      <span>Order: {order.id}</span>
-                      <span style={{ 
-                        color: order.status === 'Delivered' ? '#2e7d32' : 
-                                order.status === 'Order Received' ? '#d84315' : 'var(--accent-color)',
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase'
-                      }}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.6rem' }}>
-                      AWB: <strong>{order.awb}</strong> ({order.courier})
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>Placed on {order.date}</span>
+          {/* TAB 3: ORDERS */}
+          {activeTab === 'orders' && (
+            <div className="profile-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.85rem', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                Your Orders
+              </h3>
+              
+              <div className="profile-orders-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'visible', maxHeight: 'none' }}>
+                {loadingOrders ? (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Loading historical orders...</p>
+                ) : userOrders.length === 0 ? (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>No orders placed yet.</p>
+                ) : (
+                  userOrders.map(order => (
+                    <div 
+                      key={order.id} 
+                      className="profile-order-card"
+                      style={{ borderRadius: 0 }}
+                    >
+                      <div className="profile-order-card__header">
+                        <span className="profile-order-card__id">Order #{order.id.slice(0, 8)}</span>
+                        <span className={`profile-order-card__status ${
+                          order.status === 'Delivered' ? 'delivered' : 'received'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.8rem', lineHeight: 1.4 }}>
+                        <div>AWB: <strong>{order.awb || 'N/A'}</strong> ({order.courier || 'Express'})</div>
+                        <div style={{ marginTop: '0.2rem' }}>Placed on: {order.date}</div>
+                      </div>
                       <button 
                         className="btn btn--outline" 
                         onClick={() => window.open(`/order-status?id=${order.id}`, '_blank')}
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', textTransform: 'uppercase' }}
+                        style={{ width: '100%', padding: '0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}
                       >
                         Track Status
                       </button>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
       </div>

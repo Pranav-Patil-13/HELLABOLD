@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
+import { cloudinaryOptimize } from '../utils/cloudinary';
+import BargainModal from './BargainModal';
 
-const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isLiked = false, onToggleLike }) => {
+const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onAddBargainedToCart, isLiked = false, onToggleLike, initialImageIndex = 0, cartItems = [], onOpenCart }) => {
   if (!product) {
     return (
       <div className="pdp-error">
@@ -11,9 +13,40 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
     );
   }
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const isInCart = cartItems.some(item => String(item.id) === String(product.id));
+  const [activeImageIndex, setActiveImageIndex] = useState(initialImageIndex);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [activeTab, setActiveTab] = useState('details'); // details, sizing, shipping
+  const [isBargainOpen, setIsBargainOpen] = useState(false);
+  const [showPeekingMascot, setShowPeekingMascot] = useState(false);
+  const [isWishlistHovered, setIsWishlistHovered] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    setActiveImageIndex(initialImageIndex);
+  }, [product.id, initialImageIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    if (product.label === 'out-of-stock') return;
+    if (showPeekingMascot) return;
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowPeekingMascot(true);
+    }, 3000);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+  };
 
   // Lightbox carousel states
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -23,27 +56,27 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
     if (!product.label) return null;
     let icon = null;
     let text = '';
-    
+
     if (product.label === 'selling-fast') {
       icon = (
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
         </svg>
       );
       text = 'Selling Fast';
     } else if (product.label === 'few-left') {
       icon = (
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
         </svg>
       );
       text = 'Few Left';
     } else if (product.label === 'out-of-stock') {
       icon = (
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
         </svg>
       );
       text = 'Out of Stock';
@@ -128,10 +161,13 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
         {/* Left Column: Image Gallery */}
         <div className="pdp-gallery">
           <div className="pdp-gallery__main">
-            <img 
-              src={product.images[activeImageIndex]} 
-              alt={`${product.title} view ${activeImageIndex + 1}`} 
-              className="pdp-gallery__main-img" 
+            <img
+              src={cloudinaryOptimize(product.images[activeImageIndex])}
+              alt={`${product.title} view ${activeImageIndex + 1}`}
+              className="pdp-gallery__main-img"
+              fetchPriority="high"
+              loading="eager"
+              style={{ viewTransitionName: `product-image-${product.id}` }}
             />
           </div>
         </div>
@@ -148,7 +184,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
               <span className="pdp-info__original-price">{product.original_price}</span>
             )}
           </div>
-          
+
           <p className="pdp-info__description">{product.description}</p>
 
           <hr className="pdp-divider" />
@@ -164,7 +200,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
                     className={`pdp-gallery__thumb-btn ${idx === activeImageIndex ? 'active' : ''}`}
                     onClick={() => setActiveImageIndex(idx)}
                   >
-                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="pdp-gallery__thumb-img" />
+                    <img src={cloudinaryOptimize(img)} alt={`Thumbnail ${idx + 1}`} className="pdp-gallery__thumb-img" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -191,48 +227,96 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
           )}
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-            <button 
-              className="btn btn--primary pdp-add-btn" 
-              onClick={() => onAddToCart(selectedSize)}
-              disabled={product.label === 'out-of-stock'}
-              style={{
-                flex: 1,
-                marginTop: 0,
-                ...(product.label === 'out-of-stock' ? { backgroundColor: '#e2e8f0', color: '#a0aec0', cursor: 'not-allowed', borderColor: '#e2e8f0' } : {})
-              }}
-            >
-              {product.label === 'out-of-stock' ? 'Sold Out' : 'Add to Bag'}
-            </button>
-            <button 
+            <div style={{ position: 'relative', flex: 1 }}>
+              <button
+                className={`btn pdp-add-btn ${isInCart ? 'btn--outline' : 'btn--primary'}`}
+                onClick={() => {
+                  if (isInCart) {
+                    if (onOpenCart) onOpenCart();
+                  } else {
+                    onAddToCart(selectedSize);
+                  }
+                }}
+                disabled={product.label === 'out-of-stock'}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                style={{
+                  width: '100%',
+                  marginTop: 0,
+                  ...(product.label === 'out-of-stock' ? { backgroundColor: '#e2e8f0', color: '#a0aec0', cursor: 'not-allowed', borderColor: '#e2e8f0' } : {})
+                }}
+              >
+                {product.label === 'out-of-stock' ? 'Sold Out' : isInCart ? 'View Bag' : 'Add to Bag'}
+              </button>
+
+              {/* Easter Egg Peeking Mascot */}
+              {showPeekingMascot && product.label !== 'out-of-stock' && (
+                <div
+                  className="pdp-easter-egg-peek"
+                  onClick={() => setIsBargainOpen(true)}
+                  style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    right: '-7px',
+                    width: '175px',
+                    height: 'auto',
+                    cursor: 'pointer',
+                    zIndex: 10,
+                    marginBottom: '-32px', // slight overlap with button
+                    transformOrigin: 'bottom center',
+                    animation: 'peekUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                  }}
+                  title="Negotiate with Hella!"
+                >
+                  <img
+                    src="https://res.cloudinary.com/dtx3jvozs/image/upload/f_auto,q_auto/v1780513301/hellabold/products/hella_bargain-Photoroom.png"
+                    alt="Bargain Easter Egg"
+                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <button
               className="btn btn--outline"
               onClick={() => onToggleLike && onToggleLike(product.id)}
+              onMouseEnter={() => setIsWishlistHovered(true)}
+              onMouseLeave={() => setIsWishlistHovered(false)}
               style={{
                 padding: '1rem 1.5rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderColor: 'var(--border-color)',
-                color: isLiked ? 'var(--accent-red)' : 'var(--text-primary)',
+                color: isWishlistHovered ? 'var(--white)' : (isLiked ? 'var(--accent-red)' : 'var(--text-primary)'),
                 transition: 'transform var(--transition-fast)'
               }}
               title={isLiked ? "Remove from wishlist" : "Add to wishlist"}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "var(--accent-red)" : "none"} stroke={isLiked ? "var(--accent-red)" : "currentColor"} strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "var(--accent-red)" : "none"} stroke={isLiked ? "var(--accent-red)" : (isWishlistHovered ? "var(--white)" : "currentColor")} strokeWidth="2">
                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
               </svg>
             </button>
           </div>
 
+          {/* Bargain Modal Trigger Overlay */}
+          <BargainModal
+            isOpen={isBargainOpen}
+            onClose={() => setIsBargainOpen(false)}
+            product={product}
+            onAddToCart={(bargainedProduct) => onAddBargainedToCart(bargainedProduct, selectedSize)}
+          />
+
           {/* Product Tabs / Accordion */}
           <div className="pdp-tabs">
             <div className="pdp-tabs__nav">
-              <button 
+              <button
                 className={`pdp-tabs__link ${activeTab === 'details' ? 'active' : ''}`}
                 onClick={() => setActiveTab('details')}
               >
                 Details & Care
               </button>
-              <button 
+              <button
                 className={`pdp-tabs__link ${activeTab === 'shipping' ? 'active' : ''}`}
                 onClick={() => setActiveTab('shipping')}
               >
@@ -277,12 +361,12 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
               <h3 className="pdp-gallery-strip__title">Customer Gallery</h3>
               <div className="pdp-gallery-strip__container">
                 {reviewImages.map((revImg, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className="pdp-gallery-strip__img-wrapper"
                     onClick={() => openLightbox(idx)}
                   >
-                    <img src={revImg.url} alt={`Customer review photo ${idx + 1}`} className="pdp-gallery-strip__img" />
+                    <img src={cloudinaryOptimize(revImg.url)} alt={`Customer review photo ${idx + 1}`} className="pdp-gallery-strip__img" loading="lazy" />
                   </div>
                 ))}
               </div>
@@ -309,11 +393,12 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
                   {review.images && review.images.length > 0 && (
                     <div className="pdp-review-card__images">
                       {review.images.map((imgUrl, idx) => (
-                        <img 
-                          key={idx} 
-                          src={imgUrl} 
-                          alt="Customer uploaded review detail" 
+                        <img
+                          key={idx}
+                          src={cloudinaryOptimize(imgUrl)}
+                          alt="Customer uploaded review detail"
                           className="pdp-review-card__thumbnail"
+                          loading="lazy"
                           onClick={() => {
                             const globalIdx = reviewImages.findIndex(ri => ri.url === imgUrl);
                             if (globalIdx > -1) openLightbox(globalIdx);
@@ -378,20 +463,20 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
       {lightboxOpen && (
         <div className="pdp-lightbox-overlay" onClick={closeLightbox}>
           <button className="pdp-lightbox__close" onClick={closeLightbox}>&times;</button>
-          
-          <button 
-            className="pdp-lightbox__nav pdp-lightbox__nav--prev" 
+
+          <button
+            className="pdp-lightbox__nav pdp-lightbox__nav--prev"
             onClick={(e) => { e.stopPropagation(); prevLightbox(); }}
           >
             &#8249;
           </button>
-          
+
           <div className="pdp-lightbox__modal" onClick={(e) => e.stopPropagation()}>
             <div className="pdp-lightbox__media">
-              <img 
-                src={reviewImages[lightboxIndex]?.url} 
-                alt="Enlarged customer upload review" 
-                className="pdp-lightbox__img" 
+              <img
+                src={cloudinaryOptimize(reviewImages[lightboxIndex]?.url)}
+                alt="Enlarged customer upload review"
+                className="pdp-lightbox__img"
               />
             </div>
             <div className="pdp-lightbox__sidebar">
@@ -409,9 +494,9 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
               <p className="pdp-lightbox__comment">{reviewImages[lightboxIndex]?.comment}</p>
             </div>
           </div>
-          
-          <button 
-            className="pdp-lightbox__nav pdp-lightbox__nav--next" 
+
+          <button
+            className="pdp-lightbox__nav pdp-lightbox__nav--next"
             onClick={(e) => { e.stopPropagation(); nextLightbox(); }}
           >
             &#8250;
@@ -429,6 +514,8 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, isL
                 key={item.id}
                 product={item}
                 onAddToCart={onAddToCart}
+                isInCart={cartItems.some(c => String(c.id) === String(item.id))}
+                onOpenCart={onOpenCart}
               />
             ))}
           </div>

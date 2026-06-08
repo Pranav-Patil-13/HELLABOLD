@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getOrders, updateOrderStatusInDB, getCurrentUser } from '../utils/supabase';
+import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const OrderStatus = () => {
   const [order, setOrder] = useState(null);
@@ -187,7 +188,7 @@ const OrderStatus = () => {
       {/* Shiprocket Tracker Header */}
       <div className="order-status__header">
         <div className="order-status__brand-shiprocket">
-          <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png" alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
+          <img src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png')} alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
           <span>×</span>
           <span className="shiprocket-badge">Shiprocket Fulfillment</span>
         </div>
@@ -255,8 +256,9 @@ const OrderStatus = () => {
               <div key={`${item.id}-${item.size}`} className="sidebar-item-row">
                 <div className="sidebar-item-img-wrap">
                   <img 
-                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png' : item.image} 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png') : cloudinaryOptimize(item.image)} 
                     alt={item.title} 
+                    loading="lazy"
                   />
                 </div>
                 <div className="sidebar-item-info">
