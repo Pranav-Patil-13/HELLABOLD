@@ -1,5 +1,9 @@
 {
   "appId": "com.hellabold.app",
   "appName": "HELLABOLD",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "url": "https://hellabold.vercel.app",
+    "cleartext": true
+  }
 }
