@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "mobile:build": "npm run build && npx cap copy && (cd ios/App && pod install || true)",
+    "mobile:prep": "mkdir -p mobile-dist && echo '<!DOCTYPE html><html><head><title>HELLABOLD</title></head><body></body></html>' > mobile-dist/index.html",
+    "mobile:build": "npm run mobile:prep && npx cap copy && (cd ios/App && pod install || true)",
     "mobile:open-ios": "npx cap open ios",
     "mobile:open-android": "npx cap open android"
   },
