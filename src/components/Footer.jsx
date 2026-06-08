@@ -4,6 +4,14 @@ import { supabase, isSupabaseConfigured } from '../utils/supabase';
 const Footer = ({ onNavigate }) => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadClick = () => {
+    setIsDownloading(true);
+    setTimeout(() => {
+      setIsDownloading(false);
+    }, 6000);
+  };
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
@@ -75,13 +83,30 @@ const Footer = ({ onNavigate }) => {
           </div>
           <div className="footer__app-downloads">
             <span className="footer__app-title">Mobile App</span>
-            <a href="/downloads/hellabold.apk" download className="footer__direct-download-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download Android APK
+            <a 
+              href="/downloads/hellabold.apk" 
+              download 
+              className={`footer__direct-download-btn ${isDownloading ? 'footer__direct-download-btn--disabled' : ''}`}
+              onClick={handleDownloadClick}
+              style={isDownloading ? { pointerEvents: 'none', opacity: 0.6 } : {}}
+            >
+              {isDownloading ? (
+                <>
+                  <svg className="footer__spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                    <line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="4.93" y1="4.93" x2="7.76" y2="7.76" /><line x1="16.24" y1="16.24" x2="19.07" y2="19.07" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /><line x1="4.93" y1="19.07" x2="7.76" y2="16.24" /><line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+                  </svg>
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Download Android APK
+                </>
+              )}
             </a>
           </div>
         </div>
