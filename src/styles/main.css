@@ -4126,6 +4126,44 @@ button {
     background-color: #111;
 }
 
+.footer__app-downloads {
+    margin-top: 2rem;
+}
+
+.footer__app-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 0.8rem;
+}
+
+.footer__direct-download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.footer__direct-download-btn:hover {
+    border-color: #fff;
+    background-color: #fff;
+    color: #000;
+    transform: translateY(-2px);
+}
+
 /* Nav columns */
 .footer__col-title {
     font-family: var(--font-body);

@@ -374,7 +374,7 @@ function App() {
         });
         transition.finished.then(() => {
           setPrevActiveProductId(null);
-        }).catch(() => {});
+        }).catch(() => { });
       } else {
         updateState();
       }
@@ -499,7 +499,7 @@ function App() {
         });
         transition.finished.then(() => {
           setPrevActiveProductId(null);
-        }).catch(() => {});
+        }).catch(() => { });
       } else {
         updateState();
       }
@@ -837,7 +837,7 @@ function App() {
             });
             transition.finished.then(() => {
               setPrevActiveProductId(null);
-            }).catch(() => {});
+            }).catch(() => { });
           } else {
             updateState();
           }
