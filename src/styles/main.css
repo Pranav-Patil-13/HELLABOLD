@@ -707,6 +707,43 @@ button {
     transform: scale(1.5);
 }
 
+.product-card__color-selector {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 12;
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 6px 10px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.product-card__color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--transition-fast);
+}
+
+.product-card__color-dot.active {
+    transform: scale(1.25);
+    border: 2px solid var(--accent-red);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.product-card__color-dot:hover:not(.active) {
+    transform: scale(1.15);
+}
+
 .product-card__info {
     text-align: center;
     margin-bottom: 1.5rem;

@@ -49,7 +49,17 @@ export const getProducts = async () => {
         data = seededData;
       }
     }
-    return data;
+    return data.map(p => {
+      const localProduct = productsJson.find(lp => lp.id === p.id);
+      if (localProduct && localProduct.colors) {
+        return {
+          ...p,
+          colors: localProduct.colors,
+          colorImages: localProduct.colorImages
+        };
+      }
+      return p;
+    });
   } else {
     const res = await fetch('/api/products');
     return res.json();
@@ -58,6 +68,8 @@ export const getProducts = async () => {
 
 export const saveProduct = async (productData, editingId = null) => {
   if (isSupabaseConfigured) {
+    const { colors, colorImages, ...dbPayload } = productData;
+
     const performSave = async (payload) => {
       if (editingId) {
         return await supabase
@@ -73,24 +85,67 @@ export const saveProduct = async (productData, editingId = null) => {
       }
     };
 
-    let { data, error } = await performSave(productData);
+    // Try saving the full payload (which might include colors and colorImages if they exist in schema)
+    let result = await performSave(productData);
+    let usedFallback = false;
 
-    if (error && (error.code === 'PGRST204' || (error.message && error.message.includes('original_price'))) && 'original_price' in productData) {
+    if (result.error && (result.error.code === '42703' || result.error.message?.includes('colors') || result.error.message?.includes('colorImages') || result.error.message?.includes('color_images'))) {
+      console.warn('Supabase products table is missing colors/colorImages columns. Retrying with standard fields only.');
+      result = await performSave(dbPayload);
+      usedFallback = true;
+    }
+
+    if (result.error && (result.error.code === 'PGRST204' || (result.error.message && result.error.message.includes('original_price')))) {
       console.warn('Supabase products table is missing original_price column. Retrying without it.');
-      const { original_price, ...fallbackPayload } = productData;
-      const retryResult = await performSave(fallbackPayload);
-      if (retryResult.error) throw retryResult.error;
-      if (retryResult.data && retryResult.data[0]) {
-        retryResult.data[0]._warning = "Supabase is missing the 'original_price' column. The product was saved, but your original price was not persisted. Please add the column in your Supabase dashboard.";
-      }
-      return retryResult.data;
+      const { original_price, ...minimalPayload } = dbPayload;
+      result = await performSave(minimalPayload);
+      usedFallback = true;
     }
 
-    if (error) {
-      console.error('Error saving product in Supabase:', error);
-      throw error;
+    if (result.error) {
+      console.error('Error saving product in Supabase:', result.error);
+      throw result.error;
     }
-    return data;
+
+    const savedRecord = result.data?.[0];
+    if (savedRecord) {
+      if (usedFallback) {
+        savedRecord._warning = "Product saved to Supabase. Note: Variant settings (colors, colorImages) were synced to products.json locally as columns do not exist in Supabase yet.";
+      }
+
+      // Sync local products.json
+      try {
+        const localRes = await fetch('/api/products');
+        if (localRes.ok) {
+          const localProducts = await localRes.json();
+          let updatedProducts;
+          
+          const localIndex = localProducts.findIndex(lp => lp.id === savedRecord.id);
+          const fullProduct = {
+            ...savedRecord,
+            colors: colors || undefined,
+            colorImages: colorImages || undefined
+          };
+
+          if (localIndex !== -1) {
+            localProducts[localIndex] = { ...localProducts[localIndex], ...fullProduct };
+            updatedProducts = [...localProducts];
+          } else {
+            updatedProducts = [...localProducts, fullProduct];
+          }
+
+          await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedProducts)
+          });
+        }
+      } catch (syncErr) {
+        console.error('Error syncing variant configuration locally:', syncErr);
+      }
+    }
+
+    return result.data;
   } else {
     // Local API mode: send complete list (handled inside AdminPanel using POST /api/products)
     const currentProducts = await getProducts();
@@ -156,26 +211,44 @@ export const getReviews = async () => {
     // Auto-seed if the database table is empty
     if (data && data.length === 0) {
       console.log('Supabase reviews table is empty. Auto-seeding from reviews.json...');
-      const reviewsToInsert = reviewsJson.map(r => ({
-        id: r.id,
-        product_id: r.productId,
-        author: r.author,
-        rating: r.rating,
-        comment: r.comment,
-        verified: r.verified,
-        images: r.images,
-        date: r.date
-      }));
-      const { data: seededData, error: seedError } = await supabase
-        .from('reviews')
-        .insert(reviewsToInsert)
-        .select();
+      
+      let productIds = [];
+      try {
+        const { data: dbProducts } = await supabase.from('products').select('id');
+        if (dbProducts) {
+          productIds = dbProducts.map(p => p.id);
+        }
+      } catch (e) {
+        console.warn('Could not fetch products to validate review foreign keys:', e);
+      }
 
-      if (seedError) {
-        console.error('Failed to auto-seed reviews:', seedError);
+      const reviewsToInsert = reviewsJson
+        .filter(r => productIds.includes(parseInt(r.productId, 10)))
+        .map(r => ({
+          id: r.id,
+          product_id: parseInt(r.productId, 10),
+          author: r.author,
+          rating: r.rating,
+          comment: r.comment,
+          verified: r.verified,
+          images: r.images,
+          date: r.date
+        }));
+
+      if (reviewsToInsert.length > 0) {
+        const { data: seededData, error: seedError } = await supabase
+          .from('reviews')
+          .insert(reviewsToInsert)
+          .select();
+
+        if (seedError) {
+          console.error('Failed to auto-seed reviews:', seedError);
+        } else {
+          console.log('Successfully seeded reviews:', seededData);
+          data = seededData;
+        }
       } else {
-        console.log('Successfully seeded reviews:', seededData);
-        data = seededData;
+        console.log('No reviews matched existing products. Seeding skipped.');
       }
     }
 

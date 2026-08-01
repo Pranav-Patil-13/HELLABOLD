@@ -78,6 +78,12 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
 
   const [feedbackImages, setFeedbackImages] = useState([]);
 
+  // Color Variants States
+  const [hasColors, setHasColors] = useState(false);
+  const [colors, setColors] = useState([]);
+  const [colorImages, setColorImages] = useState({});
+  const [newColorInput, setNewColorInput] = useState('');
+
   // Load products, images, and orders on mount
   useEffect(() => {
     fetchProducts();
@@ -236,7 +242,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
       sizes,
       images: selectedImages,
       category,
-      label
+      label,
+      colors: hasColors ? colors : null,
+      colorImages: hasColors ? colorImages : null
     };
 
     try {
@@ -263,9 +271,24 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     setDescription(product.description || '');
     setDetails(product.details?.join('\n') || '');
     setSizes(product.sizes || []);
-    setSelectedImages(product.images || []);
+    
+    // Load union of standard images and variant-specific color images
+    const unionImages = new Set(product.images || []);
+    if (product.colorImages) {
+      Object.values(product.colorImages).forEach(imgs => {
+        if (Array.isArray(imgs)) {
+          imgs.forEach(img => unionImages.add(img));
+        }
+      });
+    }
+    setSelectedImages(Array.from(unionImages));
+
     setCategory(product.category || 'Outerwear');
     setLabel(product.label || '');
+    const hasVariants = !!(product.colors && product.colors.length > 0);
+    setHasColors(hasVariants);
+    setColors(product.colors || []);
+    setColorImages(product.colorImages || {});
   };
 
   const handleDelete = async (id) => {
@@ -292,6 +315,10 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     setSelectedImages([]);
     setCategory('Outerwear');
     setLabel('');
+    setHasColors(false);
+    setColors([]);
+    setColorImages({});
+    setNewColorInput('');
   };
 
   const toggleSize = (size) => {
@@ -688,6 +715,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                 <label>Category *</label>
                 <select value={category} onChange={e => setCategory(e.target.value)} className="form-select" style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', fontFamily: 'inherit', fontSize: '0.95rem' }} required>
                   <option value="Tops">Tops</option>
+                  <option value="Women">Women</option>
+                  <option value="Men">Men</option>
                 </select>
               </div>
 
@@ -760,6 +789,133 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                     );
                   })}
                 </div>
+              </div>
+
+              <div className="form-group" style={{ border: '1px solid var(--border-color)', padding: '1.5rem', borderRadius: '6px', backgroundColor: '#fafafa', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', marginBottom: '1rem' }}>
+                  <input 
+                    type="checkbox" 
+                    id="enable-color-variants"
+                    checked={hasColors} 
+                    onChange={e => setHasColors(e.target.checked)} 
+                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="enable-color-variants" style={{ cursor: 'pointer', marginBottom: 0, fontWeight: 700, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Enable Color Variants</label>
+                </div>
+
+                {hasColors && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.8rem' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Add Color (e.g. Black, White)" 
+                        value={newColorInput} 
+                        onChange={e => setNewColorInput(e.target.value)}
+                        style={{ flex: 1, padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.95rem' }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (newColorInput.trim()) {
+                              const newColor = newColorInput.trim();
+                              if (!colors.includes(newColor)) {
+                                setColors([...colors, newColor]);
+                              }
+                              setNewColorInput('');
+                            }
+                          }
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        className="btn btn--outline" 
+                        onClick={() => {
+                          if (newColorInput.trim()) {
+                            const newColor = newColorInput.trim();
+                            if (!colors.includes(newColor)) {
+                              setColors([...colors, newColor]);
+                            }
+                            setNewColorInput('');
+                          }
+                        }}
+                        style={{ padding: '0.8rem 1.5rem' }}
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {colors.length === 0 ? (
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>No colors added yet. Type a color name above and click Add.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                        {colors.map(color => (
+                          <div key={color} style={{ border: '1px solid var(--border-color)', borderRadius: '4px', padding: '1rem', backgroundColor: '#fff' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1px solid #ccc', backgroundColor: color.toLowerCase() === 'white' ? '#fff' : color.toLowerCase() === 'black' ? '#000' : '#888' }} />
+                                {color}
+                              </span>
+                              <button 
+                                type="button" 
+                                style={{ background: 'none', border: 'none', color: '#e53e3e', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                                onClick={() => {
+                                  setColors(colors.filter(c => c !== color));
+                                  const updatedMap = { ...colorImages };
+                                  delete updatedMap[color];
+                                  setColorImages(updatedMap);
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+
+                            {selectedImages.length === 0 ? (
+                              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>Please select/upload images for the product first above.</p>
+                            ) : (
+                              <div>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>Select images for this variant:</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                  {selectedImages.map(imgUrl => {
+                                    const mappedList = colorImages[color] || [];
+                                    const isMapped = mappedList.includes(imgUrl);
+                                    return (
+                                      <div 
+                                        key={imgUrl} 
+                                        onClick={() => {
+                                          const currentList = colorImages[color] || [];
+                                          const newList = currentList.includes(imgUrl) 
+                                            ? currentList.filter(url => url !== imgUrl) 
+                                            : [...currentList, imgUrl];
+                                          setColorImages({
+                                            ...colorImages,
+                                            [color]: newList
+                                          });
+                                        }}
+                                        style={{ 
+                                          position: 'relative', 
+                                          width: '60px', 
+                                          height: '60px', 
+                                          cursor: 'pointer', 
+                                          border: isMapped ? '2.5px solid var(--accent-color)' : '1px solid var(--border-color)', 
+                                          borderRadius: '4px',
+                                          overflow: 'hidden'
+                                        }}
+                                      >
+                                        <img src={imgUrl} alt={color} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <div style={{ position: 'absolute', top: '2px', right: '2px', background: isMapped ? 'var(--accent-color)' : 'transparent', color: '#fff', borderRadius: '50%', width: '12px', height: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px' }}>
+                                          {isMapped ? '✓' : ''}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="form-group">

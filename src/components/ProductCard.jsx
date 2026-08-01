@@ -2,18 +2,26 @@ import React, { useState } from 'react';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, cardIndex = 99, isTransitionTarget = false, isInCart = false, onOpenCart }) => {
+  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
+  const displayImages = product.colorImages && selectedColor ? product.colorImages[selectedColor] : product.images;
+  
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
   const isAboveFold = cardIndex < 3;
 
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+    setCurrentImageIndex(0);
+  };
+
   const handleNextImage = (e) => {
     e.preventDefault();
-    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+    setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
   };
 
   const handlePrevImage = (e) => {
     e.preventDefault();
-    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+    setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
   };
 
   const handleLike = (e) => {
@@ -31,7 +39,8 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
       }
       return;
     }
-    onAddToCart();
+    const targetSize = selectedColor ? `${product.sizes?.[0] || 'M'} (${selectedColor})` : undefined;
+    onAddToCart(targetSize);
     setIsAdded(true);
     setTimeout(() => {
       setIsAdded(false);
@@ -49,7 +58,8 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
       e.target.closest('.carousel-btn') || 
       e.target.closest('.like-btn') || 
       e.target.closest('.add-to-cart-btn') ||
-      e.target.closest('.product-card__dot')
+      e.target.closest('.product-card__dot') ||
+      e.target.closest('.color-dot-btn')
     ) {
       return;
     }
@@ -61,7 +71,9 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
     if (currentMainImg) {
       currentMainImg.style.viewTransitionName = 'none';
     }
-    window.history.pushState({}, '', `/?product=${product.id}&img=${currentImageIndex}`);
+    // Pass color param to auto-select the chosen variant on PDP
+    const colorQuery = selectedColor ? `&color=${encodeURIComponent(selectedColor)}` : '';
+    window.history.pushState({}, '', `/?product=${product.id}&img=${currentImageIndex}${colorQuery}`);
     window.dispatchEvent(new Event('popstate'));
   };
 
@@ -109,7 +121,7 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
             {renderProductBadge()}
 
             <div className="product-card__carousel">
-              {product.images.map((imgSrc, index) => (
+              {displayImages.map((imgSrc, index) => (
                 <img 
                   key={index}
                   src={cloudinaryOptimize(imgSrc)} 
@@ -122,7 +134,7 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
               ))}
             </div>
             
-            {product.images.length > 1 && (
+            {displayImages.length > 1 && (
               <>
                 <button className="carousel-btn carousel-btn--prev" aria-label="Previous image" onClick={handlePrevImage}>‹</button>
                 <button className="carousel-btn carousel-btn--next" aria-label="Next image" onClick={handleNextImage}>›</button>
@@ -138,9 +150,9 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
             </button>
 
-            {product.images.length > 1 && (
+            {displayImages.length > 1 && (
               <div className="product-card__dots">
-                {product.images.map((_, index) => (
+                {displayImages.map((_, index) => (
                   <button
                     key={index}
                     className={`product-card__dot ${index === currentImageIndex ? 'active' : ''}`}
@@ -150,15 +162,41 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
                 ))}
               </div>
             )}
+
+            {product.colors && product.colors.length > 0 && (
+              <div className="product-card__color-selector">
+                {product.colors.map(color => {
+                  const isSelected = selectedColor === color;
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`product-card__color-dot ${isSelected ? 'active' : ''}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleColorChange(color);
+                      }}
+                      style={{
+                        backgroundColor: color.toLowerCase() === 'white' ? '#ffffff' : '#000000'
+                      }}
+                      title={color}
+                    />
+                  );
+                })}
+              </div>
+            )}
         </div>
-        <div className="product-card__info">
-            <h3 className="product-card__title">{product.title}</h3>
-            <p className="product-card__price">
-              <span>{product.price}</span>
-              {product.original_price && (
-                <span className="product-card__original-price">{product.original_price}</span>
-              )}
-            </p>
+        <div className="product-card__info" style={{ padding: '1.2rem 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                <h3 className="product-card__title" style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{product.title}</h3>
+                <p className="product-card__price" style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
+                  <span>{product.price}</span>
+                  {product.original_price && (
+                    <span className="product-card__original-price" style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginLeft: '8px', fontSize: '0.8rem' }}>{product.original_price}</span>
+                  )}
+                </p>
+            </div>
         </div>
         <button 
           className={`btn add-to-cart-btn ${isInCart ? 'btn--outline' : 'btn--primary'}`} 

@@ -13,18 +13,36 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
     );
   }
 
-  const isInCart = cartItems.some(item => String(item.id) === String(product.id));
-  const [activeImageIndex, setActiveImageIndex] = useState(initialImageIndex);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
+  const [selectedColor, setSelectedColor] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const colorParam = params.get('color');
+    if (colorParam && product.colors?.includes(colorParam)) {
+      return colorParam;
+    }
+    return product.colors?.[0] || '';
+  });
+  const targetSizeString = selectedColor ? `${selectedSize} (${selectedColor})` : selectedSize;
+  const isInCart = cartItems.some(item => String(item.id) === String(product.id) && item.size === targetSizeString);
+  const [activeImageIndex, setActiveImageIndex] = useState(initialImageIndex);
   const [activeTab, setActiveTab] = useState('details'); // details, sizing, shipping
   const [isBargainOpen, setIsBargainOpen] = useState(false);
   const [showPeekingMascot, setShowPeekingMascot] = useState(false);
   const [isWishlistHovered, setIsWishlistHovered] = useState(false);
   const hoverTimeoutRef = useRef(null);
 
+  const displayImages = product.colorImages && selectedColor ? product.colorImages[selectedColor] : product.images;
+
   useEffect(() => {
     setActiveImageIndex(initialImageIndex);
-  }, [product.id, initialImageIndex]);
+    const params = new URLSearchParams(window.location.search);
+    const colorParam = params.get('color');
+    if (colorParam && product.colors?.includes(colorParam)) {
+      setSelectedColor(colorParam);
+    } else {
+      setSelectedColor(product.colors?.[0] || '');
+    }
+  }, [product.id, initialImageIndex, product.colors]);
 
   useEffect(() => {
     return () => {
@@ -162,7 +180,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
         <div className="pdp-gallery">
           <div className="pdp-gallery__main">
             <img
-              src={cloudinaryOptimize(product.images[activeImageIndex])}
+              src={cloudinaryOptimize(displayImages[activeImageIndex] || displayImages[0])}
               alt={`${product.title} view ${activeImageIndex + 1}`}
               className="pdp-gallery__main-img"
               fetchPriority="high"
@@ -190,17 +208,39 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
           <hr className="pdp-divider" />
 
           {/* View Selector (Moved thumbnails here) */}
-          {product.images.length > 1 && (
+          {displayImages.length > 1 && (
             <div className="pdp-selector">
               <span className="pdp-selector__label">Select View</span>
               <div className="pdp-gallery__thumbnails">
-                {product.images.map((img, idx) => (
+                {displayImages.map((img, idx) => (
                   <button
                     key={idx}
                     className={`pdp-gallery__thumb-btn ${idx === activeImageIndex ? 'active' : ''}`}
                     onClick={() => setActiveImageIndex(idx)}
                   >
                     <img src={cloudinaryOptimize(img)} alt={`Thumbnail ${idx + 1}`} className="pdp-gallery__thumb-img" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Color Selector */}
+          {product.colors && product.colors.length > 0 && (
+            <div className="pdp-selector">
+              <span className="pdp-selector__label">Color: <strong>{selectedColor}</strong></span>
+              <div className="pdp-selector__options">
+                {product.colors.map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`pdp-size-chip ${selectedColor === color ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedColor(color);
+                      setActiveImageIndex(0);
+                    }}
+                  >
+                    {color}
                   </button>
                 ))}
               </div>
@@ -234,7 +274,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
                   if (isInCart) {
                     if (onOpenCart) onOpenCart();
                   } else {
-                    onAddToCart(selectedSize);
+                    onAddToCart(targetSizeString);
                   }
                 }}
                 disabled={product.label === 'out-of-stock'}

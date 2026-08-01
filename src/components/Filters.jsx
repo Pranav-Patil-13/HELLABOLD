@@ -10,7 +10,7 @@ const Filters = ({
   onReset
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const categoriesList = ['Tops'];
+  const categoriesList = ['Tops', 'Women', 'Men'];
   const sizesList = ['S', 'M', 'L', 'XL'];
 
   const hasActiveFilters = selectedCategories.length > 0 || selectedSizes.length > 0 || priceRange[1] < 1000;

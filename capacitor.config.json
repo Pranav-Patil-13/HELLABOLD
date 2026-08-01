@@ -3,7 +3,7 @@
   "appName": "HELLABOLD",
   "webDir": "mobile-dist",
   "server": {
-    "url": "https://hellabold.vercel.app",
+    "url": "https://hellabold.com",
     "cleartext": true
   }
 }

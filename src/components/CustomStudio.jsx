@@ -2,12 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 
-const CustomStudio = ({ onAddToCart, userProfile }) => {
-  const [gender, setGender] = useState('male'); // male, female
+const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
+  const [gender, setGender] = useState(initialGender); // male, female
   const [color, setColor] = useState('black'); // black, white
   const [garmentType, setGarmentType] = useState('tee'); // tee
   const [size, setSize] = useState('L');
   const [currentSide, setCurrentSide] = useState('front'); // 'front' or 'back'
+
+  useEffect(() => {
+    if (initialGender) {
+      setGender(initialGender);
+    }
+  }, [initialGender]);
+
 
   // Front side states
   const [frontImage, setFrontImage] = useState(null);

@@ -25,84 +25,10 @@ import FaqPage from './components/FaqPage';
 import PolicyPages from './components/PolicyPages';
 import CustomStudio from './components/CustomStudio';
 import ContactUs from './components/ContactUs';
+import EntryGate from './components/EntryGate';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 
-const SplashLoader = ({ onComplete }) => {
-  const [imgLoaded, setImgLoaded] = useState(false);
-
-  useEffect(() => {
-    if (imgLoaded) {
-      const timeout = setTimeout(() => {
-        onComplete();
-      }, 1500); // 1.5 second display duration after image loads
-      return () => clearTimeout(timeout);
-    }
-  }, [imgLoaded, onComplete]);
-
-  return (
-    <div style={{
-      display: imgLoaded ? 'flex' : 'none',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      background: 'radial-gradient(circle, rgb(145, 0, 32) 0%, #0c0002ea 100%)',
-      color: '#ffffff',
-      fontFamily: 'Montserrat, sans-serif',
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
-      <style>{`
-        .clean-loader-line {
-          width: 80px;
-          height: 2px;
-          background-color: rgba(255, 255, 255, 0.2);
-          position: relative;
-          overflow: hidden;
-          border-radius: 4px;
-          margin-top: 2rem;
-        }
-        .clean-loader-progress {
-          position: absolute;
-          height: 100%;
-          width: 40px;
-          background-color: #ffffff;
-          animation: lineLoad 1.2s infinite linear;
-        }
-        @keyframes lineLoad {
-          0% { left: -50px; }
-          100% { left: 90px; }
-        }
-      `}</style>
-
-      <img
-        src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1780463490/hellabold/products/hella_loading.png')}
-        alt="HELLABOLD Mascot"
-        onLoad={() => setImgLoaded(true)}
-        onError={() => setImgLoaded(true)}
-        style={{
-          height: '180px',
-          width: 'auto',
-          marginBottom: '1.8rem'
-        }}
-      />
-      <div style={{
-        fontSize: '2.4rem',
-        letterSpacing: '8px',
-        textTransform: 'uppercase',
-        color: '#ffffff',
-        fontWeight: 900,
-        textAlign: 'center'
-      }}>
-        HELLABOLD
-      </div>
-      <div className="clean-loader-line">
-        <div className="clean-loader-progress"></div>
-      </div>
-    </div>
-  );
-};
 
 
 // ── Admin email allowlist (Supabase-auth-verified, not client-side) ──────────
@@ -203,13 +129,21 @@ function App() {
   const [isSizeGuidePage, setIsSizeGuidePage] = useState(false);
   const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
   const [isContactPage, setIsContactPage] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
+    const passedSession = sessionStorage.getItem('hb_gate_passed') === 'true';
+    return isMainHome && !passedSession;
+  });
+  const [genderPreference, setGenderPreference] = useState(() => {
+    return localStorage.getItem('hb_gender_preference') || 'male';
+  });
   const [adminAuthenticated, setAdminAuthenticated] = useState(() =>
     localStorage.getItem(ADMIN_SESSION_KEY) === ADMIN_PANEL_PASSWORD
   );
   const [reviews, setReviews] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
-  const [typewriterDone, setTypewriterDone] = useState(false);
+
+
 
   // Auth & Profile states
   const [userProfile, setUserProfile] = useState(null);
@@ -228,7 +162,20 @@ function App() {
   };
 
   // Filters, Search, and Discount States
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const categoryParam = params.get('category');
+    if (categoryParam) {
+      return categoryParam.split(',').filter(Boolean);
+    }
+    const passedSession = sessionStorage.getItem('hb_gate_passed') === 'true';
+    if (passedSession) {
+      const pref = localStorage.getItem('hb_gender_preference');
+      if (pref === 'male') return ['Men'];
+      if (pref === 'female') return ['Women'];
+    }
+    return [];
+  });
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [priceRange, setPriceRange] = useState([499, 1000]);
   const [sortBy, setSortBy] = useState('default');
@@ -380,22 +327,12 @@ function App() {
       }
     };
 
-    const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
-    if (!isMainHome) {
-      setTypewriterDone(true);
-    }
-
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
 
-  useEffect(() => {
-    if (typewriterDone) {
-      setLoading(false);
-    }
-  }, [typewriterDone]);
 
   // Listen to other tabs' storage changes for real-time synchronization
   useEffect(() => {
@@ -683,8 +620,19 @@ function App() {
   const activeProduct = products.find(p => p.id === activeProductId);
 
   if (loading) {
-    return <SplashLoader onComplete={() => setTypewriterDone(true)} />;
+    return (
+      <EntryGate 
+        onSelectGender={(gender) => {
+          setGenderPreference(gender);
+          localStorage.setItem('hb_gender_preference', gender);
+          sessionStorage.setItem('hb_gate_passed', 'true');
+          setSelectedCategories(gender === 'female' ? ['Women'] : ['Men']);
+          setLoading(false);
+        }}
+      />
+    );
   }
+
 
   if (isAdmin) {
     // ── Not signed in: show sign-in prompt with AuthModal accessible ─────────
@@ -900,9 +848,10 @@ function App() {
         </>
       ) : isCustomStudioPage ? (
         <>
-          <CustomStudio onAddToCart={handleAddToCart} userProfile={userProfile} />
+          <CustomStudio onAddToCart={handleAddToCart} userProfile={userProfile} initialGender={genderPreference} />
           <Footer onNavigate={handleFooterNavigation} />
         </>
+
       ) : isContactPage ? (
         <>
           <ContactUs />
@@ -987,7 +936,7 @@ function App() {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      onAddToCart={() => handleAddToCart(product)}
+                      onAddToCart={(size) => handleAddToCart(product, size)}
                       isLiked={likedIds.includes(product.id)}
                       onToggleLike={handleToggleLike}
                       cardIndex={idx}
