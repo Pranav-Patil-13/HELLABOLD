@@ -652,7 +652,7 @@ button {
     background: rgba(255, 255, 255, 0.8);
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -718,7 +718,7 @@ button {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 6px 10px;
-    border-radius: 30px;
+    border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.4);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: transform var(--transition-fast), opacity var(--transition-fast);
@@ -727,7 +727,7 @@ button {
 .product-card__color-dot {
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    border-radius: 6px;
     border: 1px solid rgba(0, 0, 0, 0.2);
     cursor: pointer;
     padding: 0;

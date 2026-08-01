@@ -473,17 +473,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   });
 
   const timelineData = Object.entries(salesByDate).slice(0, 7).reverse();
-  const displayTimeline = timelineData.length > 0 ? timelineData : [
-    ['Mon', 12000],
-    ['Tue', 18500],
-    ['Wed', 9000],
-    ['Thu', 24000],
-    ['Fri', 31000],
-    ['Sat', 15000],
-    ['Sun', 42000]
-  ];
+  const displayTimeline = timelineData;
   
-  const maxSaleValue = Math.max(...displayTimeline.map(item => item[1]), 1000);
+  const maxSaleValue = displayTimeline.length > 0 ? Math.max(...displayTimeline.map(item => item[1]), 1000) : 1000;
 
   if (!userProfile || userProfile.role !== 'admin') {
     return (
@@ -587,26 +579,32 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
             <div className="admin-card chart-card">
               <h3>Sales Timeline (INR)</h3>
               <div className="sales-chart-wrapper">
-                <svg viewBox="0 0 500 220" className="sales-svg-chart">
-                  <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
-                  <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
-                  <line x1="40" y1="120" x2="480" y2="120" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
-                  <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                {displayTimeline.length === 0 ? (
+                  <p className="empty-message" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '180px', color: 'var(--text-secondary)', margin: 0 }}>
+                    No sales recorded yet.
+                  </p>
+                ) : (
+                  <svg viewBox="0 0 500 220" className="sales-svg-chart">
+                    <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                    <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                    <line x1="40" y1="120" x2="480" y2="120" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
+                    <line x1="40" y1="170" x2="480" y2="170" stroke="rgba(0,0,0,0.05)" strokeDasharray="4 4" />
 
-                  {displayTimeline.map((item, idx) => {
-                    const x = 60 + idx * 60;
-                    const height = (item[1] / maxSaleValue) * 130;
-                    const y = 170 - height;
-                    return (
-                      <g key={idx} className="chart-bar-group">
-                        <rect x={x} y={y} width="24" height={height} fill="var(--accent-color)" rx="2" />
-                        <text x={x + 12} y="192" textAnchor="middle" className="chart-label-text">{item[0]}</text>
-                        <text x={x + 12} y={y - 8} textAnchor="middle" className="chart-val-text">{new Intl.NumberFormat('en-IN', { notation: 'compact' }).format(item[1])}</text>
-                      </g>
-                    );
-                  })}
-                  <line x1="40" y1="170" x2="480" y2="170" stroke="var(--accent-color)" strokeWidth="1.5" />
-                </svg>
+                    {displayTimeline.map((item, idx) => {
+                      const x = 60 + idx * 60;
+                      const height = (item[1] / maxSaleValue) * 130;
+                      const y = 170 - height;
+                      return (
+                        <g key={idx} className="chart-bar-group">
+                          <rect x={x} y={y} width="24" height={height} fill="var(--accent-color)" rx="2" />
+                          <text x={x + 12} y="192" textAnchor="middle" className="chart-label-text">{item[0]}</text>
+                          <text x={x + 12} y={y - 8} textAnchor="middle" className="chart-val-text">{new Intl.NumberFormat('en-IN', { notation: 'compact' }).format(item[1])}</text>
+                        </g>
+                      );
+                    })}
+                    <line x1="40" y1="170" x2="480" y2="170" stroke="var(--accent-color)" strokeWidth="1.5" />
+                  </svg>
+                )}
               </div>
             </div>
 
