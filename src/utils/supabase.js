@@ -51,14 +51,12 @@ export const getProducts = async () => {
     }
     return data.map(p => {
       const localProduct = productsJson.find(lp => lp.id === p.id);
-      if (localProduct && localProduct.colors) {
-        return {
-          ...p,
-          colors: localProduct.colors,
-          colorImages: localProduct.colorImages
-        };
-      }
-      return p;
+      return {
+        ...p,
+        colors: localProduct?.colors || p.colors || null,
+        colorImages: localProduct?.colorImages || p.colorImages || null,
+        skus: localProduct?.skus || p.skus || null
+      };
     });
   } else {
     const res = await fetch('/api/products');
@@ -68,7 +66,7 @@ export const getProducts = async () => {
 
 export const saveProduct = async (productData, editingId = null) => {
   if (isSupabaseConfigured) {
-    const { colors, colorImages, ...dbPayload } = productData;
+    const { colors, colorImages, skus, ...dbPayload } = productData;
 
     const performSave = async (payload) => {
       if (editingId) {
@@ -89,8 +87,8 @@ export const saveProduct = async (productData, editingId = null) => {
     let result = await performSave(productData);
     let usedFallback = false;
 
-    if (result.error && (result.error.code === '42703' || result.error.message?.includes('colors') || result.error.message?.includes('colorImages') || result.error.message?.includes('color_images'))) {
-      console.warn('Supabase products table is missing colors/colorImages columns. Retrying with standard fields only.');
+    if (result.error && (result.error.code === '42703' || result.error.message?.includes('colors') || result.error.message?.includes('colorImages') || result.error.message?.includes('skus') || result.error.message?.includes('color_images'))) {
+      console.warn('Supabase products table is missing colors/colorImages/skus columns. Retrying with standard fields only.');
       result = await performSave(dbPayload);
       usedFallback = true;
     }
@@ -110,7 +108,7 @@ export const saveProduct = async (productData, editingId = null) => {
     const savedRecord = result.data?.[0];
     if (savedRecord) {
       if (usedFallback) {
-        savedRecord._warning = "Product saved to Supabase. Note: Variant settings (colors, colorImages) were synced to products.json locally as columns do not exist in Supabase yet.";
+        savedRecord._warning = "Product saved to Supabase. Note: Variant settings (colors, colorImages, skus) were synced to products.json locally as columns do not exist in Supabase yet.";
       }
 
       // Sync local products.json
@@ -124,7 +122,8 @@ export const saveProduct = async (productData, editingId = null) => {
           const fullProduct = {
             ...savedRecord,
             colors: colors || undefined,
-            colorImages: colorImages || undefined
+            colorImages: colorImages || undefined,
+            skus: skus || undefined
           };
 
           if (localIndex !== -1) {

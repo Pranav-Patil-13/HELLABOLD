@@ -371,6 +371,35 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     }
   };
 
+  const handleEditSku = async (product, size, currentSku) => {
+    const newSku = prompt(`Enter custom SKU for ${product.title} (Size: ${size}):`, currentSku);
+    if (newSku === null) return;
+    
+    const updatedSkus = {
+      ...(product.skus || {}),
+      [size]: newSku.trim() || undefined
+    };
+    
+    if (updatedSkus[size] === undefined) {
+      delete updatedSkus[size];
+    }
+    
+    const updatedProduct = {
+      ...product,
+      skus: updatedSkus
+    };
+    
+    try {
+      await saveProduct(updatedProduct, product.id);
+      const allProducts = await getProducts();
+      onProductsUpdated(allProducts);
+      setProducts(allProducts);
+    } catch (err) {
+      console.error('Error updating SKU:', err);
+      alert('Failed to update SKU: ' + (err.message || err));
+    }
+  };
+
   const toggleImageSelect = (imgUrl) => {
     if (selectedImages.includes(imgUrl)) {
       setSelectedImages(selectedImages.filter(url => url !== imgUrl));
@@ -707,7 +736,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                     {products.flatMap(p => {
                       const sizesList = p.sizes && p.sizes.length > 0 ? p.sizes : ['One Size'];
                       return sizesList.map(size => {
-                        const skuCode = `HB-${p.id}-${size}`;
+                        const customSku = p.skus?.[size];
+                        const skuCode = customSku || `HB-${p.id}-${size}`;
                         return (
                           <tr key={`${p.id}-${size}`}>
                             <td style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
@@ -716,7 +746,21 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                             </td>
                             <td>{p.category}</td>
                             <td><span className="table-promo-badge" style={{ backgroundColor: '#f1f1f1', color: '#111' }}>{size}</span></td>
-                            <td><code style={{ fontSize: '0.85rem', fontWeight: 'bold', letterSpacing: '0.5px' }}>{skuCode}</code></td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <code style={{ fontSize: '0.85rem', fontWeight: 'bold', letterSpacing: '0.5px', color: customSku ? 'var(--accent-color)' : 'inherit' }}>{skuCode}</code>
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleEditSku(p, size, skuCode)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'inline-flex', alignItems: 'center', opacity: 0.6 }}
+                                  title="Edit SKU Code"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
                             <td style={{ textAlign: 'right', fontWeight: '600' }}>{p.price}</td>
                           </tr>
                         );

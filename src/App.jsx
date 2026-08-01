@@ -494,6 +494,7 @@ function App() {
         image: product.images?.[0] || '',
         size: size,
         quantity: 1,
+        sku: product.skus?.[size] || null,
         customDesign: product.customDesign || null,
         customDesignName: product.customDesignName || '',
         customDesignBack: product.customDesignBack || null,

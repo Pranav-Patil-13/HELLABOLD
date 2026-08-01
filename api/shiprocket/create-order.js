@@ -104,7 +104,7 @@ export default async function handler(req, res) {
     const unitPrice = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
     return {
       name: `${item.title} (Size: ${item.size})`,
-      sku: `HB-${item.id}-${item.size}`,
+      sku: item.sku || `HB-${item.id}-${item.size}`,
       units: item.quantity || 1,
       selling_price: unitPrice,
       discount: 0,
