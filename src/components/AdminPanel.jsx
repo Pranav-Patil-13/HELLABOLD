@@ -686,6 +686,48 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               </div>
             </div>
           </div>
+
+          {/* Product SKU Directory */}
+          <div className="admin-card table-card" style={{ marginTop: '2rem' }}>
+            <h3>Product SKU & Variant Directory</h3>
+            <p className="kpi-card__indicator" style={{ marginBottom: '1.5rem', textTransform: 'none' }}>Auto-generated SKUs used for Shiprocket shipping integrations</p>
+            <div className="table-wrapper">
+              {products.length === 0 ? <p className="empty-message">No products in catalog.</p> : (
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Category</th>
+                      <th>Size Variant</th>
+                      <th>SKU Code</th>
+                      <th style={{ textAlign: 'right' }}>Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.flatMap(p => {
+                      const sizesList = p.sizes && p.sizes.length > 0 ? p.sizes : ['One Size'];
+                      return sizesList.map(size => {
+                        const skuCode = `HB-${p.id}-${size}`;
+                        return (
+                          <tr key={`${p.id}-${size}`}>
+                            <td style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                              <img src={p.images?.[0] || cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png')} alt={p.title} className="table-product-img" />
+                              <span className="table-product-title">{p.title}</span>
+                            </td>
+                            <td>{p.category}</td>
+                            <td><span className="table-promo-badge" style={{ backgroundColor: '#f1f1f1', color: '#111' }}>{size}</span></td>
+                            <td><code style={{ fontSize: '0.85rem', fontWeight: 'bold', letterSpacing: '0.5px' }}>{skuCode}</code></td>
+                            <td style={{ textAlign: 'right', fontWeight: '600' }}>{p.price}</td>
+                          </tr>
+                        );
+                      });
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
         </div>
       )}
 
