@@ -105,6 +105,20 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
         </svg>
       );
       text = 'Out of Stock';
+    } else if (product.label === 'exclusive') {
+      icon = (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+        </svg>
+      );
+      text = 'Exclusive';
+    } else if (product.label === 'new') {
+      icon = (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      );
+      text = 'New Drop';
     }
 
     return (
@@ -116,7 +130,8 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
   };
 
   return (
-    <article className="product-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
+    <article className={`product-card ${product.label === 'exclusive' ? 'product-card--exclusive' : ''}`} onClick={handleCardClick} style={{ cursor: 'pointer' }}>
+      <div className="product-card__main-wrapper">
         <div className="product-card__image-container">
             {renderProductBadge()}
 
@@ -163,7 +178,7 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
               </div>
             )}
 
-            {product.colors && product.colors.length > 0 && (
+            {product.label !== 'exclusive' && product.colors && product.colors.length > 0 && (
               <div className="product-card__color-selector">
                 {product.colors.map(color => {
                   const isSelected = selectedColor === color;
@@ -187,7 +202,7 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
               </div>
             )}
         </div>
-        <div className="product-card__info" style={{ padding: '1.2rem 0' }}>
+        <div className="product-card__info" style={{ padding: '1rem 0' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
                 <h3 className="product-card__title" style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{product.title}</h3>
                 <p className="product-card__price" style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
@@ -198,13 +213,14 @@ const ProductCard = ({ product, onAddToCart, isLiked = false, onToggleLike, card
                 </p>
             </div>
         </div>
+      </div>
         <button 
           className={`btn add-to-cart-btn ${isInCart ? 'btn--outline' : 'btn--primary'}`} 
           onClick={handleAddToCartClick}
           disabled={product.label === 'out-of-stock'}
           style={isAdded ? { backgroundColor: 'var(--text-primary)' } : product.label === 'out-of-stock' ? { backgroundColor: '#e2e8f0', color: '#a0aec0', cursor: 'not-allowed', borderColor: '#e2e8f0' } : {}}
         >
-          {product.label === 'out-of-stock' ? 'Sold Out' : isAdded ? 'Added' : isInCart ? 'View Cart' : 'Add to Cart'}
+          {product.label === 'out-of-stock' ? 'Sold Out' : isAdded ? 'Added' : isInCart ? 'View bag' : 'Add To Bag'}
         </button>
     </article>
   );

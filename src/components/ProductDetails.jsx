@@ -2,8 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 import BargainModal from './BargainModal';
+import { trackViewItem } from '../utils/analytics';
 
 const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onAddBargainedToCart, isLiked = false, onToggleLike, initialImageIndex = 0, cartItems = [], onOpenCart }) => {
+  useEffect(() => {
+    if (product) {
+      trackViewItem(product);
+    }
+  }, [product]);
+
   if (!product) {
     return (
       <div className="pdp-error">
@@ -98,6 +105,20 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
         </svg>
       );
       text = 'Out of Stock';
+    } else if (product.label === 'exclusive') {
+      icon = (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+        </svg>
+      );
+      text = 'Exclusive';
+    } else if (product.label === 'new') {
+      icon = (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      );
+      text = 'New Drop';
     }
 
     return (
@@ -225,8 +246,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
             </div>
           )}
 
-          {/* Color Selector */}
-          {product.colors && product.colors.length > 0 && (
+          {product.label !== 'exclusive' && product.colors && product.colors.length > 0 && (
             <div className="pdp-selector">
               <span className="pdp-selector__label">Color: <strong>{selectedColor}</strong></span>
               <div className="pdp-selector__options">
@@ -286,7 +306,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
                   ...(product.label === 'out-of-stock' ? { backgroundColor: '#e2e8f0', color: '#a0aec0', cursor: 'not-allowed', borderColor: '#e2e8f0' } : {})
                 }}
               >
-                {product.label === 'out-of-stock' ? 'Sold Out' : isInCart ? 'View Bag' : 'Add to Bag'}
+                {product.label === 'out-of-stock' ? 'Sold Out' : isInCart ? 'View bag' : 'Add To Bag'}
               </button>
 
               {/* Easter Egg Peeking Mascot */}

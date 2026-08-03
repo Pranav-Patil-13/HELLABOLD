@@ -5,8 +5,8 @@ const EntryGate = ({ onSelectGender }) => {
   const [maleLoaded, setMaleLoaded] = useState(false);
   const [femaleLoaded, setFemaleLoaded] = useState(false);
 
-  const maleImage = cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1780459388/hellabold/products/model_male_white.png');
-  const femaleImage = cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1780459369/hellabold/products/Model_Female_White.png');
+  const maleImage = cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1780459363/hellabold/products/Hellabold_Exclusive.png');
+  const femaleImage = cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1780459364/hellabold/products/Hellabold_Exclusive_Female.png');
 
   return (
     <div className="entry-gate">

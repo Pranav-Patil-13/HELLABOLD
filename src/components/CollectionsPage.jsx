@@ -30,6 +30,20 @@ const collections = [
     category: 'Tops,Bottoms'
   },
   {
+    id: 'ink-and-honor',
+    title: 'INK and HONOR',
+    subtitle: 'A Collection of Contrast and Courage',
+    description: 'Featuring THE SAMURAI, SILENT VOID, ARCHITECT OF DOOM, RED REQUIEM, and LOST SIGNAL. Bold prints that command respect.',
+    images: [
+      cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product9_A.png'),
+      cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product4_A.png'),
+      cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product7_A.png'),
+      cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/product5_A.png')
+    ],
+    count: 5,
+    category: ''
+  },
+  {
     id: 'all',
     title: 'The Full Collection',
     subtitle: 'Every Piece. Every Statement.',
@@ -41,9 +55,11 @@ const collections = [
 ];
 
 const CollectionsPage = () => {
-  const handleShopCollection = (category) => {
-    if (category) {
-      window.location.href = `/?category=${encodeURIComponent(category)}`;
+  const handleShopCollection = (collection) => {
+    if (collection.id === 'ink-and-honor') {
+      window.location.href = `/?collection=ink-and-honor`;
+    } else if (collection.category) {
+      window.location.href = `/?category=${encodeURIComponent(collection.category)}`;
     } else {
       window.location.href = '/';
     }
@@ -75,12 +91,25 @@ const CollectionsPage = () => {
             className={`collection-card ${index % 2 === 1 ? 'collection-card--reverse' : ''}`}
           >
             <div className="collection-card__image-wrapper">
-              <img
-                src={collection.image}
-                alt={collection.title}
-                className="collection-card__image"
-                loading={index === 0 ? 'eager' : 'lazy'}
-              />
+              {collection.images ? (
+                <div className="collection-card__image-grid">
+                  {collection.images.map((img, i) => (
+                    <img
+                      key={i}
+                      src={img}
+                      alt={`${collection.title} item ${i + 1}`}
+                      className="collection-card__grid-image"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <img
+                  src={collection.image}
+                  alt={collection.title}
+                  className="collection-card__image"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
+              )}
             </div>
             <div className="collection-card__content">
               <span className="collection-card__count">{collection.count} {collection.count === 1 ? 'Piece' : 'Pieces'}</span>
@@ -89,7 +118,7 @@ const CollectionsPage = () => {
               <p className="collection-card__description">{collection.description}</p>
               <button
                 className="btn collection-card__btn"
-                onClick={() => handleShopCollection(collection.category)}
+                onClick={() => handleShopCollection(collection)}
               >
                 Shop the Collection
               </button>

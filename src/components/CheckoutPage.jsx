@@ -3,6 +3,7 @@ import { triggerConfettiBurst } from '../utils/confetti';
 import { createOrder, updateProfile } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
+import { trackPurchase } from '../utils/analytics';
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -331,6 +332,12 @@ const CheckoutPage = ({
     const existingOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
     existingOrders.push(finalizedOrder);
     localStorage.setItem('hellabold_orders', JSON.stringify(existingOrders));
+
+    try {
+      trackPurchase(finalizedOrder);
+    } catch (e) {
+      console.error('Failed to dispatch purchase analytics event:', e);
+    }
 
     setPlacedOrder(finalizedOrder);
     setStep('success');

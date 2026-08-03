@@ -28,6 +28,7 @@ import ContactUs from './components/ContactUs';
 import EntryGate from './components/EntryGate';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
+import { initAnalytics, trackPageView, trackAddToCart, trackInitiateCheckout } from './utils/analytics';
 
 
 
@@ -177,18 +178,28 @@ function App() {
     return [];
   });
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [priceRange, setPriceRange] = useState([499, 1000]);
+   const [priceRange, setPriceRange] = useState([499, 1000]);
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(() => {
     const saved = localStorage.getItem('hellabold_discount');
     return saved ? JSON.parse(saved) : null;
   });
+  const [selectedCollection, setSelectedCollection] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('collection') || null;
+  });
 
   useEffect(() => {
+    initAnalytics();
     const params = new URLSearchParams(window.location.search);
     const productId = params.get('product');
     const categoryParam = params.get('category');
+    const collectionParam = params.get('collection');
+
+    if (collectionParam) {
+      setSelectedCollection(collectionParam);
+    }
 
     if (categoryParam) {
       const categories = categoryParam.split(',').filter(Boolean);
@@ -284,6 +295,7 @@ function App() {
       const params = new URLSearchParams(window.location.search);
       const productId = params.get('product');
       const categoryParam = params.get('category');
+      const collectionParam = params.get('collection');
 
       const updateState = () => {
         setIsAdmin(path === '/admin');
@@ -303,6 +315,12 @@ function App() {
         setActiveProductId(productId ? parseInt(productId, 10) : null);
         const imageIndexParam = params.get('img');
         setActiveImageIndex(imageIndexParam ? parseInt(imageIndexParam, 10) : 0);
+
+        if (collectionParam) {
+          setSelectedCollection(collectionParam);
+        } else {
+          setSelectedCollection(null);
+        }
 
         if (categoryParam) {
           setSelectedCategories([categoryParam]);
@@ -332,6 +350,61 @@ function App() {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
+
+  // Conversion Event: SPA Page View Tracker
+  useEffect(() => {
+    let path = window.location.pathname;
+    let title = 'Shop';
+
+    if (activeProductId) {
+      path = `${path}?product=${activeProductId}`;
+      title = `Product Details (ID: ${activeProductId})`;
+    } else if (isCheckoutPage) {
+      path = '/checkout';
+      title = 'Checkout';
+    } else if (isOrderStatusPage) {
+      path = '/order-status';
+      title = 'Order Status';
+    } else if (isCollectionsPage) {
+      path = '/collections';
+      title = 'Collections';
+    } else if (isCustomStudioPage) {
+      path = '/custom-studio';
+      title = 'Custom Studio';
+    } else if (isAboutPage) {
+      path = '/about';
+      title = 'About Us';
+    } else if (isPrivacyPage) {
+      path = '/privacy';
+      title = 'Privacy Policy';
+    } else if (isTermsPage) {
+      path = '/terms';
+      title = 'Terms of Service';
+    } else if (isFaqPage) {
+      path = '/faqs';
+      title = 'FAQs';
+    } else if (isContactPage) {
+      path = '/contact';
+      title = 'Contact Us';
+    } else if (selectedCollection) {
+      path = `${path}?collection=${selectedCollection}`;
+      title = `${selectedCollection.replace(/-/g, ' ')} Collection`;
+    }
+
+    trackPageView(path, `HELLABOLD | ${title}`);
+  }, [
+    activeProductId,
+    isCheckoutPage,
+    isOrderStatusPage,
+    isCollectionsPage,
+    isCustomStudioPage,
+    isAboutPage,
+    isPrivacyPage,
+    isTermsPage,
+    isFaqPage,
+    isContactPage,
+    selectedCollection
+  ]);
 
 
   // Listen to other tabs' storage changes for real-time synchronization
@@ -503,6 +576,7 @@ function App() {
       };
       newItems = [...cartItems, newItem];
     }
+    trackAddToCart(product, 1, product.colors?.[0] || '', size);
     saveCart(newItems);
     setIsCartOpen(true);
   };
@@ -553,6 +627,8 @@ function App() {
     setSelectedCategories([]);
     setSelectedSizes([]);
     setPriceRange([499, 1000]);
+    setSelectedCollection(null);
+    window.history.pushState({}, '', '/');
   };
 
   const handleFooterNavigation = (path) => {
@@ -561,6 +637,7 @@ function App() {
     const params = new URLSearchParams(queryStr);
     const productId = params.get('product');
     const categoryParam = params.get('category');
+    const collectionParam = params.get('collection');
 
     setIsAdmin(path.startsWith('/admin'));
     setIsCheckoutPage(path.startsWith('/checkout'));
@@ -580,6 +657,12 @@ function App() {
     const imageIndexParam = params.get('img');
     setActiveImageIndex(imageIndexParam ? parseInt(imageIndexParam, 10) : 0);
 
+    if (collectionParam) {
+      setSelectedCollection(collectionParam);
+    } else {
+      setSelectedCollection(null);
+    }
+
     if (categoryParam) {
       setSelectedCategories([categoryParam]);
     } else {
@@ -592,14 +675,19 @@ function App() {
 
   // 1. Filtering logic
   const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+    if (selectedCollection === 'ink-and-honor') {
+      if (![1, 5, 6, 8, 9].includes(product.id)) return false;
+    } else {
+      const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+      if (!matchesCategory) return false;
+    }
     const matchesSize = selectedSizes.length === 0 || product.sizes?.some(size => selectedSizes.includes(size));
     const priceNum = parseFloat(product.price.replace(/[^0-9.]/g, ''));
     const matchesPrice = priceNum >= priceRange[0] && priceNum <= priceRange[1];
     const matchesSearch = !searchQuery ||
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSize && matchesPrice && matchesSearch;
+    return matchesSize && matchesPrice && matchesSearch;
   });
 
   // 2. Sorting logic
@@ -900,7 +988,17 @@ function App() {
               onPriceChange={setPriceRange}
               onReset={handleResetFilters}
             />
-            <section className="shop__products">
+             <section className="shop__products">
+              {selectedCollection && (
+                <div className="collection-header" style={{ marginBottom: '2.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.5rem' }}>
+                  <h2 style={{ textTransform: 'uppercase', letterSpacing: '4px', fontSize: '1.8rem', fontWeight: 900, fontFamily: 'var(--font-display, inherit)' }}>
+                    {selectedCollection.replace(/-/g, ' ')} Collection
+                  </h2>
+                  <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem', fontFamily: 'var(--font-body, inherit)' }}>
+                    A curated selection of contrast, courage, and bold street design.
+                  </p>
+                </div>
+              )}
               <div className="shop__products-header">
                 <span className="products-count">{sortedProducts.length} Products</span>
                 <div className="sort-selector">
@@ -964,6 +1062,12 @@ function App() {
         appliedDiscount={appliedDiscount}
         onApplyDiscount={saveDiscount}
         onCheckout={() => {
+          const subtotal = cartItems.reduce((acc, item) => {
+            const priceVal = parseFloat(item.price?.replace(/[^0-9.]/g, '') || 0);
+            return acc + (priceVal * item.quantity);
+          }, 0);
+          trackInitiateCheckout(cartItems, subtotal);
+
           if (!userProfile) {
             setPendingCheckout(true);
             setIsAuthOpen(true);
