@@ -282,6 +282,17 @@ function adminApiPlugin() {
                   <a href="${trackingUrl}" target="_blank" style="background-color: #ffffff; color: #000000; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 2px; display: inline-block; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;">View Order Status</a>
                  </div>`;
 
+            const shippingText = shipping === 0 ? 'FREE' : `₹${shipping}`;
+            let discountRow = '';
+            if (discount > 0) {
+              discountRow = `
+                <tr style="font-size: 12px; color: #ff3333;">
+                  <td align="right" style="padding: 4px 12px;">Discount Applied:</td>
+                  <td align="right" style="padding: 4px 12px; width: 100px;">-₹${discount}</td>
+                </tr>
+              `;
+            }
+
             // Styled black and gold email template
             const emailHtml = `
 <!DOCTYPE html>
@@ -354,14 +365,10 @@ function adminApiPlugin() {
                   <td align="right" style="padding: 4px 12px;">Subtotal:</td>
                   <td align="right" style="padding: 4px 12px; width: 100px; color: #ffffff;">₹\${subtotal}</td>
                 </tr>
-                \${discount > 0 ? `
-                <tr style="font-size: 12px; color: #ff3333;">
-                  <td align="right" style="padding: 4px 12px;">Discount Applied:</td>
-                  <td align="right" style="padding: 4px 12px; width: 100px;">-₹\${discount}</td>
-                </tr>` : ''}
+                \${discountRow}
                 <tr style="font-size: 12px; color: #a0a0a0;">
                   <td align="right" style="padding: 4px 12px;">Shipping:</td>
-                  <td align="right" style="padding: 4px 12px; width: 100px; color: #ffffff;">\${shipping === 0 ? 'FREE' : \`₹\${shipping}\`}</td>
+                  <td align="right" style="padding: 4px 12px; width: 100px; color: #ffffff;">\${shippingText}</td>
                 </tr>
                 <tr style="font-size: 15px; color: #d4af37; font-weight: bold;">
                   <td align="right" style="padding: 10px 12px 4px 12px;">TOTAL SECURED:</td>
