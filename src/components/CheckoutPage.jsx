@@ -328,6 +328,17 @@ const CheckoutPage = ({
       console.error('Failed to create order in database:', err);
     }
 
+    // ── Send Order Confirmation Email ───────────────────────────────────────
+    try {
+      fetch('/api/send-confirmation-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalizedOrder)
+      }).catch(err => console.error('Background email dispatch failed:', err));
+    } catch (emailErr) {
+      console.error('Failed to initiate confirmation email:', emailErr);
+    }
+
     // ── Save to localStorage (local cache / fallback) ────────────────────────
     const existingOrders = JSON.parse(localStorage.getItem('hellabold_orders') || '[]');
     existingOrders.push(finalizedOrder);
