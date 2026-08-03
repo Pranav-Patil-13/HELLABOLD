@@ -34,6 +34,7 @@ const CheckoutPage = ({
     }
   }, [cartItems, step]);
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [countdown, setCountdown] = useState(10);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -497,6 +498,23 @@ const CheckoutPage = ({
     window.location.href = '/';
   };
 
+  useEffect(() => {
+    if (step !== 'success') return;
+
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleFinish();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [step]);
+
   if (step === 'success') {
     return (
       <div className="checkout-page-container success-state">
@@ -526,7 +544,7 @@ const CheckoutPage = ({
                 Track Order (Shiprocket)
               </button>
               <button className="btn btn--outline" onClick={handleFinish}>
-                Back to Homepage
+                Back to Homepage ({countdown}s)
               </button>
             </div>
           </div>
