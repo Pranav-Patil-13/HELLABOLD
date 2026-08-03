@@ -864,6 +864,9 @@ export const getSharedDesigns = async () => {
         .select('*')
         .order('likes', { ascending: false });
 
+      if (error) {
+        console.error('Supabase shared_designs table query error:', error);
+      }
       if (!error && data) {
         return data.map(d => ({
           id: d.id,
@@ -880,7 +883,7 @@ export const getSharedDesigns = async () => {
         }));
       }
     } catch (err) {
-      console.warn('Supabase shared_designs table error, falling back to local:', err);
+      console.error('Supabase shared_designs exception:', err);
     }
   }
 
