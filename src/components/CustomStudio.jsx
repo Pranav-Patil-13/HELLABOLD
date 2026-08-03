@@ -1,13 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
 import { cloudinaryOptimize } from '../utils/cloudinary';
+import { getSharedDesigns, saveSharedDesign } from '../utils/supabase';
 
-const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
+const CustomStudio = ({ 
+  onAddToCart, 
+  userProfile, 
+  initialGender = 'male',
+  remixedDesign,
+  onClearRemix,
+  onDesignShared
+}) => {
   const [gender, setGender] = useState(initialGender); // male, female
   const [color, setColor] = useState('black'); // black, white
   const [garmentType, setGarmentType] = useState('tee'); // tee
   const [size, setSize] = useState('L');
   const [currentSide, setCurrentSide] = useState('front'); // 'front' or 'back'
+
+  // Sharing states
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareTitle, setShareTitle] = useState('');
+  const [shareCreator, setShareCreator] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
+  const [loadedDesignId, setLoadedDesignId] = useState(null);
+  const loadedDesignRef = useRef(null);
+
+  useEffect(() => {
+    if (userProfile?.name) {
+      setShareCreator(userProfile.name);
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     if (initialGender) {
@@ -125,6 +147,119 @@ const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
   // Active URL input for current side
   const urlInput = currentSide === 'front' ? frontUrlInput : backUrlInput;
   const setUrlInput = (val) => currentSide === 'front' ? setFrontUrlInput(val) : setBackUrlInput(val);
+
+  const applyDesignToStudio = (design) => {
+    if (!design) return;
+    setLoadedDesignId(design.id);
+    loadedDesignRef.current = design;
+    setGender(design.gender || 'male');
+    setColor(design.color || 'black');
+    setGarmentType(design.garmentType || 'tee');
+    
+    const meta = design.customMeta;
+    if (meta) {
+      setSize(meta.size || 'L');
+      setInstructionText(meta.instructions || '');
+      
+      const placement = meta.placement || {};
+      if (design.frontImage) {
+        setFrontImage(design.frontImage);
+        setFrontFileName(design.frontFileName || 'custom-design-front.png');
+        if (placement.front) {
+          setFrontScale(placement.front.scale);
+          setFrontPositionX(placement.front.x);
+          setFrontPositionY(placement.front.y);
+          setFrontRotation(placement.front.rotation);
+          setFrontOpacity(placement.front.opacity);
+        }
+      } else {
+        setFrontImage(null);
+        setFrontFileName('');
+      }
+
+      if (design.backImage) {
+        setBackImage(design.backImage);
+        setBackFileName(design.backFileName || 'custom-design-back.png');
+        if (placement.back) {
+          setBackScale(placement.back.scale);
+          setBackPositionX(placement.back.x);
+          setBackPositionY(placement.back.y);
+          setBackRotation(placement.back.rotation);
+          setBackOpacity(placement.back.opacity);
+        }
+      } else {
+        setBackImage(null);
+        setBackFileName('');
+      }
+
+      if (design.backImage && !design.frontImage) {
+        setCurrentSide('back');
+      } else {
+        setCurrentSide('front');
+      }
+    }
+  };
+
+  useEffect(() => {
+    const checkUrlForDesign = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const remixId = params.get('remix');
+      if (remixId) {
+        try {
+          const allShared = await getSharedDesigns();
+          const design = allShared.find(d => d.id === remixId);
+          if (design) {
+            applyDesignToStudio(design);
+            showError(`Loaded design: "${design.title}"`);
+          }
+        } catch (e) {
+          console.error("Failed to load design from URL:", e);
+        }
+      }
+    };
+    checkUrlForDesign();
+  }, []);
+
+  useEffect(() => {
+    if (remixedDesign) {
+      applyDesignToStudio(remixedDesign);
+      if (onClearRemix) onClearRemix();
+    }
+  }, [remixedDesign]);
+
+  const isCurrentlyRemixedUnchanged = (() => {
+    if (!loadedDesignId || !loadedDesignRef.current) return false;
+    const original = loadedDesignRef.current;
+    const originalMeta = original.customMeta || {};
+    const originalPlacement = originalMeta.placement || {};
+    
+    if (gender !== original.gender) return false;
+    if (color !== original.color) return false;
+    if (garmentType !== original.garmentType) return false;
+    if (instructionText !== (originalMeta.instructions || '')) return false;
+
+    if (frontImage !== original.frontImage) return false;
+    if (frontImage) {
+      const origFront = originalPlacement.front || {};
+      if (frontScale !== origFront.scale) return false;
+      if (frontPositionX !== origFront.x) return false;
+      if (frontPositionY !== origFront.y) return false;
+      if (frontRotation !== origFront.rotation) return false;
+      if (frontOpacity !== origFront.opacity) return false;
+    }
+
+    if (backImage !== original.backImage) return false;
+    if (backImage) {
+      const origBack = originalPlacement.back || {};
+      if (backScale !== origBack.scale) return false;
+      if (backPositionX !== origBack.x) return false;
+      if (backPositionY !== origBack.y) return false;
+      if (backRotation !== origBack.rotation) return false;
+      if (backOpacity !== origBack.opacity) return false;
+    }
+
+    return true;
+  })();
 
   const fileInputRef = useRef(null);
   const dragAreaRef = useRef(null);
@@ -366,6 +501,114 @@ const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
     setOpacity(100);
   };
 
+  const uploadGraphicIfNeeded = async (imgString, fallbackName) => {
+    if (!imgString) return null;
+    if (imgString.startsWith('http://') || imgString.startsWith('https://')) {
+      return imgString;
+    }
+    
+    const base64Data = imgString.split(',')[1];
+    if (!base64Data) return imgString;
+    
+    try {
+      const res = await fetch('/api/custom-order-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: fallbackName || 'design.png',
+          base64: base64Data
+        })
+      });
+      
+      if (!res.ok) throw new Error('Cloudinary upload proxy failed');
+      const data = await res.json();
+      return data.url;
+    } catch (err) {
+      console.error('Error uploading custom graphic:', err);
+      throw err;
+    }
+  };
+
+  const handleShareSubmit = async (e) => {
+    e.preventDefault();
+    if (!shareTitle.trim()) {
+      showError('Please enter a title for your design.');
+      return;
+    }
+    
+    setIsSharing(true);
+    try {
+      let frontUrl = null;
+      if (frontImage) {
+        frontUrl = await uploadGraphicIfNeeded(frontImage, frontFileName || 'front-design.png');
+      }
+      
+      let backUrl = null;
+      if (backImage) {
+        backUrl = await uploadGraphicIfNeeded(backImage, backFileName || 'back-design.png');
+      }
+      
+      const designId = `design-${Date.now()}`;
+      
+      const newSharedDesign = {
+        id: designId,
+        title: shareTitle.trim().toUpperCase(),
+        author: shareCreator.trim() || 'Bold Creator',
+        gender,
+        color,
+        garmentType,
+        frontImage: frontUrl,
+        backImage: backUrl,
+        instructionText: instructionText || '',
+        likes: 0,
+        customMeta: {
+          model: `${gender}_${color}`,
+          garmentType,
+          color,
+          gender,
+          size,
+          price: frontImage && backImage ? garmentPrices[garmentType] + 79 : garmentPrices[garmentType],
+          isBothSides: !!(frontImage && backImage),
+          instructions: instructionText,
+          placement: {
+            front: {
+              scale: frontScale,
+              x: frontPositionX,
+              y: frontPositionY,
+              rotation: frontRotation,
+              opacity: frontOpacity
+            },
+            back: {
+              scale: backScale,
+              x: backPositionX,
+              y: backPositionY,
+              rotation: backRotation,
+              opacity: backOpacity
+            }
+          }
+        }
+      };
+      
+      await saveSharedDesign(newSharedDesign);
+      
+      if (onDesignShared) {
+        onDesignShared();
+      }
+      
+      const shareUrl = `${window.location.origin}${window.location.pathname}?remix=${designId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      
+      showError(`Design shared! Share link copied to clipboard.`);
+      setIsShareModalOpen(false);
+      setShareTitle('');
+    } catch (err) {
+      showError('Failed to share design. Please try again.');
+      console.error(err);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const handleAddCustomToCart = (e) => {
     if (!frontImage && !backImage) {
       showError('Please upload a design on the front or back first to manifest your boldness.');
@@ -390,6 +633,11 @@ const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
       customDesignName: frontFileName || (frontImage ? 'custom-design-front.png' : ''),
       customDesignBack: backImage, // base64 encoded back design
       customDesignBackName: backFileName || (backImage ? 'custom-design-back.png' : ''),
+      remixOf: loadedDesignId ? {
+        designId: loadedDesignId,
+        creator: loadedDesignRef.current?.author || 'Anonymous',
+        royaltyAmount: Math.round(priceNum * 0.05)
+      } : null,
       customMeta: {
         model: `${gender}_${color}`,
         garmentType,
@@ -893,14 +1141,35 @@ const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
           </div>
 
           {/* Add to Cart Actions */}
-          <div className="lab-action-group">
+          <div className="lab-action-group" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
             <button 
               type="button" 
               className={`btn btn--primary lab-submit-btn ${!(frontImage || backImage) ? 'disabled' : ''}`}
               onClick={handleAddCustomToCart}
               disabled={!(frontImage || backImage)}
+              style={{ flex: 2 }}
             >
-              Add Custom Tee to Bag (₹{frontImage && backImage ? garmentPrices[garmentType] + 79 : garmentPrices[garmentType]})
+              Add to Bag (₹{frontImage && backImage ? garmentPrices[garmentType] + 79 : garmentPrices[garmentType]})
+            </button>
+            <button 
+              type="button" 
+              className={`btn lab-share-btn ${(!(frontImage || backImage) || isCurrentlyRemixedUnchanged) ? 'disabled' : ''}`}
+              onClick={() => setIsShareModalOpen(true)}
+              disabled={!(frontImage || backImage) || isCurrentlyRemixedUnchanged}
+              title={isCurrentlyRemixedUnchanged ? "This design is already in the gallery. Customize it to share your remix!" : "Share this design with the community"}
+              style={{ 
+                flex: 1, 
+                backgroundColor: 'transparent', 
+                border: '1px solid var(--border-color)', 
+                color: isCurrentlyRemixedUnchanged ? 'var(--text-secondary)' : 'var(--text-primary)',
+                fontWeight: 'bold',
+                letterSpacing: '1px',
+                fontSize: '0.8rem',
+                cursor: isCurrentlyRemixedUnchanged ? 'not-allowed' : 'pointer',
+                opacity: isCurrentlyRemixedUnchanged ? 0.5 : 1
+              }}
+            >
+              Share Design
             </button>
           </div>
 
@@ -970,6 +1239,86 @@ const CustomStudio = ({ onAddToCart, userProfile, initialGender = 'male' }) => {
               <strong>FIT ADVICE:</strong> HELLA-LAB garments feature a modern, slightly oversized streetwear cut. 
               We recommend ordering your standard size for the intended relaxed aesthetic, or sizing down if you prefer a standard tailored fit.
             </div>
+          </div>
+        </div>
+      )}
+
+      {isShareModalOpen && (
+        <div className="share-design-modal-overlay" onClick={() => setIsShareModalOpen(false)}>
+          <div className="share-design-modal-container" onClick={(e) => e.stopPropagation()}>
+            <button 
+              type="button" 
+              className="share-design-close-btn" 
+              onClick={() => setIsShareModalOpen(false)}
+            >
+              ✕
+            </button>
+            <h2 className="share-design-title">SHARE YOUR BOLDNESS</h2>
+            <span className="share-design-subtitle">POST TO COMMUNITY GALLERY</span>
+            
+            <form onSubmit={handleShareSubmit} className="share-design-form" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left' }}>
+                <label htmlFor="design-title" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>Design Title</label>
+                <input 
+                  id="design-title"
+                  type="text" 
+                  placeholder="e.g. TOKYO NEON SPEEDWAY" 
+                  value={shareTitle}
+                  onChange={e => setShareTitle(e.target.value)}
+                  maxLength={30}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    fontSize: '0.85rem',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: '#fff',
+                    outline: 'none',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left' }}>
+                <label htmlFor="creator-name" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>Creator Name</label>
+                <input 
+                  id="creator-name"
+                  type="text" 
+                  placeholder="e.g. harajuku_drip" 
+                  value={shareCreator}
+                  onChange={e => setShareCreator(e.target.value)}
+                  maxLength={20}
+                  required
+                  style={{
+                    padding: '0.8rem',
+                    fontSize: '0.85rem',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: '#fff',
+                    outline: 'none',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn btn--primary share-submit-confirm-btn"
+                disabled={isSharing}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  backgroundColor: '#000',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase',
+                  cursor: isSharing ? 'not-allowed' : 'pointer',
+                  marginTop: '0.5rem'
+                }}
+              >
+                {isSharing ? 'UPLOADING & SHARING...' : 'PUBLISH & COPY LINK'}
+              </button>
+            </form>
           </div>
         </div>
       )}

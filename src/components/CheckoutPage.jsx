@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
-import { createOrder, updateProfile, getCoupons } from '../utils/supabase';
+import { createOrder, updateProfile, getCoupons, awardRoyaltiesForOrder, deductHellaMoney } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 import { trackPurchase } from '../utils/analytics';
@@ -42,6 +42,7 @@ const CheckoutPage = ({
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [appliedHellaMoney, setAppliedHellaMoney] = useState(0);
   
   // Custom Searchable Dropdown States for State Selector
   const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
@@ -369,8 +370,21 @@ const CheckoutPage = ({
     // ── Save to Supabase ────────────────────────────────────────────────────
     try {
       await createOrder(finalizedOrder);
+      await awardRoyaltiesForOrder(finalizedOrder);
+      if (finalizedOrder.appliedHellaMoney > 0) {
+        const creatorName = userProfile?.fullName || 'Anonymous';
+        await deductHellaMoney(creatorName, finalizedOrder.appliedHellaMoney, finalizedOrder.id);
+        if (userProfile && onProfileUpdate) {
+          const currentBal = userProfile.hellaMoney || 0;
+          const newBal = Math.max(0, currentBal - finalizedOrder.appliedHellaMoney);
+          onProfileUpdate({
+            ...userProfile,
+            hellaMoney: newBal
+          });
+        }
+      }
     } catch (err) {
-      console.error('Failed to create order in database:', err);
+      console.error('Failed to create order in database or award royalties/deduct credit:', err);
     }
 
     // ── Send Order Confirmation Email ───────────────────────────────────────
@@ -455,6 +469,8 @@ const CheckoutPage = ({
     // once createShiprocketOrder() runs inside handlePaymentSuccess).
     const orderId = 'HB-' + Math.floor(10000 + Math.random() * 90000);
 
+    const remainingToPay = total - appliedHellaMoney;
+
     const newOrder = {
       id: orderId,
       awb: null,       // filled by Shiprocket after payment
@@ -463,10 +479,11 @@ const CheckoutPage = ({
       subtotal: subtotal,
       discount: discountAmount,
       appliedPromo: appliedDiscount ? appliedDiscount.code : null,
+      appliedHellaMoney: appliedHellaMoney,
       shipping: shipping,
-      total: total,
+      total: Math.max(0, remainingToPay),
       status: 'Order Received',
-      paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)',
+      paymentMethod: remainingToPay <= 0 ? 'Store Credit (Hella Money)' : (paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'),
       date: new Date().toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
@@ -482,6 +499,11 @@ const CheckoutPage = ({
         zipCode
       }
     };
+
+    if (remainingToPay <= 0) {
+      await handlePaymentSuccess(newOrder);
+      return;
+    }
 
     if (paymentMethod === 'cod') {
       setTempOrder(newOrder);
@@ -501,7 +523,7 @@ const CheckoutPage = ({
 
     const options = {
       key: razorpayKey,
-      amount: total * 100, // Amount in paise
+      amount: remainingToPay * 100, // Amount in paise
       currency: 'INR',
       name: 'HELLABOLD',
       description: `Purchase for Order ${orderId}`,
@@ -1013,6 +1035,33 @@ const CheckoutPage = ({
               {promoError && <p className="promo-error">{promoError}</p>}
             </div>
 
+            {/* Hella Money Redemption Box */}
+            {userProfile && (userProfile.hellaMoney || 0) > 0 && (
+              <div className="checkout-summary__promo" style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                {appliedHellaMoney > 0 ? (
+                  <div className="promo-badge" style={{ backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', padding: '0.6rem 0.8rem', fontSize: '0.75rem', width: '100%' }}>
+                    <span>Applied: <strong>{appliedHellaMoney} Hella Money</strong> (-₹{appliedHellaMoney})</span>
+                    <button type="button" className="promo-remove-btn" onClick={() => setAppliedHellaMoney(0)} style={{ color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Remove</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      <span>Hella Money Balance:</span>
+                      <span style={{ fontFamily: 'monospace' }}>{userProfile.hellaMoney} HM (₹{userProfile.hellaMoney})</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setAppliedHellaMoney(Math.min(userProfile.hellaMoney || 0, total))}
+                      className="btn btn--outline"
+                      style={{ padding: '0.6rem', fontSize: '0.7rem', width: '100%', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                    >
+                      Redeem Hella Money Discount
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="checkout-summary__math">
               <div className="summary-row">
                 <span>Subtotal</span>
@@ -1032,10 +1081,16 @@ const CheckoutPage = ({
                   <span>{formatCurrency(shipping)}</span>
                 )}
               </div>
+              {appliedHellaMoney > 0 && (
+                <div className="summary-row discount-row" style={{ color: '#166534' }}>
+                  <span>Hella Money Applied</span>
+                  <span className="discount-amount" style={{ color: '#166534' }}>-{formatCurrency(appliedHellaMoney)}</span>
+                </div>
+              )}
               <hr className="pdp-divider" />
               <div className="summary-row total">
                 <span>Total Amount</span>
-                <span>{formatCurrency(total)}</span>
+                <span>{formatCurrency(total - appliedHellaMoney)}</span>
               </div>
             </div>
           </div>

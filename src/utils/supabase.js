@@ -773,3 +773,448 @@ export const deleteCoupon = async (code) => {
   localStorage.setItem('hellabold_coupons', JSON.stringify(filtered));
   return true;
 };
+
+// ==========================================
+// 6. SHARED DESIGNS DATABASE ACTIONS
+// ==========================================
+
+const MOCK_SHARED_DESIGNS = [
+  {
+    id: 'shared-mock-1',
+    title: 'CYBER-PUNK NEON DRIFT',
+    author: 'ZeroCool',
+    gender: 'male',
+    color: 'black',
+    garmentType: 'tee',
+    frontImage: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600&auto=format&fit=crop',
+    backImage: null,
+    instructionText: 'Make the neon printing extra reflective under dark lights.',
+    likes: 142,
+    customMeta: {
+      model: 'male_black',
+      garmentType: 'tee',
+      color: 'black',
+      gender: 'male',
+      size: 'L',
+      price: 999,
+      isBothSides: false,
+      placement: {
+        front: { scale: 100, x: 5, y: 5, rotation: 0, opacity: 100 },
+        back: { scale: 100, x: 5, y: 5, rotation: 0, opacity: 100 }
+      }
+    }
+  },
+  {
+    id: 'shared-mock-2',
+    title: 'ABSTRACT GEOMETRIC SPACE',
+    author: 'VaporKate',
+    gender: 'female',
+    color: 'white',
+    garmentType: 'tee',
+    frontImage: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop',
+    backImage: null,
+    instructionText: 'Center aligning is important, high contrast.',
+    likes: 98,
+    customMeta: {
+      model: 'female_white',
+      garmentType: 'tee',
+      color: 'white',
+      gender: 'female',
+      size: 'M',
+      price: 999,
+      isBothSides: false,
+      placement: {
+        front: { scale: 80, x: 0, y: 8, rotation: 0, opacity: 90 },
+        back: { scale: 100, x: 5, y: 5, rotation: 0, opacity: 100 }
+      }
+    }
+  },
+  {
+    id: 'shared-mock-3',
+    title: 'TOKYO FUTURE LIGHTS',
+    author: 'HarajukuDrip',
+    gender: 'male',
+    color: 'black',
+    garmentType: 'tee',
+    frontImage: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=600&auto=format&fit=crop',
+    backImage: null,
+    instructionText: 'Slightly oversized decal alignment.',
+    likes: 215,
+    customMeta: {
+      model: 'male_black',
+      garmentType: 'tee',
+      color: 'black',
+      gender: 'male',
+      size: 'XL',
+      price: 999,
+      isBothSides: false,
+      placement: {
+        front: { scale: 95, x: 5, y: 5, rotation: -5, opacity: 100 },
+        back: { scale: 100, x: 5, y: 5, rotation: 0, opacity: 100 }
+      }
+    }
+  }
+];
+
+export const getSharedDesigns = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('shared_designs')
+        .select('*')
+        .order('likes', { ascending: false });
+
+      if (!error && data) {
+        return data.map(d => ({
+          id: d.id,
+          title: d.title,
+          author: d.author,
+          gender: d.gender,
+          color: d.color,
+          garmentType: d.garment_type,
+          frontImage: d.front_image,
+          backImage: d.back_image,
+          instructionText: d.instruction_text,
+          likes: d.likes || 0,
+          customMeta: d.custom_meta
+        }));
+      }
+    } catch (err) {
+      console.warn('Supabase shared_designs table error, falling back to local:', err);
+    }
+  }
+
+  // Fallback to local storage + mock data
+  const localSaved = localStorage.getItem('hellabold_shared_designs');
+  let userDesigns = [];
+  if (localSaved) {
+    try {
+      userDesigns = JSON.parse(localSaved);
+    } catch (e) {
+      userDesigns = [];
+    }
+  }
+  // Merge user-made designs with seed mock data, sorted by likes descending
+  const allDesigns = [...userDesigns, ...MOCK_SHARED_DESIGNS];
+  return allDesigns.sort((a, b) => b.likes - a.likes);
+};
+
+export const saveSharedDesign = async (design) => {
+  const payload = {
+    id: design.id || `design-${Date.now()}`,
+    title: design.title || 'UNTITLED DESIGN',
+    author: design.author || 'Anonymous Creator',
+    gender: design.gender || 'male',
+    color: design.color || 'black',
+    garment_type: design.garmentType || 'tee',
+    front_image: design.frontImage,
+    back_image: design.backImage,
+    instruction_text: design.instructionText || '',
+    likes: design.likes || 0,
+    custom_meta: design.customMeta
+  };
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('shared_designs')
+        .insert([payload])
+        .select();
+
+      if (!error && data) {
+        return true;
+      }
+      console.warn('Failed to save to Supabase shared_designs table:', error);
+    } catch (err) {
+      console.warn('Error saving shared design in Supabase:', err);
+    }
+  }
+
+  // Local storage fallback
+  const localSaved = localStorage.getItem('hellabold_shared_designs');
+  let userDesigns = [];
+  if (localSaved) {
+    try {
+      userDesigns = JSON.parse(localSaved);
+    } catch (e) {
+      userDesigns = [];
+    }
+  }
+  
+  // Format for local storage to match key style
+  const localPayload = {
+    id: payload.id,
+    title: payload.title,
+    author: payload.author,
+    gender: payload.gender,
+    color: payload.color,
+    garmentType: payload.garment_type,
+    frontImage: payload.front_image,
+    backImage: payload.back_image,
+    instructionText: payload.instruction_text,
+    likes: payload.likes,
+    customMeta: payload.custom_meta
+  };
+
+  userDesigns.push(localPayload);
+  localStorage.setItem('hellabold_shared_designs', JSON.stringify(userDesigns));
+  return true;
+};
+
+export const likeSharedDesign = async (designId) => {
+  if (isSupabaseConfigured) {
+    try {
+      // In a real database, we would do a RPC call or update with math logic,
+      // here we do a fetch, increment, and update
+      const { data: current } = await supabase
+        .from('shared_designs')
+        .select('likes')
+        .eq('id', designId)
+        .single();
+      
+      const newLikes = (current?.likes || 0) + 1;
+      const { error } = await supabase
+        .from('shared_designs')
+        .update({ likes: newLikes })
+        .eq('id', designId);
+
+      if (!error) return newLikes;
+    } catch (err) {
+      console.warn('Error incrementing likes in Supabase:', err);
+    }
+  }
+
+  // Local storage fallback (or mock design increment)
+  const isMock = MOCK_SHARED_DESIGNS.find(d => d.id === designId);
+  if (isMock) {
+    isMock.likes += 1;
+    return isMock.likes;
+  }
+
+  const localSaved = localStorage.getItem('hellabold_shared_designs');
+  let userDesigns = [];
+  if (localSaved) {
+    try {
+      userDesigns = JSON.parse(localSaved);
+    } catch (e) {
+      userDesigns = [];
+    }
+  }
+
+  const designIndex = userDesigns.findIndex(d => d.id === designId);
+  if (designIndex >= 0) {
+    userDesigns[designIndex].likes = (userDesigns[designIndex].likes || 0) + 1;
+    localStorage.setItem('hellabold_shared_designs', JSON.stringify(userDesigns));
+    return userDesigns[designIndex].likes;
+  }
+
+  return 1;
+};
+
+// ==========================================
+// 7. HELLA MONEY & ROYALTY ACTIONS
+// ==========================================
+
+export const getHellaMoneyLedger = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('hella_money_ledger')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) return data.map(d => ({
+        id: d.id,
+        orderId: d.order_id,
+        itemTitle: d.item_title,
+        price: d.price,
+        creator: d.creator,
+        amount: d.amount,
+        createdAt: d.created_at
+      }));
+    } catch (e) {
+      console.warn('Supabase hella_money_ledger error:', e);
+    }
+  }
+  return JSON.parse(localStorage.getItem('hellabold_hm_ledger') || '[]');
+};
+
+export const getPayoutRequests = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('payout_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) return data.map(d => ({
+        id: d.id,
+        creator: d.creator,
+        upiId: d.upi_id,
+        amount: d.amount,
+        status: d.status,
+        createdAt: d.created_at
+      }));
+    } catch (e) {
+      console.warn('Supabase payout_requests error:', e);
+    }
+  }
+  return JSON.parse(localStorage.getItem('hellabold_payout_requests') || '[]');
+};
+
+export const createPayoutRequest = async (creator, upiId, amount) => {
+  const request = {
+    id: `req-${Date.now()}`,
+    creator,
+    upi_id: upiId,
+    amount: Number(amount),
+    status: 'Pending',
+    created_at: new Date().toISOString()
+  };
+
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('payout_requests')
+        .insert([request]);
+      if (!error) return true;
+    } catch (e) {
+      console.warn('Supabase create payout error:', e);
+    }
+  }
+
+  // Deduct from local user profile balance first
+  const mockUser = JSON.parse(localStorage.getItem('hellabold_mock_user') || '{}');
+  if (mockUser && mockUser.fullName === creator) {
+    mockUser.hellaMoney = Math.max(0, (mockUser.hellaMoney || 0) - amount);
+    localStorage.setItem('hellabold_mock_user', JSON.stringify(mockUser));
+  }
+
+  const requests = await getPayoutRequests();
+  const localRequest = {
+    id: request.id,
+    creator: request.creator,
+    upiId: request.upi_id,
+    amount: request.amount,
+    status: request.status,
+    createdAt: request.created_at
+  };
+  requests.push(localRequest);
+  localStorage.setItem('hellabold_payout_requests', JSON.stringify(requests));
+  return true;
+};
+
+export const settlePayoutRequest = async (requestId) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('payout_requests')
+        .update({ status: 'Settled' })
+        .eq('id', requestId);
+      if (!error) return true;
+    } catch (e) {
+      console.warn('Supabase settle payout error:', e);
+    }
+  }
+
+  const requests = await getPayoutRequests();
+  const index = requests.findIndex(r => r.id === requestId);
+  if (index >= 0) {
+    requests[index].status = 'Settled';
+    localStorage.setItem('hellabold_payout_requests', JSON.stringify(requests));
+  }
+  return true;
+};
+
+export const awardRoyaltiesForOrder = async (order) => {
+  if (!order || !order.items) return;
+
+  const ledger = await getHellaMoneyLedger();
+
+  for (const item of order.items) {
+    if (item.remixOf) {
+      const creator = item.remixOf.creator;
+      const royalty = item.remixOf.royaltyAmount || Math.round(parseFloat(String(item.price).replace(/[^0-9.]/g, '')) * 0.05);
+
+      const ledgerEntry = {
+        id: `hm-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        orderId: order.id,
+        itemTitle: item.title,
+        price: item.price,
+        creator,
+        amount: royalty,
+        createdAt: new Date().toISOString()
+      };
+      ledger.push(ledgerEntry);
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data: matches } = await supabase
+            .from('profiles')
+            .select('id, hella_money')
+            .or(`full_name.eq."${creator}",email.eq."${creator}"`);
+          
+          if (matches && matches.length > 0) {
+            const profile = matches[0];
+            const newBal = (profile.hella_money || 0) + royalty;
+            await supabase
+              .from('profiles')
+              .update({ hella_money: newBal })
+              .eq('id', profile.id);
+          }
+        } catch (err) {
+          console.warn('Failed to award royalties in Supabase profiles:', err);
+        }
+      } else {
+        const mockUser = JSON.parse(localStorage.getItem('hellabold_mock_user') || '{}');
+        if (mockUser && mockUser.fullName === creator) {
+          mockUser.hellaMoney = (mockUser.hellaMoney || 0) + royalty;
+          localStorage.setItem('hellabold_mock_user', JSON.stringify(mockUser));
+        }
+      }
+    }
+  }
+
+  localStorage.setItem('hellabold_hm_ledger', JSON.stringify(ledger));
+};
+
+export const deductHellaMoney = async (creator, amount, orderId) => {
+  const ledger = await getHellaMoneyLedger();
+  const ledgerEntry = {
+    id: `hm-ded-${Date.now()}`,
+    orderId,
+    itemTitle: 'Redeemed Store Credit',
+    price: `₹${amount}`,
+    creator,
+    amount: -amount,
+    createdAt: new Date().toISOString()
+  };
+  ledger.push(ledgerEntry);
+  localStorage.setItem('hellabold_hm_ledger', JSON.stringify(ledger));
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data: matches } = await supabase
+        .from('profiles')
+        .select('id, hella_money')
+        .or(`full_name.eq."${creator}",email.eq."${creator}"`);
+      
+      if (matches && matches.length > 0) {
+        const profile = matches[0];
+        const newBal = Math.max(0, (profile.hella_money || 0) - amount);
+        await supabase
+          .from('profiles')
+          .update({ hella_money: newBal })
+          .eq('id', profile.id);
+      }
+    } catch (err) {
+      console.warn('Failed to deduct Hella Money in Supabase:', err);
+    }
+  } else {
+    const mockUser = JSON.parse(localStorage.getItem('hellabold_mock_user') || '{}');
+    if (mockUser && mockUser.fullName === creator) {
+      mockUser.hellaMoney = Math.max(0, (mockUser.hellaMoney || 0) - amount);
+      localStorage.setItem('hellabold_mock_user', JSON.stringify(mockUser));
+    }
+  }
+};
+
+

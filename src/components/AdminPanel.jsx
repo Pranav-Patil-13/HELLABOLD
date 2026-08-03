@@ -11,7 +11,10 @@ import {
   updateOrderStatusInDB,
   getCoupons,
   saveCoupon,
-  deleteCoupon 
+  deleteCoupon,
+  getHellaMoneyLedger,
+  getPayoutRequests,
+  settlePayoutRequest
 } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
@@ -95,6 +98,33 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   const [newCouponMinOrder, setNewCouponMinOrder] = useState('');
   const [newCouponExpiry, setNewCouponExpiry] = useState('');
 
+  // Hella Money States
+  const [hmLedger, setHmLedger] = useState([]);
+  const [payoutRequests, setPayoutRequests] = useState([]);
+
+  const fetchHellaMoneyData = async () => {
+    try {
+      const ledger = await getHellaMoneyLedger();
+      setHmLedger(ledger);
+      const requests = await getPayoutRequests();
+      setPayoutRequests(requests);
+    } catch (e) {
+      console.error('Failed to load Hella Money ledger:', e);
+    }
+  };
+
+  const handleSettlePayout = async (requestId) => {
+    if (confirm('Are you sure you have paid this creator via UPI and want to mark it as Settled?')) {
+      try {
+        await settlePayoutRequest(requestId);
+        fetchHellaMoneyData();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to settle payout request.');
+      }
+    }
+  };
+
   // Load products, images, and orders on mount
   useEffect(() => {
     fetchProducts();
@@ -102,6 +132,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     fetchFeedbackImages();
     fetchOrders();
     fetchCoupons();
+    fetchHellaMoneyData();
   }, []);
 
   useEffect(() => {
@@ -110,6 +141,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     }
     if (activeAdminTab === 'coupons') {
       fetchCoupons();
+    }
+    if (activeAdminTab === 'hellamoney') {
+      fetchHellaMoneyData();
     }
   }, [activeAdminTab]);
 
@@ -648,6 +682,13 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'coupons' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'coupons' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
         >
           Manage Coupons
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'hellamoney' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('hellamoney')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'hellamoney' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'hellamoney' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Hella Money Ledger
         </button>
       </div>
 
@@ -1622,6 +1663,112 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeAdminTab === 'hellamoney' && (
+        <div className="admin-hellamoney-tab" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Payout Requests Card */}
+          <div className="admin-card table-card">
+            <h2>Pending UPI Payout Requests</h2>
+            <div className="table-wrapper">
+              {payoutRequests.length === 0 ? (
+                <p className="empty-message">No payout requests found.</p>
+              ) : (
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Request ID</th>
+                      <th>Creator</th>
+                      <th>UPI ID</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutRequests.map((req) => (
+                      <tr key={req.id}>
+                        <td><code>#{req.id.slice(-6)}</code></td>
+                        <td style={{ fontWeight: 'bold' }}>@{req.creator}</td>
+                        <td><code>{req.upiId}</code></td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>₹{req.amount} ({req.amount} HM)</td>
+                        <td>
+                          <span style={{
+                            padding: '0.2rem 0.5rem',
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            borderRadius: '2px',
+                            backgroundColor: req.status === 'Settled' ? '#e8f5e9' : '#fff3e0',
+                            color: req.status === 'Settled' ? '#2e7d32' : '#e65100',
+                          }}>
+                            {req.status}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          {req.status === 'Pending' ? (
+                            <button
+                              type="button"
+                              className="btn btn--primary"
+                              onClick={() => handleSettlePayout(req.id)}
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                            >
+                              Settle UPI Payout
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Paid & Cleared</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Royalty Earnings Ledger Card */}
+          <div className="admin-card table-card">
+            <h2>Hella Money Royalty Ledger</h2>
+            <div className="table-wrapper">
+              {hmLedger.length === 0 ? (
+                <p className="empty-message">No royalty earnings ledger entries found.</p>
+              ) : (
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Transaction ID</th>
+                      <th>Order ID</th>
+                      <th>Item Title</th>
+                      <th>Item Retail Price</th>
+                      <th>Design Creator</th>
+                      <th style={{ textAlign: 'right' }}>Royalty Paid</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hmLedger.map((tx) => {
+                      const isRedemption = tx.amount < 0;
+                      return (
+                        <tr key={tx.id}>
+                          <td><code>#{tx.id.slice(-6)}</code></td>
+                          <td><code>#{tx.orderId.slice(0, 8)}</code></td>
+                          <td>{tx.itemTitle}</td>
+                          <td>{tx.price}</td>
+                          <td style={{ fontWeight: 'bold' }}>@{tx.creator}</td>
+                          <td style={{ textAlign: 'right', color: isRedemption ? '#e53e3e' : '#38a169', fontFamily: 'monospace', fontWeight: 600 }}>
+                            {isRedemption ? `${tx.amount} HM (₹${Math.abs(tx.amount)})` : `+${tx.amount} HM (₹${tx.amount})`}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
         </div>
       )}
     </div>

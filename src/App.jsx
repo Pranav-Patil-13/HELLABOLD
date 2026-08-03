@@ -24,6 +24,7 @@ import TermsOfService from './components/TermsOfService';
 import FaqPage from './components/FaqPage';
 import PolicyPages from './components/PolicyPages';
 import CustomStudio from './components/CustomStudio';
+import CommunityGallery from './components/CommunityGallery';
 import ContactUs from './components/ContactUs';
 import EntryGate from './components/EntryGate';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -190,6 +191,18 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get('collection') || null;
   });
+
+  const [remixedDesign, setRemixedDesign] = useState(null);
+  const [galleryRefreshTrigger, setGalleryRefreshTrigger] = useState(0);
+
+  const handleRemix = (design) => {
+    setRemixedDesign(design);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDesignShared = () => {
+    setGalleryRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     initAnalytics();
@@ -941,7 +954,15 @@ function App() {
         </>
       ) : isCustomStudioPage ? (
         <>
-          <CustomStudio onAddToCart={handleAddToCart} userProfile={userProfile} initialGender={genderPreference} />
+          <CustomStudio 
+            onAddToCart={handleAddToCart} 
+            userProfile={userProfile} 
+            initialGender={genderPreference}
+            remixedDesign={remixedDesign}
+            onClearRemix={() => setRemixedDesign(null)}
+            onDesignShared={handleDesignShared}
+          />
+          <CommunityGallery onRemix={handleRemix} refreshTrigger={galleryRefreshTrigger} />
           <Footer onNavigate={handleFooterNavigation} />
         </>
 

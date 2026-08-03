@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { signOutUser, updateProfile, getOrders } from '../utils/supabase';
+import { signOutUser, updateProfile, getOrders, getHellaMoneyLedger, getPayoutRequests, createPayoutRequest } from '../utils/supabase';
 
 const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOut }) => {
   const [activeTab, setActiveTab] = useState('settings'); // settings, addresses, orders
@@ -8,6 +8,15 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [nameUpdateSuccess, setNameUpdateSuccess] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Hella Money States
+  const [hmTransactions, setHmTransactions] = useState([]);
+  const [payoutRequests, setPayoutRequests] = useState([]);
+  const [upiId, setUpiId] = useState('');
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutError, setPayoutError] = useState('');
+  const [payoutSuccess, setPayoutSuccess] = useState('');
+  const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
   // Add Address Form States
   const [showAddForm, setShowAddForm] = useState(false);
@@ -23,8 +32,73 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
     if (userProfile) {
       setFullName(userProfile.fullName || '');
       fetchUserOrders();
+      fetchHellaMoneyData();
     }
   }, [userProfile, isOpen]);
+
+  const fetchHellaMoneyData = async () => {
+    if (!userProfile) return;
+    try {
+      const creatorName = userProfile.fullName || 'Anonymous';
+      const allLedger = await getHellaMoneyLedger();
+      const filteredLedger = allLedger.filter(
+        l => l.creator === creatorName || l.creator.toLowerCase() === userProfile.email?.split('@')[0].toLowerCase()
+      );
+      setHmTransactions(filteredLedger);
+
+      const allPayouts = await getPayoutRequests();
+      const filteredPayouts = allPayouts.filter(
+        p => p.creator === creatorName || p.creator.toLowerCase() === userProfile.email?.split('@')[0].toLowerCase()
+      );
+      setPayoutRequests(filteredPayouts);
+    } catch (e) {
+      console.error('Failed to load Hella Money data:', e);
+    }
+  };
+
+  const handlePayoutSubmit = async (e) => {
+    e.preventDefault();
+    setPayoutError('');
+    setPayoutSuccess('');
+    
+    const balance = userProfile.hellaMoney || 0;
+    const amount = Number(payoutAmount);
+    
+    if (amount < 500) {
+      setPayoutError('Minimum payout request is 500 Hella Money (HM).');
+      return;
+    }
+    if (amount > balance) {
+      setPayoutError(`Insufficient balance. You only have ${balance} Hella Money.`);
+      return;
+    }
+    if (!upiId.trim()) {
+      setPayoutError('Please enter a valid UPI ID.');
+      return;
+    }
+
+    setIsRequestingPayout(true);
+    try {
+      const creatorName = userProfile.fullName || 'Anonymous';
+      await createPayoutRequest(creatorName, upiId.trim(), amount);
+      
+      const updatedProfile = {
+        ...userProfile,
+        hellaMoney: Math.max(0, balance - amount)
+      };
+      onProfileUpdate(updatedProfile);
+
+      setPayoutSuccess(`Successfully requested payout of ${amount} Hella Money!`);
+      setPayoutAmount('');
+      setUpiId('');
+      fetchHellaMoneyData();
+    } catch (err) {
+      console.error(err);
+      setPayoutError('Failed to submit payout request. Please try again.');
+    } finally {
+      setIsRequestingPayout(false);
+    }
+  };
 
   const fetchUserOrders = async () => {
     if (!userProfile) return;
@@ -176,13 +250,19 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
             className={`profile-drawer__tab-btn ${activeTab === 'addresses' ? 'active' : ''}`}
             onClick={() => setActiveTab('addresses')}
           >
-            Addresses ({savedAddresses.length})
+            Addresses
           </button>
           <button 
             className={`profile-drawer__tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
           >
-            Orders ({userOrders.length})
+            Orders
+          </button>
+          <button 
+            className={`profile-drawer__tab-btn ${activeTab === 'hellamoney' ? 'active' : ''}`}
+            onClick={() => setActiveTab('hellamoney')}
+          >
+            Hella Money
           </button>
         </div>
 
@@ -419,6 +499,150 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* TAB 4: HELLA MONEY */}
+          {activeTab === 'hellamoney' && (
+            <div className="profile-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Balance Card Banner */}
+              <div style={{
+                background: '#000',
+                color: '#fff',
+                padding: '2rem 1.5rem',
+                textAlign: 'center',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem'
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '2px', opacity: 0.7, textTransform: 'uppercase' }}>YOUR HELLA MONEY BALANCE</span>
+                <span style={{ fontSize: '2.5rem', fontWeight: 900, fontFamily: 'monospace' }}>{userProfile?.hellaMoney || 0} HM</span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.6, letterSpacing: '0.5px' }}>1 Hella Money (HM) = 1 Rupee (₹1)</span>
+              </div>
+
+              {/* Payout Request Section */}
+              <div style={{ border: '1px solid var(--border-color)', padding: '1.5rem', backgroundColor: '#fafafa' }}>
+                <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.8rem', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                  Request UPI Cashout
+                </h3>
+
+                {payoutError && (
+                  <p style={{ color: '#e53e3e', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.8rem' }}>{payoutError}</p>
+                )}
+                {payoutSuccess && (
+                  <p style={{ color: '#38a169', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.8rem' }}>{payoutSuccess}</p>
+                )}
+
+                {(userProfile?.hellaMoney || 0) < 500 ? (
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.4 }}>
+                    Cashouts require a minimum balance of <strong>500 Hella Money</strong>. Keep sharing your custom creations to earn 5% on every purchase!
+                  </p>
+                ) : (
+                  <form onSubmit={handlePayoutSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div className="profile-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', textAlign: 'left' }}>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>UPI ID</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. name@upi" 
+                        value={upiId}
+                        onChange={e => setUpiId(e.target.value)}
+                        required
+                        className="profile-input"
+                        style={{ fontSize: '0.8rem', padding: '0.6rem' }}
+                      />
+                    </div>
+                    <div className="profile-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', textAlign: 'left' }}>
+                      <label style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>Amount (HM)</label>
+                      <input 
+                        type="number" 
+                        placeholder="e.g. 500" 
+                        value={payoutAmount}
+                        onChange={e => setPayoutAmount(e.target.value)}
+                        min={500}
+                        max={userProfile?.hellaMoney || 0}
+                        required
+                        className="profile-input"
+                        style={{ fontSize: '0.8rem', padding: '0.6rem' }}
+                      />
+                    </div>
+                    <button 
+                      type="submit" 
+                      className="btn btn--primary"
+                      disabled={isRequestingPayout}
+                      style={{ padding: '0.8rem', fontSize: '0.75rem', width: '100%', textTransform: 'uppercase', letterSpacing: '1px' }}
+                    >
+                      {isRequestingPayout ? 'Submitting...' : 'Submit Cashout Request'}
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              {/* Transactions Ledger Log */}
+              <div>
+                <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.8rem', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                  Hella Money Earnings
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {hmTransactions.length === 0 ? (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', textAlign: 'center', padding: '1rem 0' }}>No royalty earnings recorded yet.</p>
+                  ) : (
+                    hmTransactions.map(tx => {
+                      const isRedemption = tx.amount < 0;
+                      return (
+                        <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)', padding: '0.8rem 1rem', fontSize: '0.75rem' }}>
+                          <div>
+                            <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+                              {isRedemption ? 'Redeemed Store Credit' : 'Royalty Reward'}
+                            </div>
+                            <div style={{ opacity: 0.6, fontSize: '0.65rem', marginTop: '0.2rem' }}>
+                              {isRedemption ? `Applied on Order #${tx.orderId.slice(0, 8)}` : `${tx.itemTitle} (Order #${tx.orderId.slice(0, 8)})`}
+                            </div>
+                          </div>
+                          <span style={{ color: isRedemption ? '#e53e3e' : '#38a169', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                            {isRedemption ? `${tx.amount} HM` : `+${tx.amount} HM`}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Payout requests log */}
+              {payoutRequests.length > 0 && (
+                <div>
+                  <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.8rem', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                    Cashout History
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {payoutRequests.map(req => (
+                      <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)', padding: '0.8rem 1rem', fontSize: '0.75rem' }}>
+                        <div>
+                          <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>UPI Transfer</div>
+                          <div style={{ opacity: 0.6, fontSize: '0.65rem', marginTop: '0.2rem' }}>To: {req.upiId}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontWeight: 'bold', fontFamily: 'monospace', display: 'block' }}>-{req.amount} HM</span>
+                          <span style={{ 
+                            fontSize: '0.6rem', 
+                            fontWeight: 'bold', 
+                            textTransform: 'uppercase', 
+                            padding: '0.1rem 0.4rem', 
+                            borderRadius: '2px',
+                            backgroundColor: req.status === 'Settled' ? '#e8f5e9' : '#fff3e0',
+                            color: req.status === 'Settled' ? '#2e7d32' : '#e65100',
+                            marginTop: '0.25rem',
+                            display: 'inline-block'
+                          }}>{req.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
