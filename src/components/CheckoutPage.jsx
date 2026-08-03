@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
-import { createOrder, updateProfile } from '../utils/supabase';
+import { createOrder, updateProfile, getCoupons } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 import { trackPurchase } from '../utils/analytics';
@@ -35,6 +35,7 @@ const CheckoutPage = ({
   }, [cartItems, step]);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [countdown, setCountdown] = useState(10);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -54,6 +55,17 @@ const CheckoutPage = ({
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
+
+    const fetchAllCoupons = async () => {
+      try {
+        const data = await getCoupons();
+        setAvailableCoupons(data);
+      } catch (err) {
+        console.error('Failed to load coupons in CheckoutPage:', err);
+      }
+    };
+    fetchAllCoupons();
+
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
@@ -120,7 +132,11 @@ const CheckoutPage = ({
     return acc + (numericalPrice * item.quantity);
   }, 0);
 
-  const discountAmount = appliedDiscount ? Math.round(unbargainedSubtotal * appliedDiscount.percent / 100) : 0;
+  const discountAmount = appliedDiscount 
+    ? (appliedDiscount.fixed 
+        ? Math.min(appliedDiscount.fixed, unbargainedSubtotal) 
+        : Math.round(unbargainedSubtotal * (appliedDiscount.percent || 0) / 100))
+    : 0;
   const shipping = paymentMethod === 'razorpay' ? 0 : 50; // WAIVE shipping for online payments (incentive)
   const total = subtotal - discountAmount + shipping;
 
@@ -141,34 +157,38 @@ const CheckoutPage = ({
     }
 
     const code = promoCode.trim().toUpperCase();
-    if (code === 'BOLD10') {
-      onApplyDiscount({ code, percent: 10 });
-      setPromoError('');
-      setPromoCode('');
-      triggerConfettiBurst(e.target);
-    } else if (code === 'BOLD20') {
-      if (unbargainedSubtotal < 899) {
-        const diff = 899 - unbargainedSubtotal;
-        setPromoError(`Add eligible items worth ₹${Math.round(diff)} more to redeem this offer`);
-      } else {
-        onApplyDiscount({ code, percent: 20 });
-        setPromoError('');
-        setPromoCode('');
-        triggerConfettiBurst(e.target);
-      }
-    } else if (code === 'HELLA50') {
-      if (unbargainedSubtotal < 1299) {
-        const diff = 1299 - unbargainedSubtotal;
-        setPromoError(`Add eligible items worth ₹${Math.round(diff)} more to redeem this offer`);
-      } else {
-        onApplyDiscount({ code, percent: 50 });
-        setPromoError('');
-        setPromoCode('');
-        triggerConfettiBurst(e.target);
-      }
-    } else {
+    const coupon = availableCoupons.find(c => c.code.toUpperCase() === code);
+
+    if (!coupon) {
       setPromoError('Invalid promo code');
+      return;
     }
+
+    if (!coupon.active) {
+      setPromoError('This promo code is currently inactive.');
+      return;
+    }
+
+    if (coupon.expiry && new Date(coupon.expiry) < new Date()) {
+      setPromoError('This promo code has expired.');
+      return;
+    }
+
+    if (unbargainedSubtotal < (coupon.minOrder || 0)) {
+      const diff = coupon.minOrder - unbargainedSubtotal;
+      setPromoError(`Add eligible items worth ₹${Math.round(diff)} more to redeem this offer`);
+      return;
+    }
+
+    // Apply coupon
+    onApplyDiscount({
+      code: coupon.code,
+      percent: coupon.type === 'percent' ? coupon.value : 0,
+      fixed: coupon.type === 'fixed' ? coupon.value : 0
+    });
+    setPromoError('');
+    setPromoCode('');
+    triggerConfettiBurst(e.target);
   };
 
   const handleRemovePromo = () => {
@@ -190,6 +210,30 @@ const CheckoutPage = ({
   };
 
   const handlePaymentSuccess = async (completedOrder) => {
+    // ── Server-side Razorpay payment validation ──────────────────────────────
+    if (completedOrder.razorpayPaymentId) {
+      try {
+        const verifyRes = await fetch('/api/razorpay/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentId: completedOrder.razorpayPaymentId,
+            expectedAmount: completedOrder.total
+          })
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyRes.ok || !verifyData.verified) {
+          setPaymentError(verifyData.reason || 'Payment verification failed. Tampering detected.');
+          return;
+        }
+        console.log('[Razorpay Verify] Server-side validation succeeded.', verifyData);
+      } catch (err) {
+        console.error('Server-side verification request failed:', err);
+        setPaymentError('Verification client connection failed.');
+        return;
+      }
+    }
+
     // ── Push order to Shiprocket ────────────────────────────────────────────
     // This replaces awb/courier with real Shiprocket data.
     // If Shiprocket is unreachable or returns an error, we fall back gracefully

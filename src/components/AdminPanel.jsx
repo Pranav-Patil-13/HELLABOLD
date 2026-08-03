@@ -8,7 +8,10 @@ import {
   deleteReview, 
   getOrders, 
   getAllOrdersForAdmin,
-  updateOrderStatusInDB 
+  updateOrderStatusInDB,
+  getCoupons,
+  saveCoupon,
+  deleteCoupon 
 } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
@@ -84,19 +87,88 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   const [colorImages, setColorImages] = useState({});
   const [newColorInput, setNewColorInput] = useState('');
 
+  // Coupon States
+  const [couponsList, setCouponsList] = useState([]);
+  const [newCouponCode, setNewCouponCode] = useState('');
+  const [newCouponType, setNewCouponType] = useState('percent');
+  const [newCouponValue, setNewCouponValue] = useState('');
+  const [newCouponMinOrder, setNewCouponMinOrder] = useState('');
+  const [newCouponExpiry, setNewCouponExpiry] = useState('');
+
   // Load products, images, and orders on mount
   useEffect(() => {
     fetchProducts();
     fetchImages();
     fetchFeedbackImages();
     fetchOrders();
+    fetchCoupons();
   }, []);
 
   useEffect(() => {
     if (activeAdminTab === 'orders' || activeAdminTab === 'dashboard') {
       fetchOrders();
     }
+    if (activeAdminTab === 'coupons') {
+      fetchCoupons();
+    }
   }, [activeAdminTab]);
+
+  const fetchCoupons = async () => {
+    try {
+      const data = await getCoupons();
+      setCouponsList(data);
+    } catch (err) {
+      console.error('Error fetching coupons:', err);
+    }
+  };
+
+  const handleSaveCoupon = async (e) => {
+    e.preventDefault();
+    if (!newCouponCode.trim() || !newCouponValue) {
+      alert('Coupon code and discount value are required.');
+      return;
+    }
+    const newCoupon = {
+      code: newCouponCode.trim().toUpperCase(),
+      type: newCouponType,
+      value: parseFloat(newCouponValue),
+      minOrder: parseFloat(newCouponMinOrder || 0),
+      expiry: newCouponExpiry,
+      active: true
+    };
+    try {
+      await saveCoupon(newCoupon);
+      alert('Coupon saved successfully!');
+      setNewCouponCode('');
+      setNewCouponValue('');
+      setNewCouponMinOrder('');
+      setNewCouponExpiry('');
+      fetchCoupons();
+    } catch (err) {
+      console.error('Failed to save coupon:', err);
+      alert('Failed to save coupon.');
+    }
+  };
+
+  const handleToggleCoupon = async (coupon) => {
+    const updated = { ...coupon, active: !coupon.active };
+    try {
+      await saveCoupon(updated);
+      fetchCoupons();
+    } catch (err) {
+      console.error('Failed to toggle coupon:', err);
+    }
+  };
+
+  const handleDeleteCoupon = async (code) => {
+    if (!window.confirm(`Are you sure you want to revoke coupon ${code}?`)) return;
+    try {
+      await deleteCoupon(code);
+      fetchCoupons();
+    } catch (err) {
+      console.error('Failed to delete coupon:', err);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -569,6 +641,13 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'orders' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
         >
           Manage Shipments
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'coupons' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('coupons')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'coupons' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'coupons' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Manage Coupons
         </button>
       </div>
 
@@ -1401,6 +1480,146 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeAdminTab === 'coupons' && (
+        <div className="admin-coupons-tab">
+          <div className="admin-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            {/* Create Coupon Card */}
+            <div className="admin-card form-card">
+              <h3>Create Discount Coupon</h3>
+              <form onSubmit={handleSaveCoupon} className="admin-form" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                <div className="form-group">
+                  <label htmlFor="couponCode">Coupon Code</label>
+                  <input
+                    id="couponCode"
+                    type="text"
+                    placeholder="e.g. SUMMER20"
+                    value={newCouponCode}
+                    onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
+                    required
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
+                
+                <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label htmlFor="couponType">Discount Type</label>
+                    <select
+                      id="couponType"
+                      value={newCouponType}
+                      onChange={(e) => setNewCouponType(e.target.value)}
+                    >
+                      <option value="percent">Percentage (%)</option>
+                      <option value="fixed">Fixed Amount (₹)</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label htmlFor="couponValue">Value</label>
+                    <input
+                      id="couponValue"
+                      type="number"
+                      placeholder="e.g. 15 or 150"
+                      value={newCouponValue}
+                      onChange={(e) => setNewCouponValue(e.target.value)}
+                      required
+                      min="1"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label htmlFor="couponMinOrder">Min Order Requirement (₹)</label>
+                    <input
+                      id="couponMinOrder"
+                      type="number"
+                      placeholder="e.g. 500"
+                      value={newCouponMinOrder}
+                      onChange={(e) => setNewCouponMinOrder(e.target.value)}
+                      min="0"
+                    />
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label htmlFor="couponExpiry">Expiry Date (Optional)</label>
+                    <input
+                      id="couponExpiry"
+                      type="date"
+                      value={newCouponExpiry}
+                      onChange={(e) => setNewCouponExpiry(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn--primary" style={{ marginTop: '0.5rem' }}>Create Coupon</button>
+              </form>
+            </div>
+
+            {/* Coupons Directory List */}
+            <div className="admin-card table-card">
+              <h3>Active Coupons Directory</h3>
+              <div className="table-wrapper">
+                {couponsList.length === 0 ? (
+                  <p className="empty-message">No coupons found.</p>
+                ) : (
+                  <table className="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Benefit</th>
+                        <th>Min Order</th>
+                        <th>Expires</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {couponsList.map((coupon) => (
+                        <tr key={coupon.code}>
+                          <td>
+                            <span className="table-promo-badge" style={{ fontSize: '0.85rem' }}>{coupon.code}</span>
+                          </td>
+                          <td style={{ fontWeight: 600 }}>
+                            {coupon.type === 'percent' ? `${coupon.value}% OFF` : `₹${coupon.value} OFF`}
+                          </td>
+                          <td>₹{coupon.minOrder || 0}</td>
+                          <td>{coupon.expiry ? new Date(coupon.expiry).toLocaleDateString() : 'Never'}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="btn btn--outline"
+                              onClick={() => handleToggleCoupon(coupon)}
+                              style={{
+                                padding: '0.2rem 0.5rem',
+                                fontSize: '0.7rem',
+                                textTransform: 'uppercase',
+                                backgroundColor: coupon.active ? '#38a169' : 'transparent',
+                                color: coupon.active ? '#fff' : '#e53e3e',
+                                borderColor: coupon.active ? '#38a169' : '#e53e3e'
+                              }}
+                            >
+                              {coupon.active ? 'Active' : 'Inactive'}
+                            </button>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              className="btn btn--outline"
+                              onClick={() => handleDeleteCoupon(coupon.code)}
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', color: '#e53e3e', borderColor: '#e53e3e' }}
+                            >
+                              Revoke
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           </div>
         </div>

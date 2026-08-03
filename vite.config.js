@@ -456,6 +456,78 @@ function adminApiPlugin() {
           return;
         }
 
+        // ── POST /api/razorpay/verify-payment ─────────────────────────────────
+        if (pathname === '/api/razorpay/verify-payment' && req.method === 'POST') {
+          try {
+            const rawBody = await collectBody(req);
+            const body = JSON.parse(rawBody);
+
+            const { paymentId, expectedAmount } = body;
+
+            if (!paymentId || !expectedAmount) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Missing paymentId or expectedAmount' }));
+              return;
+            }
+
+            const keyId = process.env.VITE_RAZORPAY_KEY_ID;
+            const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+            if (!keySecret) {
+              console.warn('[Razorpay Dev Verify] RAZORPAY_KEY_SECRET is not configured. Running in MOCK VERIFICATION mode.');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ verified: true, mock: true }));
+              return;
+            }
+
+            console.log(`[Razorpay Dev Verify] Fetching payment details for: ${paymentId}`);
+            const authString = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+            
+            const rzpRes = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Basic ${authString}`
+              }
+            });
+
+            const paymentData = await rzpRes.json();
+            
+            if (!rzpRes.ok) {
+              console.error('[Razorpay Dev Verify] Fetch payment details failed:', paymentData);
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ verified: false, error: 'Failed to retrieve payment details' }));
+              return;
+            }
+
+            const expectedPaise = Math.round(Number(expectedAmount) * 100);
+            const amountMatches = Math.abs(paymentData.amount - expectedPaise) <= 1;
+            const statusValid = paymentData.status === 'captured' || paymentData.status === 'authorized';
+            const currencyValid = paymentData.currency === 'INR';
+
+            console.log(`[Razorpay Dev Verify] Result: amountMatches=${amountMatches}, statusValid=${statusValid}, currencyValid=${currencyValid}`);
+
+            if (amountMatches && statusValid && currencyValid) {
+              console.log(`[Razorpay Dev Verify] ✅ Payment verified successfully.`);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ verified: true }));
+            } else {
+              console.error('[Razorpay Dev Verify] ❌ Tampering detected:', {
+                paymentStatus: paymentData.status,
+                paymentAmount: paymentData.amount,
+                expectedAmount: expectedPaise,
+                currency: paymentData.currency
+              });
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ verified: false, reason: 'Payment validation fields mismatch' }));
+            }
+          } catch (err) {
+            console.error('[Razorpay Dev Verify] Error verifying payment:', err);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+          return;
+        }
+
         // ── POST /api/tracking-webhook ────────────────────────────────────────
         // Dev-server proxy to simulate the Vercel webhook endpoint locally
         if (pathname === '/api/tracking-webhook' && req.method === 'POST') {

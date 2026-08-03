@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import Header from './components/Header';
-import { getProducts, getReviews, getCurrentUser } from './utils/supabase';
+import { getProducts, getReviews, getCurrentUser, getCoupons } from './utils/supabase';
 import { cloudinaryOptimize } from './utils/cloudinary';
 import Hero from './components/Hero';
 import Filters from './components/Filters';
@@ -185,6 +185,7 @@ function App() {
     const saved = localStorage.getItem('hellabold_discount');
     return saved ? JSON.parse(saved) : null;
   });
+  const [coupons, setCoupons] = useState([]);
   const [selectedCollection, setSelectedCollection] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('collection') || null;
@@ -218,6 +219,7 @@ function App() {
     if (window.location.pathname === '/admin') {
       setIsAdmin(true);
     }
+    getCoupons().then(setCoupons).catch(err => console.error(err));
     if (window.location.pathname === '/checkout') {
       setIsCheckoutPage(true);
     }
@@ -436,9 +438,8 @@ function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Auto-invalidate applied discount if subtotal drops below thresholds
   useEffect(() => {
-    if (appliedDiscount) {
+    if (appliedDiscount && coupons.length > 0) {
       const unbargainedSubtotal = cartItems.reduce((acc, item) => {
         if (item.customMeta?.isBargained) return acc;
         const numericalPrice = parseFloat(item.price.replace(/[^0-9.]/g, ''));
@@ -447,13 +448,16 @@ function App() {
 
       if (unbargainedSubtotal === 0) {
         saveDiscount(null);
-      } else if (appliedDiscount.code === 'BOLD20' && unbargainedSubtotal < 899) {
-        saveDiscount(null);
-      } else if (appliedDiscount.code === 'HELLA50' && unbargainedSubtotal < 1299) {
-        saveDiscount(null);
+      } else {
+        const currentCoupon = coupons.find(c => c.code.toUpperCase() === appliedDiscount.code.toUpperCase());
+        if (!currentCoupon || !currentCoupon.active || (currentCoupon.expiry && new Date(currentCoupon.expiry) < new Date())) {
+          saveDiscount(null);
+        } else if (unbargainedSubtotal < (currentCoupon.minOrder || 0)) {
+          saveDiscount(null);
+        }
       }
     }
-  }, [cartItems, appliedDiscount]);
+  }, [cartItems, appliedDiscount, coupons]);
 
   // Scroll to top when switching pages
   useEffect(() => {

@@ -671,3 +671,105 @@ const getProfileById = async (userId) => {
     addresses: data.addresses || []
   };
 };
+
+// ── Coupons / Discount Manager ──────────────────────────────────────────────
+export const getCoupons = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .order('code', { ascending: true });
+      if (!error && data) {
+        return data.map(c => ({
+          code: c.code,
+          type: c.type,
+          value: c.value,
+          minOrder: c.min_order,
+          expiry: c.expiry,
+          active: c.active
+        }));
+      }
+    } catch (e) {
+      console.warn('Supabase coupons table query failed, falling back to localStorage:', e);
+    }
+  }
+  
+  // Fallback to local storage (initialized with default seed coupons)
+  const local = localStorage.getItem('hellabold_coupons');
+  if (!local) {
+    const seed = [
+      { code: 'BOLD10', type: 'percent', value: 10, minOrder: 0, expiry: '', active: true },
+      { code: 'BOLD20', type: 'percent', value: 20, minOrder: 899, expiry: '', active: true },
+      { code: 'HELLA50', type: 'percent', value: 50, minOrder: 1299, expiry: '', active: true }
+    ];
+    localStorage.setItem('hellabold_coupons', JSON.stringify(seed));
+    return seed;
+  }
+  return JSON.parse(local);
+};
+
+export const saveCoupon = async (coupon) => {
+  if (isSupabaseConfigured) {
+    try {
+      const dbCoupon = {
+        code: coupon.code.toUpperCase(),
+        type: coupon.type,
+        value: Number(coupon.value),
+        min_order: Number(coupon.minOrder || 0),
+        expiry: coupon.expiry || null,
+        active: coupon.active !== false
+      };
+
+      const { data, error } = await supabase
+        .from('coupons')
+        .upsert(dbCoupon)
+        .select();
+
+      if (!error) return true;
+      console.warn('Failed to save coupon to Supabase, falling back to localStorage:', error);
+    } catch (e) {
+      console.warn('Upsert coupon to Supabase failed:', e);
+    }
+  }
+
+  // Local storage fallback
+  const coupons = await getCoupons();
+  const index = coupons.findIndex(c => c.code.toUpperCase() === coupon.code.toUpperCase());
+  const updatedCoupon = {
+    code: coupon.code.toUpperCase(),
+    type: coupon.type,
+    value: Number(coupon.value),
+    minOrder: Number(coupon.minOrder || 0),
+    expiry: coupon.expiry || '',
+    active: coupon.active !== false
+  };
+
+  if (index >= 0) {
+    coupons[index] = updatedCoupon;
+  } else {
+    coupons.push(updatedCoupon);
+  }
+  localStorage.setItem('hellabold_coupons', JSON.stringify(coupons));
+  return true;
+};
+
+export const deleteCoupon = async (code) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('coupons')
+        .delete()
+        .eq('code', code.toUpperCase());
+      if (!error) return true;
+    } catch (e) {
+      console.warn('Failed to delete coupon from Supabase:', e);
+    }
+  }
+
+  // Local storage fallback
+  const coupons = await getCoupons();
+  const filtered = coupons.filter(c => c.code.toUpperCase() !== code.toUpperCase());
+  localStorage.setItem('hellabold_coupons', JSON.stringify(filtered));
+  return true;
+};
