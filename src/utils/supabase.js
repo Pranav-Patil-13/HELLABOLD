@@ -1170,13 +1170,14 @@ export const awardRoyaltiesForOrder = async (order) => {
       try {
         const { data: designData } = await supabase
           .from('shared_designs')
-          .select('author')
+          .select('author, author_email')
           .eq('id', item.id)
           .single();
         if (designData && designData.author) {
           remixOf = {
             designId: item.id,
-            creator: designData.author
+            creator: designData.author,
+            creatorEmail: designData.author_email || null
           };
         }
       } catch (err) {
@@ -1234,17 +1235,18 @@ export const awardRoyaltiesForOrder = async (order) => {
           }
 
           // Always write ledger entry to Supabase for earnings history
-          try {
-            await supabase.from('hella_money_ledger').insert([{
-              order_id: ledgerEntry.orderId,
-              item_title: ledgerEntry.itemTitle,
-              price: ledgerEntry.price,
-              creator: ledgerEntry.creator,
-              amount: ledgerEntry.amount,
-              created_at: ledgerEntry.createdAt
-            }]);
-          } catch (ledgerErr) {
-            console.warn('Failed to write ledger entry to Supabase:', ledgerErr);
+          const { error: ledgerInsertErr } = await supabase.from('hella_money_ledger').insert([{
+            order_id: ledgerEntry.orderId,
+            item_title: ledgerEntry.itemTitle,
+            price: ledgerEntry.price,
+            creator: ledgerEntry.creator,
+            amount: ledgerEntry.amount,
+            created_at: ledgerEntry.createdAt
+          }]);
+          if (ledgerInsertErr) {
+            console.error('❌ Ledger insert failed:', JSON.stringify(ledgerInsertErr));
+          } else {
+            console.log('✅ Ledger entry saved for', ledgerEntry.creator, '+', ledgerEntry.amount, 'HM');
           }
         } catch (err) {
           console.warn('Failed to award royalties in Supabase profiles:', err);
