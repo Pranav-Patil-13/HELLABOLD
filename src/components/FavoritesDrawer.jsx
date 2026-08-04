@@ -178,7 +178,7 @@ const FavoritesDrawer = ({
                               const customProduct = {
                                 id: design.id,
                                 title: design.title,
-                                price: design.customMeta?.price || 999,
+                                price: `₹${design.customMeta?.price || 999}`,
                                 isCustom: true,
                                 customMeta: {
                                   ...design.customMeta,

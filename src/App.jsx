@@ -721,7 +721,7 @@ function App() {
       if (!matchesCategory) return false;
     }
     const matchesSize = selectedSizes.length === 0 || product.sizes?.some(size => selectedSizes.includes(size));
-    const priceNum = parseFloat(product.price.replace(/[^0-9.]/g, ''));
+    const priceNum = typeof product.price === 'number' ? product.price : parseFloat(product.price.replace(/[^0-9.]/g, ''));
     const matchesPrice = priceNum >= priceRange[0] && priceNum <= priceRange[1];
     const matchesSearch = !searchQuery ||
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

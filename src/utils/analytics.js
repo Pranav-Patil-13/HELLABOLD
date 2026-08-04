@@ -114,7 +114,9 @@ export const trackViewItem = (product) => {
  */
 export const trackAddToCart = (product, quantity = 1, color = '', size = '') => {
   if (!product) return;
-  const priceNum = parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0);
+  const priceNum = typeof product.price === 'number' 
+    ? product.price 
+    : parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0);
 
   // Google Analytics
   if (window.gtag) {
