@@ -1110,7 +1110,7 @@ function App() {
         onApplyDiscount={saveDiscount}
         onCheckout={() => {
           const subtotal = cartItems.reduce((acc, item) => {
-            const priceVal = parseFloat(item.price?.replace(/[^0-9.]/g, '') || 0);
+            const priceVal = parseFloat(String(item.price || '').replace(/[^0-9.]/g, '') || 0);
             return acc + (priceVal * item.quantity);
           }, 0);
           trackInitiateCheckout(cartItems, subtotal);

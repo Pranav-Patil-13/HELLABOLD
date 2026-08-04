@@ -79,7 +79,7 @@ export const trackPageView = (path, title = '') => {
  */
 export const trackViewItem = (product) => {
   if (!product) return;
-  const priceNum = parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0);
+  const priceNum = parseFloat(String(product.price || '').replace(/[^0-9.]/g, '') || 0);
 
   // Google Analytics
   if (window.gtag) {
@@ -114,7 +114,7 @@ export const trackViewItem = (product) => {
  */
 export const trackAddToCart = (product, quantity = 1, color = '', size = '') => {
   if (!product) return;
-  const priceNum = parseFloat(product.price?.replace(/[^0-9.]/g, '') || 0);
+  const priceNum = parseFloat(String(product.price || '').replace(/[^0-9.]/g, '') || 0);
 
   // Google Analytics
   if (window.gtag) {
@@ -153,7 +153,7 @@ export const trackInitiateCheckout = (cartItems, subtotal) => {
   if (!cartItems || cartItems.length === 0) return;
 
   const gaItems = cartItems.map(item => {
-    const priceNum = parseFloat(item.price?.replace(/[^0-9.]/g, '') || 0);
+    const priceNum = parseFloat(String(item.price || '').replace(/[^0-9.]/g, '') || 0);
     return {
       item_id: String(item.id),
       item_name: item.title,
@@ -195,7 +195,7 @@ export const trackPurchase = (order) => {
   if (!order) return;
 
   const gaItems = (order.items || []).map(item => {
-    const priceNum = parseFloat(item.price?.replace(/[^0-9.]/g, '') || 0);
+    const priceNum = parseFloat(String(item.price || '').replace(/[^0-9.]/g, '') || 0);
     return {
       item_id: String(item.id),
       item_name: item.title,
