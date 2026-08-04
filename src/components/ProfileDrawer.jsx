@@ -518,7 +518,10 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                 gap: '0.5rem'
               }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '2px', opacity: 0.7, textTransform: 'uppercase' }}>YOUR HELLA MONEY BALANCE</span>
-                <span style={{ fontSize: '2.5rem', fontWeight: 900, fontFamily: 'monospace' }}>{userProfile?.hellaMoney || 0} HM</span>
+                <span style={{ fontSize: '2.5rem', fontWeight: 900, fontFamily: 'monospace', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785824697/Hella_Coin_yai38q.png" alt="Hella Coin" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                  {userProfile?.hellaMoney || 0}
+                </span>
                 <span style={{ fontSize: '0.7rem', opacity: 0.6, letterSpacing: '0.5px' }}>1 Hella Money (HM) = 1 Rupee (₹1)</span>
               </div>
 
@@ -600,8 +603,9 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                               {isRedemption ? `Applied on Order #${tx.orderId.slice(0, 8)}` : `${tx.itemTitle} (Order #${tx.orderId.slice(0, 8)})`}
                             </div>
                           </div>
-                          <span style={{ color: isRedemption ? '#e53e3e' : '#38a169', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                            {isRedemption ? `${tx.amount} HM` : `+${tx.amount} HM`}
+                          <span style={{ color: isRedemption ? '#e53e3e' : '#38a169', fontWeight: 'bold', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                            <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785824697/Hella_Coin_yai38q.png" alt="Hella Coin" style={{ width: '12px', height: '12px', objectFit: 'contain' }} />
+                            {isRedemption ? `${tx.amount}` : `+${tx.amount}`}
                           </span>
                         </div>
                       );
@@ -624,7 +628,10 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                           <div style={{ opacity: 0.6, fontSize: '0.65rem', marginTop: '0.2rem' }}>To: {req.upiId}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontWeight: 'bold', fontFamily: 'monospace', display: 'block' }}>-{req.amount} HM</span>
+                          <span style={{ fontWeight: 'bold', fontFamily: 'monospace', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.2rem' }}>
+                            <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785824697/Hella_Coin_yai38q.png" alt="Hella Coin" style={{ width: '12px', height: '12px', objectFit: 'contain' }} />
+                            -{req.amount}
+                          </span>
                           <span style={{ 
                             fontSize: '0.6rem', 
                             fontWeight: 'bold', 

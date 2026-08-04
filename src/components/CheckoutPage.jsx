@@ -1040,14 +1040,20 @@ const CheckoutPage = ({
               <div className="checkout-summary__promo" style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 {appliedHellaMoney > 0 ? (
                   <div className="promo-badge" style={{ backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', padding: '0.6rem 0.8rem', fontSize: '0.75rem', width: '100%' }}>
-                    <span>Applied: <strong>{appliedHellaMoney} Hella Money</strong> (-₹{appliedHellaMoney})</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                      <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785824697/Hella_Coin_yai38q.png" alt="Hella Coin" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+                      Applied: <strong>{appliedHellaMoney} Hella Money</strong> (-₹{appliedHellaMoney})
+                    </span>
                     <button type="button" className="promo-remove-btn" onClick={() => setAppliedHellaMoney(0)} style={{ color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Remove</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold' }}>
                       <span>Hella Money Balance:</span>
-                      <span style={{ fontFamily: 'monospace' }}>{userProfile.hellaMoney} HM (₹{userProfile.hellaMoney})</span>
+                      <span style={{ fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785824697/Hella_Coin_yai38q.png" alt="Hella Coin" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+                        {userProfile.hellaMoney} (₹{userProfile.hellaMoney})
+                      </span>
                     </div>
                     <button 
                       type="button" 
