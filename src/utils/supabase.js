@@ -1236,6 +1236,7 @@ export const awardRoyaltiesForOrder = async (order) => {
 
           // Always write ledger entry to Supabase for earnings history
           const { error: ledgerInsertErr } = await supabase.from('hella_money_ledger').insert([{
+            id: ledgerEntry.id,
             order_id: ledgerEntry.orderId,
             item_title: ledgerEntry.itemTitle,
             price: ledgerEntry.price,
