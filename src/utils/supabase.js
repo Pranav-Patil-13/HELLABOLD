@@ -1082,18 +1082,27 @@ export const createPayoutRequest = async (creator, upiId, amount) => {
         .from('payout_requests')
         .insert([request]);
       if (!error) {
-        // Deduct from profile balance in Supabase immediately
+        // Deduct from profile balance using the authenticated user's UUID (most reliable)
         try {
-          const { data: byEmail } = await supabase.from('profiles').select('id, hella_money').eq('email', creator);
-          const { data: byName } = !byEmail?.length ? await supabase.from('profiles').select('id, hella_money').eq('full_name', creator) : { data: [] };
-          const matches = byEmail?.length ? byEmail : byName;
-          if (matches && matches.length > 0) {
-            const profile = matches[0];
-            const newBal = Math.max(0, (profile.hella_money || 0) - Number(amount));
-            await supabase.from('profiles').update({ hella_money: newBal }).eq('id', profile.id);
-            console.log(`Deducted ${amount} HM from profile ${profile.id}. New balance: ${newBal}`);
-          } else {
-            console.warn('createPayoutRequest: could not find profile for creator:', creator);
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('hella_money')
+              .eq('id', user.id)
+              .single();
+            if (profile) {
+              const newBal = Math.max(0, (profile.hella_money || 0) - Number(amount));
+              const { error: updateErr } = await supabase
+                .from('profiles')
+                .update({ hella_money: newBal })
+                .eq('id', user.id);
+              if (updateErr) {
+                console.warn('Failed to update hella_money in profiles:', updateErr);
+              } else {
+                console.log(`✅ Deducted ${amount} HM from profile ${user.id}. New balance: ${newBal}`);
+              }
+            }
           }
         } catch (deductErr) {
           console.warn('Failed to deduct balance after payout request:', deductErr);
