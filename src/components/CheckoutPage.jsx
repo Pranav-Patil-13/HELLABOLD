@@ -969,7 +969,29 @@ const CheckoutPage = ({
                   <div className="summary-item__info" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
                     <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 'bold' }}>{item.title}</h4>
                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Size: {item.size}</p>
-                    
+
+                    {/* Phase 3.2 — Patronage tag for remixed community designs */}
+                    {item.designData?.author &&
+                      item.designData.author !== 'Anonymous' &&
+                      item.designData.author !== 'Anonymous Creator' &&
+                      item.designData.author !== 'Bold Creator' && (
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        fontSize: '0.68rem',
+                        color: '#92400e',
+                        background: '#fffbeb',
+                        border: '1px solid #fcd34d',
+                        padding: '0.2rem 0.45rem',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.2px',
+                        width: 'fit-content'
+                      }}>
+                        🟡 5% goes to @{item.designData.author} as Hella Money
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.3rem' }}>
                       <div className="qty-selector" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', height: '28px', padding: '0 4px', background: '#fff' }}>
                         <button 
