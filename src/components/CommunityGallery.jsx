@@ -25,6 +25,138 @@ const modelImages = {
   }
 };
 
+const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink }) => {
+  const { id, title, author, gender, color, frontImage, backImage, customMeta, likes } = design;
+  const hasBothSides = !!(frontImage && backImage);
+  const [activeSide, setActiveSide] = useState(frontImage ? 'front' : 'back');
+
+  const placement = customMeta?.placement || {};
+  const graphicUrl = activeSide === 'front' ? frontImage : backImage;
+  const modelImg = modelImages[activeSide][gender || 'male'][color || 'black'];
+  
+  const currentPlacement = activeSide === 'front' ? placement.front : placement.back;
+  const scale = currentPlacement?.scale || 100;
+  const posX = currentPlacement?.x !== undefined ? currentPlacement.x : 5;
+  const posY = currentPlacement?.y !== undefined ? currentPlacement.y : 5;
+  const rotation = currentPlacement?.rotation || 0;
+  const opacity = currentPlacement?.opacity !== undefined ? currentPlacement.opacity : 100;
+
+  const isLiked = likedIds.includes(id);
+
+  return (
+    <div className="gallery-card">
+      <div className="gallery-card-preview">
+        <img src={modelImg} alt="Garment Model" className="gallery-card-base-img" />
+        
+        {graphicUrl && (
+          <div 
+            className="gallery-card-graphic"
+            style={{
+              transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
+              opacity: opacity / 100,
+              mixBlendMode: color === 'white' ? 'multiply' : 'normal'
+            }}
+          >
+            <img src={graphicUrl} alt="Design Graphic" />
+          </div>
+        )}
+
+        {hasBothSides && (
+          <div className="gallery-card-side-toggle" style={{
+            position: 'absolute',
+            top: '0.75rem',
+            right: '0.75rem',
+            display: 'flex',
+            gap: '0.2rem',
+            zIndex: 10,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: '0.2rem',
+            borderRadius: '2px',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <button 
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setActiveSide('front'); }}
+              style={{
+                background: activeSide === 'front' ? '#fff' : 'none',
+                color: activeSide === 'front' ? '#000' : '#fff',
+                border: 'none',
+                padding: '0.2rem 0.4rem',
+                fontSize: '0.55rem',
+                fontWeight: '900',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                borderRadius: '1px',
+                letterSpacing: '0.5px'
+              }}
+            >
+              Front
+            </button>
+            <button 
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setActiveSide('back'); }}
+              style={{
+                background: activeSide === 'back' ? '#fff' : 'none',
+                color: activeSide === 'back' ? '#000' : '#fff',
+                border: 'none',
+                padding: '0.2rem 0.4rem',
+                fontSize: '0.55rem',
+                fontWeight: '900',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                borderRadius: '1px',
+                letterSpacing: '0.5px'
+              }}
+            >
+              Back
+            </button>
+          </div>
+        )}
+
+        <div className="gallery-card-badge">
+          {gender.toUpperCase()} FIT • {color.toUpperCase()}
+        </div>
+
+        <div className="gallery-card-hover-overlay">
+          <button className="btn btn--primary remix-btn" onClick={() => onRemix(design)}>
+            REMIX IN LAB
+          </button>
+        </div>
+      </div>
+
+      <div className="gallery-card-info">
+        <div className="gallery-card-title-row">
+          <h3 className="gallery-card-title">{title}</h3>
+          <button 
+            className={`gallery-card-like-btn ${isLiked ? 'liked' : ''}`}
+            onClick={(e) => onLike(e, id)}
+            disabled={isLiked}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <span>{likes}</span>
+          </button>
+        </div>
+        
+        <div className="gallery-card-author-row">
+          <span className="gallery-card-author">by @{author}</span>
+          <button className="gallery-card-share-btn" onClick={(e) => onCopyLink(e, id)} title="Copy shareable link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            Share
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CommunityGallery = ({ onRemix, refreshTrigger }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,88 +248,16 @@ const CommunityGallery = ({ onRemix, refreshTrigger }) => {
         </div>
       ) : (
         <div className="gallery-grid">
-          {designs.map((design) => {
-            const { id, title, author, gender, color, frontImage, backImage, customMeta, likes } = design;
-            const placement = customMeta?.placement || {};
-            const side = frontImage ? 'front' : 'back';
-            const graphicUrl = frontImage || backImage;
-            const modelImg = modelImages[side][gender || 'male'][color || 'black'];
-            
-            // Placement CSS variables/styles
-            const currentPlacement = side === 'front' ? placement.front : placement.back;
-            const scale = currentPlacement?.scale || 100;
-            const posX = currentPlacement?.x !== undefined ? currentPlacement.x : 5;
-            const posY = currentPlacement?.y !== undefined ? currentPlacement.y : 5;
-            const rotation = currentPlacement?.rotation || 0;
-            const opacity = currentPlacement?.opacity !== undefined ? currentPlacement.opacity : 100;
-
-            const isLiked = likedIds.includes(id);
-
-            return (
-              <div key={id} className="gallery-card">
-                {/* Dynamic Preview Container */}
-                <div className="gallery-card-preview">
-                  <img src={modelImg} alt="Garment Model" className="gallery-card-base-img" />
-                  
-                  {graphicUrl && (
-                    <div 
-                      className="gallery-card-graphic"
-                      style={{
-                        transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
-                        opacity: opacity / 100,
-                        mixBlendMode: color === 'white' ? 'multiply' : 'normal'
-                      }}
-                    >
-                      <img src={graphicUrl} alt="Design Graphic" />
-                    </div>
-                  )}
-
-                  {/* Badges / Side Tag */}
-                  <div className="gallery-card-badge">
-                    {gender.toUpperCase()} FIT • {color.toUpperCase()}
-                  </div>
-
-                  {/* Hover Actions */}
-                  <div className="gallery-card-hover-overlay">
-                    <button className="btn btn--primary remix-btn" onClick={() => onRemix(design)}>
-                      REMIX IN LAB
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card Details */}
-                <div className="gallery-card-info">
-                  <div className="gallery-card-title-row">
-                    <h3 className="gallery-card-title">{title}</h3>
-                    <button 
-                      className={`gallery-card-like-btn ${isLiked ? 'liked' : ''}`}
-                      onClick={(e) => handleLike(e, id)}
-                      disabled={isLiked}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                      </svg>
-                      <span>{likes}</span>
-                    </button>
-                  </div>
-                  
-                  <div className="gallery-card-author-row">
-                    <span className="gallery-card-author">by @{author}</span>
-                    <button className="gallery-card-share-btn" onClick={(e) => handleCopyLink(e, id)} title="Copy shareable link">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="18" cy="5" r="3"/>
-                        <circle cx="6" cy="12" r="3"/>
-                        <circle cx="18" cy="19" r="3"/>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                      </svg>
-                      Share
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {designs.map((design) => (
+            <GalleryCard 
+              key={design.id}
+              design={design}
+              likedIds={likedIds}
+              onLike={handleLike}
+              onRemix={onRemix}
+              onCopyLink={handleCopyLink}
+            />
+          ))}
         </div>
       )}
     </div>
