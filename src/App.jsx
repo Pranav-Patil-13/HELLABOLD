@@ -621,7 +621,7 @@ function App() {
     });
 
     // Also remove from cached custom designs if it's a custom design ID
-    if (productId.startsWith('design-') || productId.startsWith('shared-mock-')) {
+    if (String(productId).startsWith('design-') || String(productId).startsWith('shared-mock-')) {
       const savedCustom = JSON.parse(localStorage.getItem('hellabold_liked_custom_designs') || '[]');
       const filteredCustom = savedCustom.filter(d => d.id !== productId);
       localStorage.setItem('hellabold_liked_custom_designs', JSON.stringify(filteredCustom));
@@ -1136,7 +1136,7 @@ function App() {
             const cachedCustomLiked = JSON.parse(localStorage.getItem('hellabold_liked_custom_designs') || '[]');
             let updatedCache = false;
             likedIds.forEach(id => {
-              if ((id.startsWith('design-') || id.startsWith('shared-mock-')) && !cachedCustomLiked.some(d => d.id === id)) {
+              if ((String(id).startsWith('design-') || String(id).startsWith('shared-mock-')) && !cachedCustomLiked.some(d => d.id === id)) {
                 const found = communityDesigns.find(cd => cd.id === id);
                 if (found) {
                   cachedCustomLiked.push(found);
