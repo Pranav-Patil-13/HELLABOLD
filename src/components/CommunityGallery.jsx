@@ -175,10 +175,6 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
           </button>
         )}
 
-        <div className="gallery-card-badge">
-          {gender.toUpperCase()} FIT • {color.toUpperCase()}
-        </div>
-
         <div className="gallery-card-hover-overlay">
           <button className="btn btn--primary remix-btn" onClick={() => onRemix(design)}>
             REMIX IN LAB
