@@ -590,7 +590,8 @@ function App() {
         customDesignName: product.customDesignName || '',
         customDesignBack: product.customDesignBack || null,
         customDesignBackName: product.customDesignBackName || '',
-        customMeta: product.customMeta || null
+        customMeta: product.customMeta || null,
+        remixOf: product.remixOf || null
       };
       newItems = [...cartItems, newItem];
     }

@@ -1131,9 +1131,30 @@ export const awardRoyaltiesForOrder = async (order) => {
   const ledger = await getHellaMoneyLedger();
 
   for (const item of order.items) {
-    if (item.remixOf) {
-      const creator = item.remixOf.creator;
-      const royalty = item.remixOf.royaltyAmount || Math.round(parseFloat(String(item.price).replace(/[^0-9.]/g, '')) * 0.05);
+    let remixOf = item.remixOf;
+
+    // Fallback: If remixOf is missing, try to resolve it from the shared_designs DB table
+    if (!remixOf && isSupabaseConfigured && (String(item.id).startsWith('design-') || String(item.id).startsWith('shared-mock-'))) {
+      try {
+        const { data: designData } = await supabase
+          .from('shared_designs')
+          .select('author')
+          .eq('id', item.id)
+          .single();
+        if (designData && designData.author) {
+          remixOf = {
+            designId: item.id,
+            creator: designData.author
+          };
+        }
+      } catch (err) {
+        console.warn('Could not resolve creator fallback from shared_designs:', err);
+      }
+    }
+
+    if (remixOf) {
+      const creator = remixOf.creator;
+      const royalty = remixOf.royaltyAmount || Math.round(parseFloat(String(item.price).replace(/[^0-9.]/g, '')) * 0.05);
 
       const ledgerEntry = {
         id: `hm-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
