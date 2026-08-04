@@ -4,26 +4,22 @@ import { cloudinaryOptimize } from '../utils/cloudinary';
 const modelImages = {
   front: {
     male: {
-      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_black_male.webp',
-      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_white_male.webp',
-      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_grey_male.webp'
+      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png'),
+      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png')
     },
     female: {
-      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/front_black_female.webp',
-      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/front_white_female.webp',
-      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_grey_female.webp'
+      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png'),
+      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png')
     }
   },
   back: {
     male: {
-      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_black_male.webp',
-      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_white_male.webp',
-      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_grey_male.webp'
+      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png'),
+      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png')
     },
     female: {
-      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_black_female.webp',
-      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_white_female.webp',
-      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_grey_female.webp'
+      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png'),
+      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png')
     }
   }
 };
