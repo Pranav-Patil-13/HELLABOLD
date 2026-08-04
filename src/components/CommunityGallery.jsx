@@ -64,8 +64,8 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink }) => {
         {hasBothSides && (
           <div className="gallery-card-side-toggle" style={{
             position: 'absolute',
-            top: '0.75rem',
-            right: '0.75rem',
+            bottom: '0.75rem',
+            left: '0.75rem',
             display: 'flex',
             gap: '0.2rem',
             zIndex: 10,
