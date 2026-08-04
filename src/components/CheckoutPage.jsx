@@ -370,7 +370,7 @@ const CheckoutPage = ({
     // ── Save to Supabase ────────────────────────────────────────────────────
     try {
       await createOrder(finalizedOrder);
-      await awardRoyaltiesForOrder(finalizedOrder);
+
       if (finalizedOrder.appliedHellaMoney > 0) {
         const creatorName = userProfile?.fullName || 'Anonymous';
         await deductHellaMoney(creatorName, finalizedOrder.appliedHellaMoney, finalizedOrder.id);

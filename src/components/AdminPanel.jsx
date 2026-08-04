@@ -14,7 +14,8 @@ import {
   deleteCoupon,
   getHellaMoneyLedger,
   getPayoutRequests,
-  settlePayoutRequest
+  settlePayoutRequest,
+  awardRoyaltiesForOrder
 } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
@@ -219,6 +220,19 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     } catch (err) {
       console.error('Error updating order status in DB:', err);
     }
+
+    // Trigger royalties when order is marked Delivered
+    if (newStatus === 'Delivered') {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        try {
+          await awardRoyaltiesForOrder(order);
+        } catch (e) {
+          console.warn('Failed to award royalties on status change:', e);
+        }
+      }
+    }
+
     // Update local state
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
 

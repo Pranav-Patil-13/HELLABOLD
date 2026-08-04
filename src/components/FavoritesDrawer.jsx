@@ -184,6 +184,10 @@ const FavoritesDrawer = ({
                                 title: design.title,
                                 price: design.customMeta?.price || 999,
                                 isCustom: true,
+                                remixOf: {
+                                  designId: design.id,
+                                  creator: design.author || 'Bold Creator'
+                                },
                                 customMeta: {
                                   ...design.customMeta,
                                   isBothSides: !!(design.frontImage && design.backImage),

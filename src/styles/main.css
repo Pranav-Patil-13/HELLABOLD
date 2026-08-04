@@ -6642,6 +6642,11 @@ button {
     padding: 0.8rem 1.5rem;
     background: linear-gradient(to right, #6f0000, #200122);
     color: var(--bg-color);
+    border: 1px solid transparent;
+}
+.gallery-card-hover-overlay .remix-btn:hover {
+    background: black;
+    border: 1px solid var(--white);
 }
 
 .gallery-card-info {
