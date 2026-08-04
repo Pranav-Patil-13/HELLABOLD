@@ -192,7 +192,6 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
           <button 
             className={`gallery-card-like-btn ${isLiked ? 'liked' : ''}`}
             onClick={(e) => onLike(e, id)}
-            disabled={isLiked}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -219,13 +218,9 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
   );
 };
 
-const CommunityGallery = ({ onRemix, refreshTrigger, userProfile }) => {
+const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [], onToggleLike }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [likedIds, setLikedIds] = useState(() => {
-    const saved = localStorage.getItem('hellabold_liked_designs');
-    return saved ? JSON.parse(saved) : [];
-  });
   const [toastMessage, setToastMessage] = useState('');
 
   const fetchDesigns = async () => {
@@ -246,17 +241,28 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile }) => {
 
   const handleLike = async (e, designId) => {
     e.stopPropagation();
-    if (likedIds.includes(designId)) return; // prevent multiple likes
+    const isCurrentlyLiked = likedIds.includes(designId);
 
     try {
-      const updatedLikes = await likeSharedDesign(designId);
+      const updatedLikes = await likeSharedDesign(designId, isCurrentlyLiked);
       setDesigns(prev => prev.map(d => d.id === designId ? { ...d, likes: updatedLikes } : d));
       
-      const newLiked = [...likedIds, designId];
-      setLikedIds(newLiked);
-      localStorage.setItem('hellabold_liked_designs', JSON.stringify(newLiked));
+      if (!isCurrentlyLiked) {
+        const matchedDesign = designs.find(d => d.id === designId);
+        if (matchedDesign) {
+          const savedCustom = JSON.parse(localStorage.getItem('hellabold_liked_custom_designs') || '[]');
+          if (!savedCustom.some(d => d.id === designId)) {
+            savedCustom.push(matchedDesign);
+            localStorage.setItem('hellabold_liked_custom_designs', JSON.stringify(savedCustom));
+          }
+        }
+      }
+
+      if (onToggleLike) {
+        onToggleLike(designId);
+      }
     } catch (err) {
-      console.error('Failed to like design:', err);
+      console.error('Failed to toggle design like:', err);
     }
   };
 

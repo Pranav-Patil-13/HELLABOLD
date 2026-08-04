@@ -964,18 +964,16 @@ export const saveSharedDesign = async (design) => {
   return true;
 };
 
-export const likeSharedDesign = async (designId) => {
+export const likeSharedDesign = async (designId, isAlreadyLiked = false) => {
   if (isSupabaseConfigured) {
     try {
-      // In a real database, we would do a RPC call or update with math logic,
-      // here we do a fetch, increment, and update
       const { data: current } = await supabase
         .from('shared_designs')
         .select('likes')
         .eq('id', designId)
         .single();
       
-      const newLikes = (current?.likes || 0) + 1;
+      const newLikes = Math.max(0, (current?.likes || 0) + (isAlreadyLiked ? -1 : 1));
       const { error } = await supabase
         .from('shared_designs')
         .update({ likes: newLikes })
@@ -983,14 +981,14 @@ export const likeSharedDesign = async (designId) => {
 
       if (!error) return newLikes;
     } catch (err) {
-      console.warn('Error incrementing likes in Supabase:', err);
+      console.warn('Error updating likes in Supabase:', err);
     }
   }
 
   // Local storage fallback (or mock design increment)
   const isMock = MOCK_SHARED_DESIGNS.find(d => d.id === designId);
   if (isMock) {
-    isMock.likes += 1;
+    isMock.likes = Math.max(0, isMock.likes + (isAlreadyLiked ? -1 : 1));
     return isMock.likes;
   }
 
@@ -1006,12 +1004,12 @@ export const likeSharedDesign = async (designId) => {
 
   const designIndex = userDesigns.findIndex(d => d.id === designId);
   if (designIndex >= 0) {
-    userDesigns[designIndex].likes = (userDesigns[designIndex].likes || 0) + 1;
+    userDesigns[designIndex].likes = Math.max(0, (userDesigns[designIndex].likes || 0) + (isAlreadyLiked ? -1 : 1));
     localStorage.setItem('hellabold_shared_designs', JSON.stringify(userDesigns));
     return userDesigns[designIndex].likes;
   }
 
-  return 1;
+  return isAlreadyLiked ? 0 : 1;
 };
 
 // ==========================================
