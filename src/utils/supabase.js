@@ -1148,10 +1148,16 @@ export const awardRoyaltiesForOrder = async (order) => {
 
       if (isSupabaseConfigured) {
         try {
-          const { data: matches } = await supabase
-            .from('profiles')
-            .select('id, hella_money')
-            .or(`full_name.eq."${creator}",email.eq."${creator}"`);
+          let matches = [];
+          const { data: byName } = await supabase.from('profiles').select('id, hella_money').eq('full_name', creator);
+          if (byName && byName.length > 0) {
+            matches = byName;
+          } else {
+            const { data: byEmail } = await supabase.from('profiles').select('id, hella_money').eq('email', creator);
+            if (byEmail && byEmail.length > 0) {
+              matches = byEmail;
+            }
+          }
           
           if (matches && matches.length > 0) {
             const profile = matches[0];
@@ -1160,6 +1166,9 @@ export const awardRoyaltiesForOrder = async (order) => {
               .from('profiles')
               .update({ hella_money: newBal })
               .eq('id', profile.id);
+            console.log(`Successfully awarded ${royalty} Hella Money to ${creator}. New balance: ${newBal}`);
+          } else {
+            console.warn(`Could not find profile for creator: ${creator}`);
           }
         } catch (err) {
           console.warn('Failed to award royalties in Supabase profiles:', err);
@@ -1193,10 +1202,16 @@ export const deductHellaMoney = async (creator, amount, orderId) => {
 
   if (isSupabaseConfigured) {
     try {
-      const { data: matches } = await supabase
-        .from('profiles')
-        .select('id, hella_money')
-        .or(`full_name.eq."${creator}",email.eq."${creator}"`);
+      let matches = [];
+      const { data: byName } = await supabase.from('profiles').select('id, hella_money').eq('full_name', creator);
+      if (byName && byName.length > 0) {
+        matches = byName;
+      } else {
+        const { data: byEmail } = await supabase.from('profiles').select('id, hella_money').eq('email', creator);
+        if (byEmail && byEmail.length > 0) {
+          matches = byEmail;
+        }
+      }
       
       if (matches && matches.length > 0) {
         const profile = matches[0];
