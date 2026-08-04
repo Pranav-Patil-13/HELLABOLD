@@ -40,17 +40,19 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
     if (!userProfile) return;
     try {
       const creatorName = userProfile.fullName || 'Anonymous';
+      const creatorEmail = userProfile.email || '';
+      const emailPrefix = creatorEmail.split('@')[0].toLowerCase();
+
+      const matchesCreator = (c) =>
+        c === creatorName ||
+        c === creatorEmail ||
+        c.toLowerCase() === emailPrefix;
+
       const allLedger = await getHellaMoneyLedger();
-      const filteredLedger = allLedger.filter(
-        l => l.creator === creatorName || l.creator.toLowerCase() === userProfile.email?.split('@')[0].toLowerCase()
-      );
-      setHmTransactions(filteredLedger);
+      setHmTransactions(allLedger.filter(l => matchesCreator(l.creator)));
 
       const allPayouts = await getPayoutRequests();
-      const filteredPayouts = allPayouts.filter(
-        p => p.creator === creatorName || p.creator.toLowerCase() === userProfile.email?.split('@')[0].toLowerCase()
-      );
-      setPayoutRequests(filteredPayouts);
+      setPayoutRequests(allPayouts.filter(p => matchesCreator(p.creator)));
     } catch (e) {
       console.error('Failed to load Hella Money data:', e);
     }
