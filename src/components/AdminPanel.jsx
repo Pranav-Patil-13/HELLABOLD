@@ -15,7 +15,8 @@ import {
   getHellaMoneyLedger,
   getPayoutRequests,
   settlePayoutRequest,
-  awardRoyaltiesForOrder
+  awardRoyaltiesForOrder,
+  supabase
 } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
 import { cloudinaryOptimize } from '../utils/cloudinary';
@@ -208,7 +209,39 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   const fetchOrders = async () => {
     try {
       const dbOrders = await getAllOrdersForAdmin();
-      setOrders(dbOrders);
+      
+      const patchedOrders = await Promise.all((dbOrders || []).map(async (order) => {
+        const patchedItems = await Promise.all((order.items || []).map(async (item) => {
+          if ((String(item.id).startsWith('design-') || String(item.id).startsWith('shared-mock-')) && !item.customDesign && !item.frontImage) {
+            try {
+              const { data: designData } = await supabase
+                .from('shared_designs')
+                .select('*')
+                .eq('id', item.id)
+                .single();
+              
+              if (designData) {
+                return {
+                  ...item,
+                  customDesign: designData.front_image || null,
+                  customDesignBack: designData.back_image || null,
+                  customMeta: {
+                    ...item.customMeta,
+                    placement: designData.custom_meta?.placement || item.customMeta?.placement,
+                    instructions: designData.instruction_text || item.customMeta?.instructions
+                  }
+                };
+              }
+            } catch (err) {
+              console.warn('Could not patch older order item from shared_designs:', err);
+            }
+          }
+          return item;
+        }));
+        return { ...order, items: patchedItems };
+      }));
+
+      setOrders(patchedOrders);
     } catch (err) {
       console.error('Error fetching orders:', err);
     }
