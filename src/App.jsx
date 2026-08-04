@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import Header from './components/Header';
-import { getProducts, getReviews, getCurrentUser, getCoupons } from './utils/supabase';
+import { getProducts, getReviews, getCurrentUser, getCoupons, getSharedDesigns } from './utils/supabase';
 import { cloudinaryOptimize } from './utils/cloudinary';
 import Hero from './components/Hero';
 import Filters from './components/Filters';
@@ -113,6 +113,7 @@ function App() {
     const saved = localStorage.getItem('hellabold_likes');
     return saved ? JSON.parse(saved) : [];
   });
+  const [communityDesigns, setCommunityDesigns] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isCheckoutPage, setIsCheckoutPage] = useState(false);
@@ -618,7 +619,28 @@ function App() {
       localStorage.setItem('hellabold_likes', JSON.stringify(updated));
       return updated;
     });
+
+    // Also remove from cached custom designs if it's a custom design ID
+    if (productId.startsWith('design-') || productId.startsWith('shared-mock-')) {
+      const savedCustom = JSON.parse(localStorage.getItem('hellabold_liked_custom_designs') || '[]');
+      const filteredCustom = savedCustom.filter(d => d.id !== productId);
+      localStorage.setItem('hellabold_liked_custom_designs', JSON.stringify(filteredCustom));
+    }
   };
+
+  useEffect(() => {
+    if (isFavoritesOpen) {
+      const loadCommunityForFavorites = async () => {
+        try {
+          const data = await getSharedDesigns();
+          setCommunityDesigns(data);
+        } catch (e) {
+          console.warn('Failed to load shared designs in App:', e);
+        }
+      };
+      loadCommunityForFavorites();
+    }
+  }, [isFavoritesOpen]);
 
   const handleOrderSuccess = () => {
     saveCart([]);
@@ -962,7 +984,7 @@ function App() {
             onClearRemix={() => setRemixedDesign(null)}
             onDesignShared={handleDesignShared}
           />
-          <CommunityGallery onRemix={handleRemix} refreshTrigger={galleryRefreshTrigger} userProfile={userProfile} />
+          <CommunityGallery onRemix={handleRemix} refreshTrigger={galleryRefreshTrigger} userProfile={userProfile} likedIds={likedIds} onToggleLike={handleToggleLike} />
           <Footer onNavigate={handleFooterNavigation} />
         </>
 
@@ -1108,7 +1130,28 @@ function App() {
       <FavoritesDrawer
         isOpen={isFavoritesOpen}
         onClose={() => setIsFavoritesOpen(false)}
-        likedProducts={products.filter(p => likedIds.includes(p.id))}
+        likedProducts={[
+          ...products.filter(p => likedIds.includes(p.id)),
+          ...(() => {
+            const cachedCustomLiked = JSON.parse(localStorage.getItem('hellabold_liked_custom_designs') || '[]');
+            const activeCustomLiked = cachedCustomLiked.filter(d => likedIds.includes(d.id));
+            return activeCustomLiked.map(design => {
+              const isAvailable = communityDesigns.length === 0 || communityDesigns.some(cd => cd.id === design.id);
+              return {
+                id: design.id,
+                title: design.title,
+                price: design.customMeta?.price ? `₹${design.customMeta.price}` : '₹999',
+                isCustomDesign: true,
+                isUnavailable: !isAvailable,
+                designData: design,
+                images: [
+                  design.frontImage || design.backImage || ''
+                ],
+                sizes: ['S', 'M', 'L', 'XL']
+              };
+            });
+          })()
+        ]}
         onToggleLike={handleToggleLike}
         onAddToCart={(product, size) => {
           handleAddToCart(product, size);
