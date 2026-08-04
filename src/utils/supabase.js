@@ -1220,4 +1220,31 @@ export const deductHellaMoney = async (creator, amount, orderId) => {
   }
 };
 
+export const deleteSharedDesign = async (designId) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('shared_designs')
+        .delete()
+        .eq('id', designId);
+      if (!error) return true;
+    } catch (e) {
+      console.warn('Supabase deleteSharedDesign error:', e);
+    }
+  }
+
+  const localSaved = localStorage.getItem('hellabold_shared_designs');
+  if (localSaved) {
+    try {
+      const userDesigns = JSON.parse(localSaved);
+      const filtered = userDesigns.filter(d => d.id !== designId);
+      localStorage.setItem('hellabold_shared_designs', JSON.stringify(filtered));
+      return true;
+    } catch (e) {
+      console.error('Local storage shared design deletion error:', e);
+    }
+  }
+  return false;
+};
+
 

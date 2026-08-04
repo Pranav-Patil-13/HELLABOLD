@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSharedDesigns, likeSharedDesign } from '../utils/supabase';
+import { getSharedDesigns, likeSharedDesign, deleteSharedDesign } from '../utils/supabase';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 
 const modelImages = {
@@ -25,11 +25,30 @@ const modelImages = {
   }
 };
 
-const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink }) => {
+const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfile, onDeleteSuccess }) => {
   const { id, title, author, gender, color, frontImage, backImage, customMeta, likes } = design;
   const hasBothSides = !!(frontImage && backImage);
   const preferredDefaultSide = design.defaultSide || customMeta?.defaultSide || (frontImage ? 'front' : 'back');
   const [activeSide, setActiveSide] = useState(preferredDefaultSide);
+
+  const isAuthor = userProfile && (
+    author === userProfile.fullName || 
+    author.toLowerCase() === userProfile.email?.split('@')[0].toLowerCase()
+  );
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this shared design from the community gallery?')) {
+      try {
+        const ok = await deleteSharedDesign(id);
+        if (ok && onDeleteSuccess) {
+          onDeleteSuccess();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   const placement = customMeta?.placement || {};
   const graphicUrl = activeSide === 'front' ? frontImage : backImage;
@@ -140,8 +159,8 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink }) => {
           </button>
         </div>
         
-        <div className="gallery-card-author-row">
-          <span className="gallery-card-author">by @{author}</span>
+        <div className="gallery-card-author-row" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+          <span className="gallery-card-author" style={{ flexGrow: 1, minWidth: '80px' }}>by @{author}</span>
           <button className="gallery-card-share-btn" onClick={(e) => onCopyLink(e, id)} title="Copy shareable link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="18" cy="5" r="3"/>
@@ -152,13 +171,23 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink }) => {
             </svg>
             Share
           </button>
+          {isAuthor && (
+            <button 
+              className="gallery-card-share-btn" 
+              onClick={handleDelete} 
+              title="Delete design"
+              style={{ color: '#e53e3e', borderColor: '#fed7d7', background: 'rgba(254, 215, 215, 0.1)' }}
+            >
+              🗑 Delete
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-const CommunityGallery = ({ onRemix, refreshTrigger }) => {
+const CommunityGallery = ({ onRemix, refreshTrigger, userProfile }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [likedIds, setLikedIds] = useState(() => {
@@ -257,6 +286,8 @@ const CommunityGallery = ({ onRemix, refreshTrigger }) => {
               onLike={handleLike}
               onRemix={onRemix}
               onCopyLink={handleCopyLink}
+              userProfile={userProfile}
+              onDeleteSuccess={fetchDesigns}
             />
           ))}
         </div>

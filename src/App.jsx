@@ -962,7 +962,7 @@ function App() {
             onClearRemix={() => setRemixedDesign(null)}
             onDesignShared={handleDesignShared}
           />
-          <CommunityGallery onRemix={handleRemix} refreshTrigger={galleryRefreshTrigger} />
+          <CommunityGallery onRemix={handleRemix} refreshTrigger={galleryRefreshTrigger} userProfile={userProfile} />
           <Footer onNavigate={handleFooterNavigation} />
         </>
 
