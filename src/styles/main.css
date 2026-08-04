@@ -6829,4 +6829,9 @@ button {
     }
 }
 
-
+.gallery-card-like-btn.liked:hover {
+    background-color: var(--accent-red) !important;
+    color: var(--white) !important;
+    border-color: var(--accent-red) !important;
+    opacity: 0.9;
+}

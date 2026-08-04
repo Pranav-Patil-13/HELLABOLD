@@ -1134,6 +1134,19 @@ function App() {
           ...products.filter(p => likedIds.includes(p.id)),
           ...(() => {
             const cachedCustomLiked = JSON.parse(localStorage.getItem('hellabold_liked_custom_designs') || '[]');
+            let updatedCache = false;
+            likedIds.forEach(id => {
+              if ((id.startsWith('design-') || id.startsWith('shared-mock-')) && !cachedCustomLiked.some(d => d.id === id)) {
+                const found = communityDesigns.find(cd => cd.id === id);
+                if (found) {
+                  cachedCustomLiked.push(found);
+                  updatedCache = true;
+                }
+              }
+            });
+            if (updatedCache) {
+              localStorage.setItem('hellabold_liked_custom_designs', JSON.stringify(cachedCustomLiked));
+            }
             const activeCustomLiked = cachedCustomLiked.filter(d => likedIds.includes(d.id));
             return activeCustomLiked.map(design => {
               const isAvailable = communityDesigns.length === 0 || communityDesigns.some(cd => cd.id === design.id);
