@@ -31,9 +31,23 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
   const preferredDefaultSide = design.defaultSide || customMeta?.defaultSide || (frontImage ? 'front' : 'back');
   const [activeSide, setActiveSide] = useState(preferredDefaultSide);
 
-  const isAuthor = userProfile && (
-    author === userProfile.fullName || 
-    author.toLowerCase() === userProfile.email?.split('@')[0].toLowerCase()
+  const isAdmin = !!(userProfile && (
+    userProfile.role === 'admin' || 
+    userProfile.email === 'pranavpatil13.2004@gmail.com'
+  ));
+
+  const isAuthor = isAdmin || !!(
+    userProfile && 
+    author && 
+    author !== 'Anonymous' && 
+    author !== 'Anonymous Creator' && 
+    author !== 'Bold Creator' &&
+    author !== 'ZeroCool' &&
+    author !== 'VaporKate' &&
+    author !== 'HarajukuDrip' && (
+      (userProfile.fullName && author === userProfile.fullName) || 
+      (userProfile.email && author.toLowerCase() === userProfile.email.split('@')[0].toLowerCase())
+    )
   );
 
   const handleDelete = async (e) => {

@@ -27,8 +27,8 @@ const CustomStudio = ({
   const loadedDesignRef = useRef(null);
 
   useEffect(() => {
-    if (userProfile?.name) {
-      setShareCreator(userProfile.name);
+    if (userProfile) {
+      setShareCreator(userProfile.fullName || userProfile.email?.split('@')[0] || '');
     }
   }, [userProfile]);
 
