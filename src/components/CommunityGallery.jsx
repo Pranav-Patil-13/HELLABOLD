@@ -25,7 +25,7 @@ const modelImages = {
   }
 };
 
-const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfile, onDeleteSuccess }) => {
+export const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfile, onDeleteSuccess, onCreatorClick }) => {
   const { id, title, author, gender, color, frontImage, backImage, customMeta, likes } = design;
   const hasBothSides = !!(frontImage && backImage);
   const preferredDefaultSide = design.defaultSide || customMeta?.defaultSide || (frontImage ? 'front' : 'back');
@@ -49,6 +49,9 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
       (userProfile.email && author.toLowerCase() === userProfile.email.split('@')[0].toLowerCase())
     )
   );
+
+  // Show handle for current user's designs; fall back to stored author name
+  const displayHandle = (isAuthor && userProfile?.handle) ? userProfile.handle : author;
 
   const handleDelete = async (e) => {
     e.stopPropagation();
@@ -201,7 +204,19 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
         </div>
 
         <div className="gallery-card-author-row" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-          <span className="gallery-card-author" style={{ flexGrow: 1, minWidth: '80px' }}>by @{author}</span>
+          <span
+            className="gallery-card-author"
+            style={{
+              flexGrow: 1,
+              minWidth: '80px',
+              cursor: onCreatorClick ? 'pointer' : 'default',
+              textDecoration: onCreatorClick ? 'underline' : 'none',
+              textUnderlineOffset: '2px'
+            }}
+            onClick={(e) => { e.stopPropagation(); if (onCreatorClick) onCreatorClick(author); }}
+          >
+            by @{displayHandle}
+          </span>
           <button className="gallery-card-share-btn" onClick={(e) => onCopyLink(e, id)} title="Copy shareable link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="18" cy="5" r="3" />
@@ -218,7 +233,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
   );
 };
 
-const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [], onToggleLike }) => {
+const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [], onToggleLike, onCreatorClick }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
@@ -409,6 +424,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
               onCopyLink={handleCopyLink}
               userProfile={userProfile}
               onDeleteSuccess={fetchDesigns}
+              onCreatorClick={onCreatorClick}
             />
           ))}
         </div>

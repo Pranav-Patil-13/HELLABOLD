@@ -26,6 +26,7 @@ import PolicyPages from './components/PolicyPages';
 import CustomStudio from './components/CustomStudio';
 import CommunityGallery from './components/CommunityGallery';
 import ContactUs from './components/ContactUs';
+import CreatorStorefront from './components/CreatorStorefront';
 import EntryGate from './components/EntryGate';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
@@ -132,6 +133,8 @@ function App() {
   const [isSizeGuidePage, setIsSizeGuidePage] = useState(false);
   const [isCustomStudioPage, setIsCustomStudioPage] = useState(false);
   const [isContactPage, setIsContactPage] = useState(false);
+  const [isCreatorPage, setIsCreatorPage] = useState(false);
+  const [activeCreator, setActiveCreator] = useState(null);
   const [loading, setLoading] = useState(() => {
     const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
     const passedSession = sessionStorage.getItem('hb_gate_passed') === 'true';
@@ -270,6 +273,11 @@ function App() {
     if (window.location.pathname === '/contact') {
       setIsContactPage(true);
     }
+    if (window.location.pathname === '/creator') {
+      const creatorParam = params.get('name');
+      setIsCreatorPage(true);
+      setActiveCreator(creatorParam ? decodeURIComponent(creatorParam) : null);
+    }
 
     // Resolve active Supabase or mock user session
     getCurrentUser()
@@ -327,6 +335,9 @@ function App() {
         setIsSizeGuidePage(path === '/size-guide');
         setIsCustomStudioPage(path === '/custom-studio');
         setIsContactPage(path === '/contact');
+        setIsCreatorPage(path === '/creator');
+        const creatorName = params.get('name');
+        setActiveCreator(path === '/creator' && creatorName ? decodeURIComponent(creatorName) : null);
         setPrevActiveProductId(activeProductId);
         setActiveProductId(productId ? parseInt(productId, 10) : null);
         const imageIndexParam = params.get('img');
@@ -904,6 +915,8 @@ function App() {
             setIsSizeGuidePage(false);
             setIsCustomStudioPage(false);
             setIsContactPage(false);
+            setIsCreatorPage(false);
+            setActiveCreator(null);
             window.scrollTo(0, 0);
           };
           if (document.startViewTransition) {
@@ -975,6 +988,24 @@ function App() {
           <CollectionsPage />
           <Footer onNavigate={handleFooterNavigation} />
         </>
+      ) : isCreatorPage ? (
+        <>
+          <CreatorStorefront
+            creatorId={activeCreator}
+            userProfile={userProfile}
+            likedIds={likedIds}
+            onToggleLike={handleToggleLike}
+            onRemix={handleRemix}
+            onBack={() => {
+              window.history.pushState({}, '', '/custom-studio');
+              setIsCreatorPage(false);
+              setActiveCreator(null);
+              setIsCustomStudioPage(true);
+              window.scrollTo(0, 0);
+            }}
+          />
+          <Footer onNavigate={handleFooterNavigation} />
+        </>
       ) : isCustomStudioPage ? (
         <>
           <CustomStudio 
@@ -985,7 +1016,20 @@ function App() {
             onClearRemix={() => setRemixedDesign(null)}
             onDesignShared={handleDesignShared}
           />
-          <CommunityGallery onRemix={handleRemix} refreshTrigger={galleryRefreshTrigger} userProfile={userProfile} likedIds={likedIds} onToggleLike={handleToggleLike} />
+          <CommunityGallery
+            onRemix={handleRemix}
+            refreshTrigger={galleryRefreshTrigger}
+            userProfile={userProfile}
+            likedIds={likedIds}
+            onToggleLike={handleToggleLike}
+            onCreatorClick={(authorName) => {
+              window.history.pushState({}, '', `/creator?name=${encodeURIComponent(authorName)}`);
+              setIsCreatorPage(true);
+              setActiveCreator(authorName);
+              setIsCustomStudioPage(false);
+              window.scrollTo(0, 0);
+            }}
+          />
           <Footer onNavigate={handleFooterNavigation} />
         </>
 
