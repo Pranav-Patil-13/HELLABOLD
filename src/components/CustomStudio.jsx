@@ -22,6 +22,7 @@ const CustomStudio = ({
   const [shareTitle, setShareTitle] = useState('');
   const [shareCreator, setShareCreator] = useState('');
   const [isSharing, setIsSharing] = useState(false);
+  const [shareDefaultSide, setShareDefaultSide] = useState('front');
   const [loadedDesignId, setLoadedDesignId] = useState(null);
   const loadedDesignRef = useRef(null);
 
@@ -561,7 +562,9 @@ const CustomStudio = ({
         backImage: backUrl,
         instructionText: instructionText || '',
         likes: 0,
+        defaultSide: shareDefaultSide,
         customMeta: {
+          defaultSide: shareDefaultSide,
           model: `${gender}_${color}`,
           garmentType,
           color,
@@ -1298,6 +1301,36 @@ const CustomStudio = ({
                   }}
                 />
               </div>
+
+              {frontImage && backImage && (
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>Primary Preview Side</label>
+                  <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.2rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'normal' }}>
+                      <input 
+                        type="radio" 
+                        name="default-side" 
+                        value="front" 
+                        checked={shareDefaultSide === 'front'} 
+                        onChange={() => setShareDefaultSide('front')} 
+                        style={{ margin: 0 }}
+                      />
+                      Front View
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'normal' }}>
+                      <input 
+                        type="radio" 
+                        name="default-side" 
+                        value="back" 
+                        checked={shareDefaultSide === 'back'} 
+                        onChange={() => setShareDefaultSide('back')} 
+                        style={{ margin: 0 }}
+                      />
+                      Back View
+                    </label>
+                  </div>
+                </div>
+              )}
 
               <button 
                 type="submit" 

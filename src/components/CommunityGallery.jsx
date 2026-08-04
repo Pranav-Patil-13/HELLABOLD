@@ -28,7 +28,8 @@ const modelImages = {
 const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink }) => {
   const { id, title, author, gender, color, frontImage, backImage, customMeta, likes } = design;
   const hasBothSides = !!(frontImage && backImage);
-  const [activeSide, setActiveSide] = useState(frontImage ? 'front' : 'back');
+  const preferredDefaultSide = design.defaultSide || customMeta?.defaultSide || (frontImage ? 'front' : 'back');
+  const [activeSide, setActiveSide] = useState(preferredDefaultSide);
 
   const placement = customMeta?.placement || {};
   const graphicUrl = activeSide === 'front' ? frontImage : backImage;
