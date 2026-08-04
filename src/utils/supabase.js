@@ -615,6 +615,7 @@ export const updateProfile = async (profileData) => {
     if (profileData.zipCode !== undefined) dbProfile.zip_code = profileData.zipCode;
     if (profileData.addresses !== undefined) dbProfile.addresses = profileData.addresses;
     if (profileData.hellaMoney !== undefined) dbProfile.hella_money = profileData.hellaMoney;
+    if (profileData.handle !== undefined) dbProfile.handle = profileData.handle;
 
     const { data, error } = await supabase
       .from('profiles')
@@ -638,7 +639,8 @@ export const updateProfile = async (profileData) => {
       zipCode: row.zip_code,
       role: row.role,
       addresses: row.addresses || [],
-      hellaMoney: row.hella_money || 0
+      hellaMoney: row.hella_money || 0,
+      handle: row.handle || ''
     };
   } else {
     const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user') || '{}');
@@ -671,7 +673,8 @@ const getProfileById = async (userId) => {
     zipCode: data.zip_code,
     role: data.role,
     addresses: data.addresses || [],
-    hellaMoney: data.hella_money || 0
+    hellaMoney: data.hella_money || 0,
+    handle: data.handle || ''
   };
 };
 

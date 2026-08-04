@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { signOutUser, updateProfile, getOrders, getHellaMoneyLedger, getPayoutRequests, createPayoutRequest } from '../utils/supabase';
+import { signOutUser, updateProfile, getOrders, getHellaMoneyLedger, getPayoutRequests, createPayoutRequest, getSharedDesigns } from '../utils/supabase';
 
 const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOut }) => {
   const [activeTab, setActiveTab] = useState('settings'); // settings, addresses, orders
   const [fullName, setFullName] = useState('');
+  const [handle, setHandle] = useState('');
+  const [isUpdatingHandle, setIsUpdatingHandle] = useState(false);
+  const [handleUpdateSuccess, setHandleUpdateSuccess] = useState(false);
+  const [handleError, setHandleError] = useState('');
   const [userOrders, setUserOrders] = useState([]);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [nameUpdateSuccess, setNameUpdateSuccess] = useState(false);
@@ -12,6 +16,7 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
   // Hella Money States
   const [hmTransactions, setHmTransactions] = useState([]);
   const [payoutRequests, setPayoutRequests] = useState([]);
+  const [creatorStats, setCreatorStats] = useState(null);
   const [upiId, setUpiId] = useState('');
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutError, setPayoutError] = useState('');
@@ -31,6 +36,7 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
   useEffect(() => {
     if (userProfile) {
       setFullName(userProfile.fullName || '');
+      setHandle(userProfile.handle || '');
       fetchUserOrders();
       fetchHellaMoneyData();
     }
@@ -48,11 +54,30 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
         c === creatorEmail ||
         c.toLowerCase() === emailPrefix;
 
-      const allLedger = await getHellaMoneyLedger();
-      setHmTransactions(allLedger.filter(l => matchesCreator(l.creator)));
+      const [allLedger, allPayouts, allDesigns] = await Promise.all([
+        getHellaMoneyLedger(),
+        getPayoutRequests(),
+        getSharedDesigns()
+      ]);
 
-      const allPayouts = await getPayoutRequests();
+      const myTransactions = allLedger.filter(l => matchesCreator(l.creator));
+      setHmTransactions(myTransactions);
       setPayoutRequests(allPayouts.filter(p => matchesCreator(p.creator)));
+
+      // Compute creator stats from existing fetched data — no extra DB calls
+      const myDesigns = allDesigns.filter(d =>
+        matchesCreator(d.author) || (d.authorEmail && matchesCreator(d.authorEmail))
+      );
+      const totalEarned = myTransactions
+        .filter(t => t.amount > 0)
+        .reduce((sum, t) => sum + t.amount, 0);
+      const totalLikes = myDesigns.reduce((sum, d) => sum + (d.likes || 0), 0);
+      setCreatorStats({
+        designsShared: myDesigns.length,
+        remixesSold: myTransactions.filter(t => t.amount > 0).length,
+        totalEarned,
+        totalLikes
+      });
     } catch (e) {
       console.error('Failed to load Hella Money data:', e);
     }
@@ -99,6 +124,30 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
       setPayoutError('Failed to submit payout request. Please try again.');
     } finally {
       setIsRequestingPayout(false);
+    }
+  };
+
+  const handleUpdateHandle = async (e) => {
+    e.preventDefault();
+    setHandleError('');
+    setHandleUpdateSuccess(false);
+    const cleanHandle = handle.replace(/^@/, '').toLowerCase().trim();
+    if (!/^[a-z0-9_]{2,20}$/.test(cleanHandle)) {
+      setHandleError('Handle must be 2–20 chars: letters, numbers, underscores only.');
+      return;
+    }
+    setIsUpdatingHandle(true);
+    try {
+      await updateProfile({ handle: cleanHandle });
+      onProfileUpdate({ ...userProfile, handle: cleanHandle });
+      setHandle(cleanHandle);
+      setHandleUpdateSuccess(true);
+      setTimeout(() => setHandleUpdateSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error updating handle:', err);
+      setHandleError('Failed to save handle. It may already be taken.');
+    } finally {
+      setIsUpdatingHandle(false);
     }
   };
 
@@ -299,6 +348,46 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                         style={{ padding: '0.9rem 1.5rem', fontSize: '0.8rem', textTransform: 'uppercase' }}
                       >
                         {isUpdatingName ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              {/* Creator Handle */}
+              <div className="profile-section">
+                <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                  Creator Handle
+                </h3>
+                {handleError && (
+                  <p style={{ color: '#e53e3e', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.8rem' }}>{handleError}</p>
+                )}
+                {handleUpdateSuccess && (
+                  <p style={{ color: '#38a169', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.8rem', fontWeight: 'bold' }}>✓ Handle saved</p>
+                )}
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  Your public identity on the Community Marketplace — shown as <strong>@handle</strong> on your designs.
+                </p>
+                <form onSubmit={handleUpdateHandle}>
+                  <div className="profile-form-group">
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.4rem', display: 'block' }}>Handle (letters, numbers, underscores)</label>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 900, fontSize: '1.1rem', flexShrink: 0, lineHeight: 1 }}>@</span>
+                      <input
+                        type="text"
+                        value={handle.replace(/^@/, '')}
+                        onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        placeholder="yourhandle"
+                        maxLength={20}
+                        className="profile-input"
+                      />
+                      <button
+                        type="submit"
+                        className="btn btn--primary"
+                        disabled={isUpdatingHandle}
+                        style={{ padding: '0.9rem 1.2rem', fontSize: '0.8rem', textTransform: 'uppercase', flexShrink: 0 }}
+                      >
+                        {isUpdatingHandle ? '...' : 'Save'}
                       </button>
                     </div>
                   </div>
@@ -507,7 +596,37 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
           {/* TAB 4: HELLA MONEY */}
           {activeTab === 'hellamoney' && (
             <div className="profile-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              
+
+              {/* Creator Stats Grid */}
+              {creatorStats && (
+                <div style={{ border: '1px solid var(--border-color)' }}>
+                  <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border-color)', fontSize: '0.6rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1.5px', opacity: 0.5 }}>
+                    Creator Stats
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                    <div style={{ textAlign: 'center', padding: '1rem 0.5rem', borderRight: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1 }}>{creatorStats.designsShared}</div>
+                      <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.55, marginTop: '0.3rem' }}>Designs Shared</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '1rem 0.5rem' }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1 }}>{creatorStats.remixesSold}</div>
+                      <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.55, marginTop: '0.3rem' }}>Remixes Sold</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '1rem 0.5rem', borderRight: '1px solid var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                        <img src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785824697/Hella_Coin_yai38q.png" alt="HM" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                        {creatorStats.totalEarned}
+                      </div>
+                      <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.55, marginTop: '0.3rem' }}>Total Earned (HM)</div>
+                    </div>
+                    <div style={{ textAlign: 'center', padding: '1rem 0.5rem', borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1 }}>♥ {creatorStats.totalLikes}</div>
+                      <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.55, marginTop: '0.3rem' }}>All-time Likes</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Balance Card Banner */}
               <div style={{
                 background: '#000',

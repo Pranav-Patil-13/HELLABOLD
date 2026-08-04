@@ -222,12 +222,28 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  const [filterCreator, setFilterCreator] = useState(null);
+  const [topCreators, setTopCreators] = useState([]);
 
   const fetchDesigns = async () => {
     try {
       setLoading(true);
       const data = await getSharedDesigns();
       setDesigns(data);
+
+      // Compute top creators by total likes (client-side, no extra DB call)
+      const creatorMap = {};
+      data.forEach(d => {
+        const name = d.author || 'Anonymous';
+        if (!creatorMap[name]) creatorMap[name] = { name, likes: 0, designs: 0 };
+        creatorMap[name].likes += d.likes || 0;
+        creatorMap[name].designs += 1;
+      });
+      const sorted = Object.values(creatorMap)
+        .filter(c => c.designs > 0)
+        .sort((a, b) => b.likes - a.likes)
+        .slice(0, 6);
+      setTopCreators(sorted);
     } catch (err) {
       console.error('Failed to load shared designs:', err);
     } finally {
@@ -310,13 +326,80 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
         </button>
       </div>
 
+      {/* Top Creators Filter Row */}
+      {topCreators.length > 1 && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ fontSize: '0.6rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1.5px', opacity: 0.45, marginBottom: '0.6rem' }}>
+            Top Creators
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.4rem', scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => setFilterCreator(null)}
+              style={{
+                flexShrink: 0,
+                padding: '0.35rem 0.7rem',
+                border: !filterCreator ? '1.5px solid #000' : '1px solid var(--border-color)',
+                background: !filterCreator ? '#000' : 'transparent',
+                color: !filterCreator ? '#fff' : 'inherit',
+                fontSize: '0.62rem',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              All
+            </button>
+            {topCreators.map(creator => (
+              <button
+                key={creator.name}
+                onClick={() => setFilterCreator(filterCreator === creator.name ? null : creator.name)}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.35rem 0.65rem',
+                  border: filterCreator === creator.name ? '1.5px solid #000' : '1px solid var(--border-color)',
+                  background: filterCreator === creator.name ? '#000' : 'transparent',
+                  color: filterCreator === creator.name ? '#fff' : 'inherit',
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <span style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: filterCreator === creator.name ? '#fff' : '#000',
+                  color: filterCreator === creator.name ? '#000' : '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.5rem',
+                  fontWeight: 900,
+                  flexShrink: 0
+                }}>
+                  {creator.name.slice(0, 2).toUpperCase()}
+                </span>
+                @{creator.name} · ♥{creator.likes}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {designs.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', border: '1px dashed var(--border-color)', color: 'var(--text-secondary)' }}>
           No custom designs shared yet. Be the first to share your boldness!
         </div>
       ) : (
         <div className="gallery-grid">
-          {designs.map((design) => (
+          {(filterCreator ? designs.filter(d => d.author === filterCreator) : designs).map((design) => (
             <GalleryCard
               key={design.id}
               design={design}
