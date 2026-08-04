@@ -586,10 +586,10 @@ function App() {
         size: size,
         quantity: 1,
         sku: product.skus?.[size] || null,
-        customDesign: product.customDesign || null,
-        customDesignName: product.customDesignName || '',
-        customDesignBack: product.customDesignBack || null,
-        customDesignBackName: product.customDesignBackName || '',
+        customDesign: product.customDesign || product.frontImage || null,
+        customDesignName: product.customDesignName || (product.frontImage ? 'front-design.png' : ''),
+        customDesignBack: product.customDesignBack || product.backImage || null,
+        customDesignBackName: product.customDesignBackName || (product.backImage ? 'back-design.png' : ''),
         customMeta: product.customMeta || null
       };
       newItems = [...cartItems, newItem];

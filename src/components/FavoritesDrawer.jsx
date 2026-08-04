@@ -136,7 +136,7 @@ const FavoritesDrawer = ({
                               left: '50%',
                               width: '40%',
                               height: '40%',
-                              transform: `translate(-50%, -50%) translate(${posX}px, ${posY}px) rotate(${rotation}deg) scale(${scale / 100})`,
+                              transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
                               opacity: opacity / 100,
                               pointerEvents: 'none',
                               mixBlendMode: design.color === 'white' ? 'multiply' : 'normal'
