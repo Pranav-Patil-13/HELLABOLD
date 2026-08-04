@@ -4,22 +4,26 @@ import { cloudinaryOptimize } from '../utils/cloudinary';
 const modelImages = {
   front: {
     male: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png')
+      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_black_male.webp',
+      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_white_male.webp',
+      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_grey_male.webp'
     },
     female: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png')
+      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/front_black_female.webp',
+      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/front_white_female.webp',
+      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771788/front_grey_female.webp'
     }
   },
   back: {
     male: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png')
+      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_black_male.webp',
+      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_white_male.webp',
+      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_grey_male.webp'
     },
     female: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png')
+      black: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_black_female.webp',
+      white: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_white_female.webp',
+      grey: 'https://res.cloudinary.com/dyg9n8665/image/upload/v1727771789/back_grey_female.webp'
     }
   }
 };
@@ -115,7 +119,7 @@ const FavoritesDrawer = ({
                   const design = product.designData || {};
                   const side = design.defaultSide || (design.frontImage ? 'front' : 'back');
                   const graphicUrl = side === 'front' ? design.frontImage : design.backImage;
-                  const modelImg = modelImages[side]?.[design.gender || 'male']?.[design.color || 'black'] || modelImages.front.male.black;
+                  const modelImg = '/assets/custom_placeholder.png';
                   const placement = design.customMeta?.placement?.[side] || {};
                   
                   const scale = placement.scale || 100;
@@ -136,7 +140,7 @@ const FavoritesDrawer = ({
                               left: '50%',
                               width: '40%',
                               height: '40%',
-                              transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
+                              transform: `translate(-50%, -50%) translate(${posX}px, ${posY}px) rotate(${rotation}deg) scale(${scale / 100})`,
                               opacity: opacity / 100,
                               pointerEvents: 'none',
                               mixBlendMode: design.color === 'white' ? 'multiply' : 'normal'
@@ -178,7 +182,7 @@ const FavoritesDrawer = ({
                               const customProduct = {
                                 id: design.id,
                                 title: design.title,
-                                price: `₹${design.customMeta?.price || 999}`,
+                                price: design.customMeta?.price || 999,
                                 isCustom: true,
                                 customMeta: {
                                   ...design.customMeta,

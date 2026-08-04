@@ -586,10 +586,10 @@ function App() {
         size: size,
         quantity: 1,
         sku: product.skus?.[size] || null,
-        customDesign: product.customDesign || product.frontImage || null,
-        customDesignName: product.customDesignName || (product.frontImage ? 'front-design.png' : ''),
-        customDesignBack: product.customDesignBack || product.backImage || null,
-        customDesignBackName: product.customDesignBackName || (product.backImage ? 'back-design.png' : ''),
+        customDesign: product.customDesign || null,
+        customDesignName: product.customDesignName || '',
+        customDesignBack: product.customDesignBack || null,
+        customDesignBackName: product.customDesignBackName || '',
         customMeta: product.customMeta || null
       };
       newItems = [...cartItems, newItem];
@@ -721,7 +721,7 @@ function App() {
       if (!matchesCategory) return false;
     }
     const matchesSize = selectedSizes.length === 0 || product.sizes?.some(size => selectedSizes.includes(size));
-    const priceNum = typeof product.price === 'number' ? product.price : parseFloat(product.price.replace(/[^0-9.]/g, ''));
+    const priceNum = parseFloat(product.price.replace(/[^0-9.]/g, ''));
     const matchesPrice = priceNum >= priceRange[0] && priceNum <= priceRange[1];
     const matchesSearch = !searchQuery ||
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

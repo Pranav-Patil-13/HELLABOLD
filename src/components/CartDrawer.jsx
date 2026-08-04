@@ -2,29 +2,6 @@ import React, { useState } from 'react';
 import { triggerConfettiBurst } from '../utils/confetti';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 
-const modelImages = {
-  front: {
-    male: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png')
-    },
-    female: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png')
-    }
-  },
-  back: {
-    male: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png')
-    },
-    female: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png')
-    }
-  }
-};
-
 const CartDrawer = ({ 
   isOpen, 
   onClose, 
@@ -133,55 +110,12 @@ const CartDrawer = ({
             <div className="cart-drawer__list">
               {cartItems.map((item) => (
                 <div key={`${item.id}-${item.size}`} className="cart-item">
-                  {(() => {
-                    const isCustom = item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-') || item.isCustom;
-                    if (isCustom) {
-                      const meta = item.customMeta || {};
-                      const gender = meta.gender || 'male';
-                      const color = meta.color || 'black';
-                      const defaultSide = meta.defaultSide || (item.customDesign ? 'front' : 'back');
-                      const modelImg = modelImages[defaultSide]?.[gender]?.[color] || modelImages.front.male.black;
-                      const graphicUrl = defaultSide === 'front' ? item.customDesign : item.customDesignBack;
-                      const placement = meta.placement?.[defaultSide] || {};
-
-                      const scale = placement.scale || 100;
-                      const posX = placement.x !== undefined ? placement.x : 5;
-                      const posY = placement.y !== undefined ? placement.y : 5;
-                      const rotation = placement.rotation || 0;
-                      const opacity = placement.opacity !== undefined ? placement.opacity : 100;
-
-                      return (
-                        <div className="cart-item__img" style={{ position: 'relative', width: '80px', height: '100px', backgroundColor: '#f3f4f6', flexShrink: 0, overflow: 'hidden', padding: 0 }}>
-                          <img src={modelImg} alt="Model Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          {graphicUrl && (
-                            <div 
-                              style={{
-                                position: 'absolute',
-                                top: '40%',
-                                left: '50%',
-                                width: '40%',
-                                height: '40%',
-                                transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
-                                opacity: opacity / 100,
-                                pointerEvents: 'none',
-                                mixBlendMode: color === 'white' ? 'multiply' : 'normal'
-                              }}
-                            >
-                              <img src={graphicUrl} alt="Graphic" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return (
-                      <img 
-                        src={cloudinaryOptimize(item.image)} 
-                        alt={item.title} 
-                        className="cart-item__img"
-                        loading="lazy"
-                      />
-                    );
-                  })()}
+                  <img 
+                    src={(item.isCustom || item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-') || String(item.id ?? '').startsWith('design-') || String(item.id ?? '').startsWith('shared-mock-')) ? '/assets/custom_placeholder.png' : cloudinaryOptimize(item.image)} 
+                    alt={item.title} 
+                    className="cart-item__img"
+                    loading="lazy"
+                  />
                   <div className="cart-item__info">
                     <h3 className="cart-item__title">{item.title}</h3>
                     <p className="cart-item__size">Size: {item.size}</p>

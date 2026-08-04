@@ -16,29 +16,6 @@ const INDIAN_STATES = [
   "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
 
-const modelImages = {
-  front: {
-    male: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_black.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/model_male_white.png')
-    },
-    female: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White.png')
-    }
-  },
-  back: {
-    male: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_Black_BackSide.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Male_White_BackSide.png')
-    },
-    female: {
-      black: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_Black_BackSide.png'),
-      white: cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/Model_Female_White_BackSide.png')
-    }
-  }
-};
-
 const CheckoutPage = ({ 
   cartItems, 
   onOrderSuccess, 
@@ -983,55 +960,12 @@ const CheckoutPage = ({
             <div className="checkout-summary__list">
               {cartItems.map(item => (
                 <div key={`${item.id}-${item.size}`} className="summary-item" style={{ alignItems: 'flex-start' }}>
-                  {(() => {
-                    const isCustom = item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-') || item.isCustom;
-                    if (isCustom) {
-                      const meta = item.customMeta || {};
-                      const gender = meta.gender || 'male';
-                      const color = meta.color || 'black';
-                      const defaultSide = meta.defaultSide || (item.customDesign ? 'front' : 'back');
-                      const modelImg = modelImages[defaultSide]?.[gender]?.[color] || modelImages.front.male.black;
-                      const graphicUrl = defaultSide === 'front' ? item.customDesign : item.customDesignBack;
-                      const placement = meta.placement?.[defaultSide] || {};
-
-                      const scale = placement.scale || 100;
-                      const posX = placement.x !== undefined ? placement.x : 5;
-                      const posY = placement.y !== undefined ? placement.y : 5;
-                      const rotation = placement.rotation || 0;
-                      const opacity = placement.opacity !== undefined ? placement.opacity : 100;
-
-                      return (
-                        <div className="summary-item__img" style={{ position: 'relative', width: '80px', height: '100px', backgroundColor: '#f3f4f6', flexShrink: 0, overflow: 'hidden', padding: 0, border: '1px solid var(--border-color)' }}>
-                          <img src={modelImg} alt="Model Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          {graphicUrl && (
-                            <div 
-                              style={{
-                                position: 'absolute',
-                                top: '40%',
-                                left: '50%',
-                                width: '40%',
-                                height: '40%',
-                                transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
-                                opacity: opacity / 100,
-                                pointerEvents: 'none',
-                                mixBlendMode: color === 'white' ? 'multiply' : 'normal'
-                              }}
-                            >
-                              <img src={graphicUrl} alt="Graphic" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return (
-                      <img 
-                        src={cloudinaryOptimize(item.image)} 
-                        alt={item.title} 
-                        className="summary-item__img" 
-                        loading="lazy"
-                      />
-                    );
-                  })()}
+                  <img 
+                    src={(item.customDesign || item.customDesignBack || String(item.id ?? '').startsWith('custom-')) ? cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/custom_placeholder.png') : cloudinaryOptimize(item.image)} 
+                    alt={item.title} 
+                    className="summary-item__img" 
+                    loading="lazy"
+                  />
                   <div className="summary-item__info" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
                     <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 'bold' }}>{item.title}</h4>
                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Size: {item.size}</p>
