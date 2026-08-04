@@ -1081,7 +1081,25 @@ export const createPayoutRequest = async (creator, upiId, amount) => {
       const { error } = await supabase
         .from('payout_requests')
         .insert([request]);
-      if (!error) return true;
+      if (!error) {
+        // Deduct from profile balance in Supabase immediately
+        try {
+          const { data: byEmail } = await supabase.from('profiles').select('id, hella_money').eq('email', creator);
+          const { data: byName } = !byEmail?.length ? await supabase.from('profiles').select('id, hella_money').eq('full_name', creator) : { data: [] };
+          const matches = byEmail?.length ? byEmail : byName;
+          if (matches && matches.length > 0) {
+            const profile = matches[0];
+            const newBal = Math.max(0, (profile.hella_money || 0) - Number(amount));
+            await supabase.from('profiles').update({ hella_money: newBal }).eq('id', profile.id);
+            console.log(`Deducted ${amount} HM from profile ${profile.id}. New balance: ${newBal}`);
+          } else {
+            console.warn('createPayoutRequest: could not find profile for creator:', creator);
+          }
+        } catch (deductErr) {
+          console.warn('Failed to deduct balance after payout request:', deductErr);
+        }
+        return true;
+      }
     } catch (e) {
       console.warn('Supabase create payout error:', e);
     }

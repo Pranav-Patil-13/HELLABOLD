@@ -79,7 +79,7 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
 
     setIsRequestingPayout(true);
     try {
-      const creatorName = userProfile.fullName || 'Anonymous';
+      const creatorName = userProfile.email || userProfile.fullName || 'Anonymous';
       await createPayoutRequest(creatorName, upiId.trim(), amount);
       
       const updatedProfile = {
