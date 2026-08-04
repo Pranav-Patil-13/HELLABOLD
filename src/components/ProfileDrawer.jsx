@@ -573,7 +573,7 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                     <button 
                       type="submit" 
                       className="btn btn--primary"
-                      disabled={isRequestingPayout}
+                      disabled={isRequestingPayout || Number(payoutAmount) > (userProfile?.hellaMoney || 0) || Number(payoutAmount) < 100 || !upiId.trim()}
                       style={{ padding: '0.8rem', fontSize: '0.75rem', width: '100%', textTransform: 'uppercase', letterSpacing: '1px' }}
                     >
                       {isRequestingPayout ? 'Submitting...' : 'Submit Cashout Request'}
