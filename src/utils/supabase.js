@@ -1232,6 +1232,20 @@ export const awardRoyaltiesForOrder = async (order) => {
           } else {
             console.warn(`Could not find profile for creator: ${creator}`);
           }
+
+          // Always write ledger entry to Supabase for earnings history
+          try {
+            await supabase.from('hella_money_ledger').insert([{
+              order_id: ledgerEntry.orderId,
+              item_title: ledgerEntry.itemTitle,
+              price: ledgerEntry.price,
+              creator: ledgerEntry.creator,
+              amount: ledgerEntry.amount,
+              created_at: ledgerEntry.createdAt
+            }]);
+          } catch (ledgerErr) {
+            console.warn('Failed to write ledger entry to Supabase:', ledgerErr);
+          }
         } catch (err) {
           console.warn('Failed to award royalties in Supabase profiles:', err);
         }
