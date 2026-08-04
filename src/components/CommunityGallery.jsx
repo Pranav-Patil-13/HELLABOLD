@@ -282,7 +282,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
   if (loading && designs.length === 0) {
     return (
       <div className="gallery-section-container">
-        <h2 className="gallery-section-title">COMMUNITY DESIGNS</h2>
+        <h2 className="gallery-section-title">COMMUNITY MARKETPLACE</h2>
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
           Loading community creations...
         </div>
@@ -300,7 +300,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
 
       <div className="gallery-header-row">
         <div>
-          <h2 className="gallery-section-title">COMMUNITY DESIGNS</h2>
+          <h2 className="gallery-section-title">COMMUNITY MARKETPLACE</h2>
           <p className="gallery-section-subtitle">Get inspired and remix other creators' designs or buy them directly.</p>
         </div>
         <button className="gallery-refresh-btn" onClick={fetchDesigns} title="Refresh Gallery">
