@@ -133,6 +133,32 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
           </div>
         )}
 
+        {isAuthor && (
+          <button 
+            type="button"
+            onClick={handleDelete}
+            title="Delete design"
+            style={{
+              position: 'absolute',
+              bottom: '0.75rem',
+              right: '0.75rem',
+              zIndex: 10,
+              backgroundColor: 'rgba(229, 62, 62, 0.9)',
+              color: '#fff',
+              border: 'none',
+              padding: '0.2rem 0.4rem',
+              fontSize: '0.55rem',
+              fontWeight: '900',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              borderRadius: '2px',
+              letterSpacing: '0.5px'
+            }}
+          >
+            🗑 Delete
+          </button>
+        )}
+
         <div className="gallery-card-badge">
           {gender.toUpperCase()} FIT • {color.toUpperCase()}
         </div>
@@ -171,16 +197,6 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
             </svg>
             Share
           </button>
-          {isAuthor && (
-            <button 
-              className="gallery-card-share-btn" 
-              onClick={handleDelete} 
-              title="Delete design"
-              style={{ color: '#e53e3e', borderColor: '#fed7d7', background: 'rgba(254, 215, 215, 0.1)' }}
-            >
-              🗑 Delete
-            </button>
-          )}
         </div>
       </div>
     </div>
