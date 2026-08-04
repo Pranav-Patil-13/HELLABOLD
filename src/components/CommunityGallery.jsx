@@ -32,20 +32,20 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
   const [activeSide, setActiveSide] = useState(preferredDefaultSide);
 
   const isAdmin = !!(userProfile && (
-    userProfile.role === 'admin' || 
+    userProfile.role === 'admin' ||
     userProfile.email === 'pranavpatil13.2004@gmail.com'
   ));
 
   const isAuthor = isAdmin || !!(
-    userProfile && 
-    author && 
-    author !== 'Anonymous' && 
-    author !== 'Anonymous Creator' && 
+    userProfile &&
+    author &&
+    author !== 'Anonymous' &&
+    author !== 'Anonymous Creator' &&
     author !== 'Bold Creator' &&
     author !== 'ZeroCool' &&
     author !== 'VaporKate' &&
     author !== 'HarajukuDrip' && (
-      (userProfile.fullName && author === userProfile.fullName) || 
+      (userProfile.fullName && author === userProfile.fullName) ||
       (userProfile.email && author.toLowerCase() === userProfile.email.split('@')[0].toLowerCase())
     )
   );
@@ -69,7 +69,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
   const placement = customMeta?.placement || {};
   const graphicUrl = activeSide === 'front' ? frontImage : backImage;
   const modelImg = modelImages[activeSide][gender || 'male'][color || 'black'];
-  
+
   const currentPlacement = activeSide === 'front' ? placement.front : placement.back;
   const scale = currentPlacement?.scale || 100;
   const posX = currentPlacement?.x !== undefined ? currentPlacement.x : 5;
@@ -83,9 +83,9 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
     <div className="gallery-card">
       <div className="gallery-card-preview">
         <img src={modelImg} alt="Garment Model" className="gallery-card-base-img" />
-        
+
         {graphicUrl && (
-          <div 
+          <div
             className="gallery-card-graphic"
             style={{
               transform: `translate(-50%, -50%) translate(${posX}%, ${posY}%) rotate(${rotation}deg) scale(${scale / 100})`,
@@ -110,7 +110,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
             borderRadius: '2px',
             border: '1px solid rgba(255,255,255,0.1)'
           }}>
-            <button 
+            <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setActiveSide('front'); }}
               style={{
@@ -128,7 +128,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
             >
               Front
             </button>
-            <button 
+            <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setActiveSide('back'); }}
               style={{
@@ -150,7 +150,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
         )}
 
         {isAuthor && (
-          <button 
+          <button
             type="button"
             onClick={handleDelete}
             title="Delete design"
@@ -180,7 +180,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
         )}
 
         <div className="gallery-card-hover-overlay">
-          <button className="btn btn--primary remix-btn" onClick={() => onRemix(design)}>
+          <button className="remix-btn" onClick={() => onRemix(design)}>
             REMIX IN LAB
           </button>
         </div>
@@ -189,7 +189,7 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
       <div className="gallery-card-info">
         <div className="gallery-card-title-row">
           <h3 className="gallery-card-title">{title}</h3>
-          <button 
+          <button
             className={`gallery-card-like-btn ${isLiked ? 'liked' : ''}`}
             onClick={(e) => onLike(e, id)}
           >
@@ -199,16 +199,16 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
             <span>{likes}</span>
           </button>
         </div>
-        
+
         <div className="gallery-card-author-row" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
           <span className="gallery-card-author" style={{ flexGrow: 1, minWidth: '80px' }}>by @{author}</span>
           <button className="gallery-card-share-btn" onClick={(e) => onCopyLink(e, id)} title="Copy shareable link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="18" cy="5" r="3"/>
-              <circle cx="6" cy="12" r="3"/>
-              <circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
             Share
           </button>
@@ -246,7 +246,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
     try {
       const updatedLikes = await likeSharedDesign(designId, isCurrentlyLiked);
       setDesigns(prev => prev.map(d => d.id === designId ? { ...d, likes: updatedLikes } : d));
-      
+
       if (!isCurrentlyLiked) {
         const matchedDesign = designs.find(d => d.id === designId);
         if (matchedDesign) {
@@ -297,7 +297,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
           {toastMessage}
         </div>
       )}
-      
+
       <div className="gallery-header-row">
         <div>
           <h2 className="gallery-section-title">COMMUNITY DESIGNS</h2>
@@ -305,7 +305,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
         </div>
         <button className="gallery-refresh-btn" onClick={fetchDesigns} title="Refresh Gallery">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
           </svg>
         </button>
       </div>
@@ -317,7 +317,7 @@ const CommunityGallery = ({ onRemix, refreshTrigger, userProfile, likedIds = [],
       ) : (
         <div className="gallery-grid">
           {designs.map((design) => (
-            <GalleryCard 
+            <GalleryCard
               key={design.id}
               design={design}
               likedIds={likedIds}
