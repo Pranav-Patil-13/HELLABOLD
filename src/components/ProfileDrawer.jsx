@@ -64,8 +64,8 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
     const balance = userProfile.hellaMoney || 0;
     const amount = Number(payoutAmount);
     
-    if (amount < 500) {
-      setPayoutError('Minimum payout request is 500 Hella Money (HM).');
+    if (amount < 100) {
+      setPayoutError('Minimum payout request is 100 Hella Money (HM).');
       return;
     }
     if (amount > balance) {
@@ -538,9 +538,9 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                   <p style={{ color: '#38a169', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.8rem' }}>{payoutSuccess}</p>
                 )}
 
-                {(userProfile?.hellaMoney || 0) < 500 ? (
+                {(userProfile?.hellaMoney || 0) < 100 ? (
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: 1.4 }}>
-                    Cashouts require a minimum balance of <strong>500 Hella Money</strong>. Keep sharing your custom creations to earn 5% on every purchase!
+                    Cashouts require a minimum balance of <strong>100 Hella Money</strong>. Keep sharing your custom creations to earn 5% on every purchase!
                   </p>
                 ) : (
                   <form onSubmit={handlePayoutSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -560,10 +560,10 @@ const ProfileDrawer = ({ isOpen, onClose, userProfile, onProfileUpdate, onSignOu
                       <label style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>Amount (HM)</label>
                       <input 
                         type="number" 
-                        placeholder="e.g. 500" 
+                        placeholder="e.g. 100" 
                         value={payoutAmount}
                         onChange={e => setPayoutAmount(e.target.value)}
-                        min={500}
+                        min={100}
                         max={userProfile?.hellaMoney || 0}
                         required
                         className="profile-input"
