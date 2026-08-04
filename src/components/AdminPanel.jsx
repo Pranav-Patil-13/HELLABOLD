@@ -1407,7 +1407,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                         {/* Column 1: Items List (2/3 width on large screens) */}
                         <div style={{ flex: '2 1 450px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                           {order.items?.map((item, idx) => {
-                            const isCustom = item.customDesignLocalUrl || item.customDesignBackLocalUrl || item.customDesign || item.customDesignBack;
+                            const isCustom = item.customDesignLocalUrl || item.customDesignBackLocalUrl || item.customDesign || item.customDesignBack || item.frontImage || item.backImage;
                             return (
                               <div key={idx} style={{ padding: '1rem 1.2rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.6rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '0.4rem' }}>
@@ -1419,11 +1419,11 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                       <span style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', color: '#38a169', padding: '0.25rem 0.5rem', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.5px' }}>CUSTOM DESIGNED</span>
-                                      {(item.customDesignLocalUrl || item.customDesign) && (
-                                        <a href={item.customDesignLocalUrl || item.customDesign} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Front Artwork</a>
+                                      {(item.customDesignLocalUrl || item.customDesign || item.frontImage) && (
+                                        <a href={item.customDesignLocalUrl || item.customDesign || item.frontImage} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Front Artwork</a>
                                       )}
-                                      {(item.customDesignBackLocalUrl || item.customDesignBack) && (
-                                        <a href={item.customDesignBackLocalUrl || item.customDesignBack} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Back Artwork</a>
+                                      {(item.customDesignBackLocalUrl || item.customDesignBack || item.backImage) && (
+                                        <a href={item.customDesignBackLocalUrl || item.customDesignBack || item.backImage} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Back Artwork</a>
                                       )}
                                     </div>
 
@@ -1442,7 +1442,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                                             </tr>
                                           </thead>
                                           <tbody>
-                                            {(item.customDesignLocalUrl || item.customDesign) && item.customMeta.placement.front && (
+                                            {(item.customDesignLocalUrl || item.customDesign || item.frontImage) && item.customMeta.placement.front && (
                                               <tr style={{ borderBottom: '1px solid #f2f2f2' }}>
                                                 <td style={{ padding: '0.5rem 0.8rem', fontWeight: 700 }}>Front</td>
                                                 <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.scale}%</td>
@@ -1452,7 +1452,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                                                 <td style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>{item.customMeta.placement.front.opacity ?? 100}%</td>
                                               </tr>
                                             )}
-                                            {(item.customDesignBackLocalUrl || item.customDesignBack) && item.customMeta.placement.back && (
+                                            {(item.customDesignBackLocalUrl || item.customDesignBack || item.backImage) && item.customMeta.placement.back && (
                                               <tr>
                                                 <td style={{ padding: '0.5rem 0.8rem', fontWeight: 700 }}>Back</td>
                                                 <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.back.scale}%</td>

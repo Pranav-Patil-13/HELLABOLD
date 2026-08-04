@@ -197,6 +197,10 @@ const FavoritesDrawer = ({
                                 },
                                 frontImage: design.frontImage,
                                 backImage: design.backImage,
+                                customDesign: design.frontImage || null,
+                                customDesignBack: design.backImage || null,
+                                customDesignName: design.frontImage ? 'custom-design-front.png' : '',
+                                customDesignBackName: design.backImage ? 'custom-design-back.png' : '',
                                 images: [
                                   design.frontImage || design.backImage || ''
                                 ],
