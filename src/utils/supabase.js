@@ -1227,9 +1227,15 @@ export const deleteSharedDesign = async (designId) => {
         .from('shared_designs')
         .delete()
         .eq('id', designId);
-      if (!error) return true;
+      if (!error) {
+        return true;
+      } else {
+        console.error('Supabase deleteSharedDesign error:', error);
+        return false;
+      }
     } catch (e) {
-      console.warn('Supabase deleteSharedDesign error:', e);
+      console.error('Supabase deleteSharedDesign exception:', e);
+      return false;
     }
   }
 

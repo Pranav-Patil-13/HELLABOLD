@@ -41,8 +41,10 @@ const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, userProfil
     if (confirm('Are you sure you want to delete this shared design from the community gallery?')) {
       try {
         const ok = await deleteSharedDesign(id);
-        if (ok && onDeleteSuccess) {
-          onDeleteSuccess();
+        if (ok) {
+          if (onDeleteSuccess) onDeleteSuccess();
+        } else {
+          alert('Failed to delete design. Please check if you have permission to delete it.');
         }
       } catch (err) {
         console.error(err);
