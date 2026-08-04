@@ -186,7 +186,8 @@ const FavoritesDrawer = ({
                                 isCustom: true,
                                 remixOf: {
                                   designId: design.id,
-                                  creator: design.author || 'Bold Creator'
+                                  creator: design.author || 'Bold Creator',
+                                  creatorEmail: design.authorEmail || null
                                 },
                                 customMeta: {
                                   ...design.customMeta,

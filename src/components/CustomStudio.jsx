@@ -555,6 +555,7 @@ const CustomStudio = ({
         id: designId,
         title: shareTitle.trim().toUpperCase(),
         author: shareCreator.trim() || 'Bold Creator',
+        authorEmail: userProfile?.email || null,
         gender,
         color,
         garmentType,
@@ -639,6 +640,7 @@ const CustomStudio = ({
       remixOf: loadedDesignId ? {
         designId: loadedDesignId,
         creator: loadedDesignRef.current?.author || 'Anonymous',
+        creatorEmail: loadedDesignRef.current?.authorEmail || null,
         royaltyAmount: Math.round(priceNum * 0.05)
       } : null,
       customMeta: {

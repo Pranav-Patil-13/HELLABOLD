@@ -875,6 +875,7 @@ export const getSharedDesigns = async () => {
           id: d.id,
           title: d.title,
           author: d.author,
+          authorEmail: d.author_email || null,
           gender: d.gender,
           color: d.color,
           garmentType: d.garment_type,
@@ -910,6 +911,7 @@ export const saveSharedDesign = async (design) => {
     id: design.id || `design-${Date.now()}`,
     title: design.title || 'UNTITLED DESIGN',
     author: design.author || 'Anonymous Creator',
+    author_email: design.authorEmail || null,
     gender: design.gender || 'male',
     color: design.color || 'black',
     garment_type: design.garmentType || 'tee',
@@ -1173,13 +1175,22 @@ export const awardRoyaltiesForOrder = async (order) => {
       if (isSupabaseConfigured) {
         try {
           let matches = [];
-          const { data: byName } = await supabase.from('profiles').select('id, hella_money').eq('full_name', creator);
-          if (byName && byName.length > 0) {
-            matches = byName;
-          } else {
-            const { data: byEmail } = await supabase.from('profiles').select('id, hella_money').eq('email', creator);
+          const creatorEmail = remixOf.creatorEmail;
+          if (creatorEmail) {
+            const { data: byEmail } = await supabase.from('profiles').select('id, hella_money').eq('email', creatorEmail);
             if (byEmail && byEmail.length > 0) {
               matches = byEmail;
+            }
+          }
+          if (matches.length === 0) {
+            const { data: byName } = await supabase.from('profiles').select('id, hella_money').eq('full_name', creator);
+            if (byName && byName.length > 0) {
+              matches = byName;
+            } else {
+              const { data: byEmailFallback } = await supabase.from('profiles').select('id, hella_money').eq('email', creator);
+              if (byEmailFallback && byEmailFallback.length > 0) {
+                matches = byEmailFallback;
+              }
             }
           }
           
