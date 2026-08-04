@@ -74,7 +74,14 @@ button {
     letter-spacing: 1px;
     transition: var(--transition-fast);
     font-weight: 500;
+}.btn:disabled {
+    background-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+    cursor: not-allowed !important;
+    border-color: var(--border-color) !important;
+    opacity: 0.6;
 }
+
 
 .btn--primary {
     background-color: var(--accent-color);
