@@ -162,11 +162,14 @@ const Footer = ({ onNavigate }) => {
               </button>
             </form>
           )}
-          <div className="footer__payment-icons">
-            <span className="footer__payment-badge">VISA</span>
-            <span className="footer__payment-badge">MC</span>
-            <span className="footer__payment-badge">UPI</span>
-            <span className="footer__payment-badge">COD</span>
+          <div className="footer__payment-icons" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+            <img src="https://cdn.razorpay.com/card-networks/visa.svg" alt="Visa" style={{ height: '11px', objectFit: 'contain' }} />
+            <img src="https://cdn.razorpay.com/card-networks/rupay.svg" alt="Rupay" style={{ height: '11px', objectFit: 'contain' }} />
+            <img src="https://cdn.razorpay.com/card-networks/mastercard.svg" alt="Mastercard" style={{ height: '11px', objectFit: 'contain' }} />
+            <img src="https://cdn.razorpay.com/app/googlepay.svg" alt="Google Pay" style={{ height: '13px', objectFit: 'contain' }} />
+            <img src="https://checkout-static-next.razorpay.com/build/assets/images/phonepe.e101f376.svg" alt="PhonePe" style={{ height: '13px', objectFit: 'contain' }} />
+            <img src="https://cdn.razorpay.com/app/amazonpay.svg" alt="Amazon Pay" style={{ height: '13px', objectFit: 'contain' }} />
+            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', border: '1px solid #475569', color: '#94a3b8', padding: '0.15rem 0.35rem', borderRadius: '2px', letterSpacing: '0.5px' }}>COD</span>
           </div>
         </div>
       </div>
