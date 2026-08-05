@@ -1248,7 +1248,7 @@ const CheckoutPage = ({
       >
         <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto' }}>
           <img 
-            src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png" 
+            src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785953441/charity_banner_f5od1i.png" 
             alt="HELLABOLD Charity Banner" 
             style={{
               maxWidth: '100%',
