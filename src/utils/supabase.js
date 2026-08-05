@@ -111,36 +111,39 @@ export const saveProduct = async (productData, editingId = null) => {
         savedRecord._warning = "Product saved to Supabase. Note: Variant settings (colors, colorImages, skus) were synced to products.json locally as columns do not exist in Supabase yet.";
       }
 
-      // Sync local products.json
-      try {
-        const localRes = await fetch('/api/products');
-        if (localRes.ok) {
-          const localProducts = await localRes.json();
-          let updatedProducts;
-          
-          const localIndex = localProducts.findIndex(lp => lp.id === savedRecord.id);
-          const fullProduct = {
-            ...savedRecord,
-            colors: colors || undefined,
-            colorImages: colorImages || undefined,
-            skus: skus || undefined
-          };
+      // Sync local products.json (only in local dev mode)
+      const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (isLocalhost) {
+        try {
+          const localRes = await fetch('/api/products');
+          if (localRes.ok) {
+            const localProducts = await localRes.json();
+            let updatedProducts;
+            
+            const localIndex = localProducts.findIndex(lp => lp.id === savedRecord.id);
+            const fullProduct = {
+              ...savedRecord,
+              colors: colors || undefined,
+              colorImages: colorImages || undefined,
+              skus: skus || undefined
+            };
 
-          if (localIndex !== -1) {
-            localProducts[localIndex] = { ...localProducts[localIndex], ...fullProduct };
-            updatedProducts = [...localProducts];
-          } else {
-            updatedProducts = [...localProducts, fullProduct];
+            if (localIndex !== -1) {
+              localProducts[localIndex] = { ...localProducts[localIndex], ...fullProduct };
+              updatedProducts = [...localProducts];
+            } else {
+              updatedProducts = [...localProducts, fullProduct];
+            }
+
+            await fetch('/api/products', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedProducts)
+            });
           }
-
-          await fetch('/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedProducts)
-          });
+        } catch (syncErr) {
+          console.error('Error syncing variant configuration locally:', syncErr);
         }
-      } catch (syncErr) {
-        console.error('Error syncing variant configuration locally:', syncErr);
       }
     }
 
