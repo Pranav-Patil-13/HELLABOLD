@@ -938,15 +938,15 @@ const CheckoutPage = ({
                     paddingTop: '0.6rem',
                     borderTop: '1px dashed rgba(0,0,0,0.08)'
                   }}>
-                    <img src="https://cdn.razorpay.com/card-networks/visa.svg" alt="Visa" style={{ height: '11px', objectFit: 'contain', opacity: 0.7 }} />
-                    <img src="https://cdn.razorpay.com/card-networks/rupay.svg" alt="Rupay" style={{ height: '11px', objectFit: 'contain', opacity: 0.7 }} />
-                    <img src="https://cdn.razorpay.com/card-networks/mastercard.svg" alt="Mastercard" style={{ height: '11px', objectFit: 'contain', opacity: 0.7 }} />
+                    <img src="https://cdn.razorpay.com/card-networks/visa.svg" alt="Visa" style={{ height: '12px', objectFit: 'contain', opacity: 0.7 }} />
+                    <img src="https://cdn.razorpay.com/card-networks/rupay.svg" alt="Rupay" style={{ height: '12px', objectFit: 'contain', opacity: 0.7 }} />
+                    <img src="https://cdn.razorpay.com/card-networks/mastercard.svg" alt="Mastercard" style={{ height: '12px', objectFit: 'contain', opacity: 0.7 }} />
                     
                     <span style={{ color: '#e2e8f0', fontSize: '0.8rem', margin: '0 0.2rem' }}>|</span>
 
-                    <img src="https://cdn.razorpay.com/app/googlepay.svg" alt="Google Pay" style={{ height: '11px', objectFit: 'contain', opacity: 0.7 }} />
-                    <img src="https://checkout-static-next.razorpay.com/build/assets/images/phonepe.e101f376.svg" alt="PhonePe" style={{ height: '11px', objectFit: 'contain', opacity: 0.7 }} />
-                    <img src="https://cdn.razorpay.com/app/amazonpay.svg" alt="Amazon Pay" style={{ height: '11px', objectFit: 'contain', opacity: 0.7 }} />
+                    <img src="https://cdn.razorpay.com/app/googlepay.svg" alt="Google Pay" style={{ height: '15px', objectFit: 'contain', opacity: 0.75 }} />
+                    <img src="https://checkout-static-next.razorpay.com/build/assets/images/phonepe.e101f376.svg" alt="PhonePe" style={{ height: '15px', objectFit: 'contain', opacity: 0.75 }} />
+                    <img src="https://cdn.razorpay.com/app/amazonpay.svg" alt="Amazon Pay" style={{ height: '15px', objectFit: 'contain', opacity: 0.75 }} />
                   </div>
                 </div>
                 <div
