@@ -236,26 +236,16 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
               onMouseLeave={() => setShowCharityTooltip(false)}
               onClick={() => setShowCharityTooltip(!showCharityTooltip)}
             >
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.35rem', 
-                border: '1px solid #cbd5e1', 
-                padding: '0.3rem 0.6rem', 
-                borderRadius: '100px', 
-                cursor: 'pointer', 
-                backgroundColor: '#f8fafc', 
-                fontSize: '0.65rem', 
-                fontWeight: 'bold', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.5px',
-                color: '#475569',
-                userSelect: 'none',
-                transition: 'all 0.15s'
-              }}>
-                <span style={{ fontSize: '0.85rem' }}>🌾</span>
-                <span>Social Impact</span>
-              </div>
+              <img 
+                src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785950011/give_india_logo_pismox.png" 
+                alt="Give India Verified Partner" 
+                style={{ 
+                  height: '18px', 
+                  objectFit: 'contain', 
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }} 
+              />
               {showCharityTooltip && (
                 <div style={{ 
                   position: 'absolute', 
