@@ -1466,43 +1466,13 @@ export const deleteSharedDesign = async (designId) => {
 const MOCK_DONATION_RECEIPTS = [
   {
     id: 1,
-    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
+    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785952025/indian-1785948802963_2_1__pages-to-jpg-0001_1_s0nxzy.jpg',
     displayOrder: 1,
-    description: 'Annamrita Foundation — Give a million meals to India\'s hungry (₹500)',
-    receiptNo: 'PVT-IN-LC208391cc99c66',
-    date: '11-06-2026',
-    amount: 500,
-    ngo: 'Annamrita Foundation'
-  },
-  {
-    id: 2,
-    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
-    displayOrder: 2,
-    description: 'Annamrita Foundation — Give a million meals to India\'s hungry (₹500)',
-    receiptNo: 'PVT-IN-LC2018f882473da',
-    date: '11-05-2026',
-    amount: 500,
-    ngo: 'Annamrita Foundation'
-  },
-  {
-    id: 3,
-    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
-    displayOrder: 3,
-    description: 'Saint Hardyal Educational and Orphans Welfare Society — Help abandoned elderly (₹741)',
-    receiptNo: 'PVT-IN-LC136f74ba9daaf',
-    date: '10-05-2026',
-    amount: 741,
-    ngo: 'Saint Hardyal Educational and Orphans Welfare Society (SHEOWS)'
-  },
-  {
-    id: 4,
-    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
-    displayOrder: 4,
-    description: 'Annamrita Foundation — Give a million meals to India\'s hungry (₹500)',
-    receiptNo: 'PVT-IN-LC25c712b3b4718',
-    date: '11-04-2026',
-    amount: 500,
-    ngo: 'Annamrita Foundation'
+    description: 'Consolidated Donation Report via Give.do platform (Annamrita & SHEOWS)',
+    receiptNo: 'Consolidated Report (01-04-2026 to 31-03-2027)',
+    date: 'Consolidated',
+    amount: 2241,
+    ngo: 'Annamrita & SHEOWS Foundations'
   }
 ];
 
@@ -1512,7 +1482,7 @@ export const getDonationReceipts = async () => {
       let { data, error } = await supabase
         .from('donation_receipts')
         .select('*')
-        .order('display_order', { ascending: True });
+        .order('display_order', { ascending: true });
       
       if (!error && data) {
         if (data.length === 0) {
@@ -1557,7 +1527,15 @@ export const getDonationReceipts = async () => {
 
   const local = localStorage.getItem('hellabold_donation_receipts');
   if (local) {
-    try { return JSON.parse(local); } catch (e) {}
+    try { 
+      const parsed = JSON.parse(local);
+      // Force clean legacy items
+      if (parsed.length > 1 || (parsed[0] && parsed[0].imageUrl && parsed[0].imageUrl.includes('charity_banner_cudw1i'))) {
+        localStorage.removeItem('hellabold_donation_receipts');
+      } else {
+        return parsed;
+      }
+    } catch (e) {}
   }
   localStorage.setItem('hellabold_donation_receipts', JSON.stringify(MOCK_DONATION_RECEIPTS));
   return MOCK_DONATION_RECEIPTS;
