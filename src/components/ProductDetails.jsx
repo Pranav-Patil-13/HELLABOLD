@@ -35,6 +35,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
   const [activeTab, setActiveTab] = useState('details'); // details, sizing, shipping
   const [isBargainOpen, setIsBargainOpen] = useState(false);
   const [showPeekingMascot, setShowPeekingMascot] = useState(false);
+  const [showCharityTooltip, setShowCharityTooltip] = useState(false);
   const [isWishlistHovered, setIsWishlistHovered] = useState(false);
   const hoverTimeoutRef = useRef(null);
 
@@ -220,11 +221,63 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
             {product.title}
             {renderProductBadgeInline()}
           </h1>
-          <div className="pdp-info__price">
-            <span>{product.price}</span>
-            {product.original_price && (
-              <span className="pdp-info__original-price">{product.original_price}</span>
-            )}
+          <div className="pdp-info__price" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <span>{product.price}</span>
+              {product.original_price && (
+                <span className="pdp-info__original-price">{product.original_price}</span>
+              )}
+            </div>
+
+            {/* Premium Charity Impact Badge */}
+            <div 
+              style={{ position: 'relative', display: 'inline-flex' }}
+              onMouseEnter={() => setShowCharityTooltip(true)}
+              onMouseLeave={() => setShowCharityTooltip(false)}
+              onClick={() => setShowCharityTooltip(!showCharityTooltip)}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.35rem', 
+                border: '1px solid #cbd5e1', 
+                padding: '0.3rem 0.6rem', 
+                borderRadius: '100px', 
+                cursor: 'pointer', 
+                backgroundColor: '#f8fafc', 
+                fontSize: '0.65rem', 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.5px',
+                color: '#475569',
+                userSelect: 'none',
+                transition: 'all 0.15s'
+              }}>
+                <span style={{ fontSize: '0.85rem' }}>🌾</span>
+                <span>Social Impact</span>
+              </div>
+              {showCharityTooltip && (
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: '100%', 
+                  right: '0', 
+                  transform: 'translateY(-8px)', 
+                  width: '260px', 
+                  backgroundColor: '#0f172a', 
+                  color: '#f8fafc', 
+                  padding: '0.7rem 0.9rem', 
+                  borderRadius: '6px', 
+                  fontSize: '0.72rem', 
+                  lineHeight: '1.4', 
+                  zIndex: 9999, 
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                  textAlign: 'left',
+                  border: '1px solid #334155'
+                }}>
+                  🌾 Every purchase contributes meals & shelter care (via Annamrita & SHEOWS).
+                </div>
+              )}
+            </div>
           </div>
 
           <p className="pdp-info__description">{product.description}</p>

@@ -1462,4 +1462,160 @@ export const deleteSharedDesign = async (designId) => {
   return false;
 };
 
+// ── Donation Receipts Manager (Social Impact) ────────────────────────────────
+const MOCK_DONATION_RECEIPTS = [
+  {
+    id: 1,
+    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
+    displayOrder: 1,
+    description: 'Annamrita Foundation — Give a million meals to India\'s hungry (₹500)',
+    receiptNo: 'PVT-IN-LC208391cc99c66',
+    date: '11-06-2026',
+    amount: 500,
+    ngo: 'Annamrita Foundation'
+  },
+  {
+    id: 2,
+    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
+    displayOrder: 2,
+    description: 'Annamrita Foundation — Give a million meals to India\'s hungry (₹500)',
+    receiptNo: 'PVT-IN-LC2018f882473da',
+    date: '11-05-2026',
+    amount: 500,
+    ngo: 'Annamrita Foundation'
+  },
+  {
+    id: 3,
+    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
+    displayOrder: 3,
+    description: 'Saint Hardyal Educational and Orphans Welfare Society — Help abandoned elderly (₹741)',
+    receiptNo: 'PVT-IN-LC136f74ba9daaf',
+    date: '10-05-2026',
+    amount: 741,
+    ngo: 'Saint Hardyal Educational and Orphans Welfare Society (SHEOWS)'
+  },
+  {
+    id: 4,
+    imageUrl: 'https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png',
+    displayOrder: 4,
+    description: 'Annamrita Foundation — Give a million meals to India\'s hungry (₹500)',
+    receiptNo: 'PVT-IN-LC25c712b3b4718',
+    date: '11-04-2026',
+    amount: 500,
+    ngo: 'Annamrita Foundation'
+  }
+];
+
+export const getDonationReceipts = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      let { data, error } = await supabase
+        .from('donation_receipts')
+        .select('*')
+        .order('display_order', { ascending: True });
+      
+      if (!error && data) {
+        if (data.length === 0) {
+          // Auto-seed to Supabase if empty
+          const dbSeeds = MOCK_DONATION_RECEIPTS.map(r => ({
+            id: r.id,
+            image_url: r.imageUrl,
+            display_order: r.displayOrder,
+            description: r.description,
+            receipt_no: r.receiptNo,
+            date: r.date,
+            amount: r.amount,
+            ngo: r.ngo
+          }));
+          const { data: seeded } = await supabase.from('donation_receipts').insert(dbSeeds).select();
+          if (seeded) return seeded.map(d => ({
+            id: d.id,
+            imageUrl: d.image_url,
+            displayOrder: d.display_order,
+            description: d.description,
+            receiptNo: d.receipt_no,
+            date: d.date,
+            amount: d.amount,
+            ngo: d.ngo
+          }));
+        }
+        return data.map(d => ({
+          id: d.id,
+          imageUrl: d.image_url,
+          displayOrder: d.display_order,
+          description: d.description,
+          receiptNo: d.receipt_no,
+          date: d.date,
+          amount: d.amount,
+          ngo: d.ngo
+        }));
+      }
+    } catch (e) {
+      console.warn('Supabase donation_receipts fetch failed, using local fallback:', e);
+    }
+  }
+
+  const local = localStorage.getItem('hellabold_donation_receipts');
+  if (local) {
+    try { return JSON.parse(local); } catch (e) {}
+  }
+  localStorage.setItem('hellabold_donation_receipts', JSON.stringify(MOCK_DONATION_RECEIPTS));
+  return MOCK_DONATION_RECEIPTS;
+};
+
+export const saveDonationReceipt = async (receipt) => {
+  const payload = {
+    image_url: receipt.imageUrl,
+    display_order: parseInt(receipt.displayOrder || 0, 10),
+    description: receipt.description || '',
+    receipt_no: receipt.receiptNo || '',
+    date: receipt.date || '',
+    amount: parseFloat(receipt.amount || 0),
+    ngo: receipt.ngo || ''
+  };
+
+  if (isSupabaseConfigured) {
+    try {
+      let res;
+      if (receipt.id) {
+        res = await supabase.from('donation_receipts').update(payload).eq('id', receipt.id).select();
+      } else {
+        res = await supabase.from('donation_receipts').insert([payload]).select();
+      }
+      if (!res.error && res.data) return true;
+      console.error('Error saving donation receipt in Supabase:', res.error);
+    } catch (e) {
+      console.warn('Supabase save donation receipt failed:', e);
+    }
+  }
+
+  // Local storage fallback
+  const receipts = await getDonationReceipts();
+  if (receipt.id) {
+    const idx = receipts.findIndex(r => r.id === receipt.id);
+    if (idx !== -1) {
+      receipts[idx] = { ...receipts[idx], ...receipt };
+    }
+  } else {
+    receipts.push({ id: Date.now(), ...receipt });
+  }
+  receipts.sort((a, b) => a.displayOrder - b.displayOrder);
+  localStorage.setItem('hellabold_donation_receipts', JSON.stringify(receipts));
+  return true;
+};
+
+export const deleteDonationReceipt = async (id) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase.from('donation_receipts').delete().eq('id', id);
+      if (!error) return true;
+    } catch (e) {}
+  }
+  const receipts = await getDonationReceipts();
+  const filtered = receipts.filter(r => r.id !== id);
+  localStorage.setItem('hellabold_donation_receipts', JSON.stringify(filtered));
+  return true;
+};
+
+
 

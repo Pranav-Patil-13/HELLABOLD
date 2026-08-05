@@ -16,6 +16,9 @@ import {
   getPayoutRequests,
   settlePayoutRequest,
   awardRoyaltiesForOrder,
+  getDonationReceipts,
+  saveDonationReceipt,
+  deleteDonationReceipt,
   supabase
 } from '../utils/supabase';
 import { createShiprocketOrder } from '../utils/shiprocket';
@@ -104,6 +107,83 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   const [hmLedger, setHmLedger] = useState([]);
   const [payoutRequests, setPayoutRequests] = useState([]);
 
+  // Charity Receipts States
+  const [charityReceipts, setCharityReceipts] = useState([]);
+  const [charityImageUrl, setCharityImageUrl] = useState('');
+  const [charityDisplayOrder, setCharityDisplayOrder] = useState(1);
+  const [charityDescription, setCharityDescription] = useState('');
+  const [charityReceiptNo, setCharityReceiptNo] = useState('');
+  const [charityDate, setCharityDate] = useState('');
+  const [charityAmount, setCharityAmount] = useState('');
+  const [charityNgo, setCharityNgo] = useState('');
+  const [editingReceiptId, setEditingReceiptId] = useState(null);
+
+  const fetchCharityReceipts = async () => {
+    try {
+      const res = await getDonationReceipts();
+      setCharityReceipts(res);
+      if (!editingReceiptId) {
+        setCharityDisplayOrder(res.length + 1);
+      }
+    } catch (e) {
+      console.error('Failed to load receipts:', e);
+    }
+  };
+
+  const handleSaveCharityReceipt = async (e) => {
+    e.preventDefault();
+    if (!charityImageUrl) {
+      alert('Please enter a Cloudinary image URL.');
+      return;
+    }
+    try {
+      await saveDonationReceipt({
+        id: editingReceiptId,
+        imageUrl: charityImageUrl,
+        displayOrder: parseInt(charityDisplayOrder || 0, 10),
+        description: charityDescription,
+        receiptNo: charityReceiptNo,
+        date: charityDate,
+        amount: parseFloat(charityAmount || 0),
+        ngo: charityNgo
+      });
+      alert('Charity receipt saved successfully!');
+      setCharityImageUrl('');
+      setCharityDescription('');
+      setCharityReceiptNo('');
+      setCharityDate('');
+      setCharityAmount('');
+      setCharityNgo('');
+      setEditingReceiptId(null);
+      fetchCharityReceipts();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save charity receipt.');
+    }
+  };
+
+  const handleEditReceipt = (receipt) => {
+    setEditingReceiptId(receipt.id);
+    setCharityImageUrl(receipt.imageUrl);
+    setCharityDisplayOrder(receipt.displayOrder);
+    setCharityDescription(receipt.description || '');
+    setCharityReceiptNo(receipt.receiptNo || '');
+    setCharityDate(receipt.date || '');
+    setCharityAmount(receipt.amount || '');
+    setCharityNgo(receipt.ngo || '');
+  };
+
+  const handleDeleteReceipt = async (id) => {
+    if (confirm('Are you sure you want to delete this donation receipt?')) {
+      try {
+        await deleteDonationReceipt(id);
+        fetchCharityReceipts();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   const fetchHellaMoneyData = async () => {
     try {
       const ledger = await getHellaMoneyLedger();
@@ -135,6 +215,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     fetchOrders();
     fetchCoupons();
     fetchHellaMoneyData();
+    fetchCharityReceipts();
   }, []);
 
   useEffect(() => {
@@ -146,6 +227,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     }
     if (activeAdminTab === 'hellamoney') {
       fetchHellaMoneyData();
+    }
+    if (activeAdminTab === 'charity') {
+      fetchCharityReceipts();
     }
   }, [activeAdminTab]);
 
@@ -392,7 +476,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
       original_price: originalPrice || null,
       description,
       details: details.split('\n').filter(line => line.trim() !== ''),
-      sizes: sizes.length > 0 ? sizes : ['S', 'M', 'L', 'XL'],
+      sizes,
       images: selectedImages,
       category,
       label,
@@ -736,6 +820,13 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'hellamoney' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'hellamoney' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
         >
           Hella Money Ledger
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'charity' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('charity')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'charity' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'charity' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Manage Charity
         </button>
       </div>
 
@@ -1813,6 +1904,167 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {activeAdminTab === 'charity' && (
+        <div className="admin-charity-tab" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          <div className="admin-card form-card">
+            <h2 className="admin-card-title">{editingReceiptId ? 'Edit Donation Receipt' : 'Add Donation Receipt'}</h2>
+            <form onSubmit={handleSaveCharityReceipt} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Receipt Image URL (Cloudinary Link)</label>
+                <input 
+                  type="text" 
+                  value={charityImageUrl} 
+                  onChange={e => setCharityImageUrl(e.target.value)} 
+                  placeholder="https://res.cloudinary.com/..." 
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>NGO Partner Name</label>
+                <input 
+                  type="text" 
+                  value={charityNgo} 
+                  onChange={e => setCharityNgo(e.target.value)} 
+                  placeholder="e.g. Annamrita Foundation" 
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Receipt / Transaction No.</label>
+                <input 
+                  type="text" 
+                  value={charityReceiptNo} 
+                  onChange={e => setCharityReceiptNo(e.target.value)} 
+                  placeholder="e.g. PVT-IN-LC208391cc99c66" 
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Donation Date</label>
+                <input 
+                  type="text" 
+                  value={charityDate} 
+                  onChange={e => setCharityDate(e.target.value)} 
+                  placeholder="e.g. 11-06-2026" 
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Donation Amount (INR)</label>
+                <input 
+                  type="number" 
+                  value={charityAmount} 
+                  onChange={e => setCharityAmount(e.target.value)} 
+                  placeholder="e.g. 500" 
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Display Order (Priority)</label>
+                <input 
+                  type="number" 
+                  value={charityDisplayOrder} 
+                  onChange={e => setCharityDisplayOrder(e.target.value)} 
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description / Fundraiser Details</label>
+                <input 
+                  type="text" 
+                  value={charityDescription} 
+                  onChange={e => setCharityDescription(e.target.value)} 
+                  placeholder="e.g. Give a million meals to India's hungry" 
+                  required
+                />
+              </div>
+
+              <div style={{ gridColumn: 'span 2', display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="submit" className="btn btn--primary">
+                  {editingReceiptId ? 'Update Receipt' : 'Save Receipt'}
+                </button>
+                {editingReceiptId && (
+                  <button 
+                    type="button" 
+                    className="btn btn--outline" 
+                    onClick={() => {
+                      setEditingReceiptId(null);
+                      setCharityImageUrl('');
+                      setCharityDescription('');
+                      setCharityReceiptNo('');
+                      setCharityDate('');
+                      setCharityAmount('');
+                      setCharityNgo('');
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="admin-card table-card">
+            <h2 className="admin-card-title">Verified Donation Receipts</h2>
+            <div className="table-wrapper">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Date</th>
+                    <th>NGO</th>
+                    <th>Receipt No.</th>
+                    <th>Amount</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {charityReceipts.map((receipt) => (
+                    <tr key={receipt.id}>
+                      <td><code>#{receipt.displayOrder}</code></td>
+                      <td>{receipt.date}</td>
+                      <td>
+                        <strong style={{ display: 'block' }}>{receipt.ngo}</strong>
+                        <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{receipt.description}</span>
+                      </td>
+                      <td><code>{receipt.receiptNo}</code></td>
+                      <td style={{ fontWeight: 'bold' }}>₹{receipt.amount}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                          <button 
+                            className="btn btn--outline" 
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem' }}
+                            onClick={() => handleEditReceipt(receipt)}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="btn btn--outline" 
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', color: '#e53e3e', borderColor: '#feb2b2' }}
+                            onClick={() => handleDeleteReceipt(receipt.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
