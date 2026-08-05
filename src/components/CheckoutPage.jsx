@@ -1302,9 +1302,10 @@ const CheckoutPage = ({
       {/* Proof of Impact Centered Popup Modal */}
       {isImpactOpen && (() => {
         const totalDonated = charityReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
-        const totalMeals = totalDonated;
-        const milestoneTarget = 5000;
-        const progressPercent = Math.min(100, Math.round((totalDonated / milestoneTarget) * 100));
+        const mealCost = 25;
+        const totalMeals = Math.round(totalDonated / mealCost);
+        const milestoneTargetMeals = 200; // Realistic community goal in number of plates/meals
+        const progressPercent = Math.min(100, Math.round((totalMeals / milestoneTargetMeals) * 100));
 
         return (
           <div 
@@ -1374,14 +1375,14 @@ const CheckoutPage = ({
                 {/* Progress bar */}
                 <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.2rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    <span>Community Goal: Feed 5,000 children</span>
+                    <span>Community Goal: Feed 200 children</span>
                     <span style={{ color: 'var(--accent-color)' }}>{progressPercent}%</span>
                   </div>
                   <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '100px', overflow: 'hidden' }}>
                     <div style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: '#10b981', borderRadius: '100px', transition: 'width 0.5s ease-out' }}></div>
                   </div>
                   <span style={{ fontSize: '0.62rem', color: '#64748b', marginTop: '0.5rem', display: 'block' }}>
-                    Current Progress: {totalDonated.toLocaleString()} / 5,000 meals contributed
+                    Current Progress: {totalMeals} / {milestoneTargetMeals} meals contributed
                   </span>
                 </div>
               </div>
