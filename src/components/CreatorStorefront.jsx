@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getSharedDesigns, likeSharedDesign } from '../utils/supabase';
+import { getSharedDesigns, likeSharedDesign, getProfileByHandle } from '../utils/supabase';
 import { GalleryCard } from './CommunityGallery';
 
 const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, onToggleLike, onRemix, onBack }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  const [resolvedProfile, setResolvedProfile] = useState(null);
 
   const effectiveHandle = creatorHandle || null;
 
@@ -17,15 +18,28 @@ const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, on
         const all = await getSharedDesigns();
 
         if (effectiveHandle) {
-          // Filter purely by handle stored on the design — no name matching needed
-          const filtered = all.filter(d =>
-            d.authorHandle === effectiveHandle ||
-            // Fallback: for designs shared before this system, check if current user matches
-            (d.authorHandle == null && creatorId && d.author === creatorId)
-          );
+          const profile = await getProfileByHandle(effectiveHandle);
+          setResolvedProfile(profile);
+
+          const filtered = all.filter(d => {
+            // Match by new explicit authorHandle field
+            if (d.authorHandle && d.authorHandle.toLowerCase() === effectiveHandle.toLowerCase()) {
+              return true;
+            }
+            // Fallback for legacy designs without authorHandle column populated:
+            if (profile) {
+              if (d.author === profile.fullName) return true;
+              if (profile.email && d.authorEmail === profile.email) return true;
+            }
+            // Fuzzy match name as last resort fallback
+            if (d.author && d.author.toLowerCase().replace(/\s+/g, '') === effectiveHandle.toLowerCase()) {
+              return true;
+            }
+            return false;
+          });
           setDesigns(filtered);
         } else {
-          // Legacy: filter by author name (old designs without authorHandle)
+          // Legacy: filter by author name/email directly
           setDesigns(all.filter(d => d.author === creatorId || d.authorEmail === creatorId));
         }
       } catch (err) {
