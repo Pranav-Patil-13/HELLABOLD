@@ -627,6 +627,19 @@ export const updateProfile = async (profileData) => {
       console.error('Error updating user profile in Supabase:', error);
       throw error;
     }
+
+    // Sync all their existing shared designs to their new handle too!
+    if (profileData.handle !== undefined) {
+      try {
+        await supabase
+          .from('shared_designs')
+          .update({ author_handle: profileData.handle })
+          .eq('author_email', user.email);
+      } catch (err) {
+        console.warn('Could not sync handle to existing designs:', err);
+      }
+    }
+
     // Normalize to camelCase before returning
     const row = data[0];
     return {
@@ -644,8 +657,31 @@ export const updateProfile = async (profileData) => {
     };
   } else {
     const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user') || '{}');
+    const oldHandle = savedMockUser.handle;
     const updatedUser = { ...savedMockUser, ...profileData };
     localStorage.setItem('hellabold_mock_user', JSON.stringify(updatedUser));
+
+    // Fallback sync for localStorage
+    if (profileData.handle !== undefined && oldHandle !== profileData.handle) {
+      try {
+        const localSaved = localStorage.getItem('hellabold_shared_designs');
+        if (localSaved) {
+          let userDesigns = JSON.parse(localSaved);
+          let changed = false;
+          userDesigns = userDesigns.map(d => {
+            if (d.authorEmail === savedMockUser.email || d.authorHandle === oldHandle) {
+              changed = true;
+              return { ...d, authorHandle: profileData.handle };
+            }
+            return d;
+          });
+          if (changed) {
+            localStorage.setItem('hellabold_shared_designs', JSON.stringify(userDesigns));
+          }
+        }
+      } catch (e) {}
+    }
+
     return updatedUser;
   }
 };
