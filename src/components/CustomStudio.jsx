@@ -1284,7 +1284,6 @@ const CustomStudio = ({
                 />
               </div>
 
-              </div>
 
               {frontImage && backImage && (
                 <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left' }}>
