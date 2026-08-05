@@ -392,7 +392,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
       original_price: originalPrice || null,
       description,
       details: details.split('\n').filter(line => line.trim() !== ''),
-      sizes,
+      sizes: sizes.length > 0 ? sizes : ['S', 'M', 'L', 'XL'],
       images: selectedImages,
       category,
       label,

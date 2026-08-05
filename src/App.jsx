@@ -184,7 +184,7 @@ function App() {
     return [];
   });
   const [selectedSizes, setSelectedSizes] = useState([]);
-   const [priceRange, setPriceRange] = useState([499, 1000]);
+   const [priceRange, setPriceRange] = useState([499, 2000]);
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(() => {
@@ -699,7 +699,7 @@ function App() {
   const handleResetFilters = () => {
     setSelectedCategories([]);
     setSelectedSizes([]);
-    setPriceRange([499, 1000]);
+    setPriceRange([499, 2000]);
     setSelectedCollection(null);
     window.history.pushState({}, '', '/');
   };
