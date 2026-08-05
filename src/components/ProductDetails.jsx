@@ -129,9 +129,12 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
     );
   };
 
-  const similarProducts = products
-    .filter(p => p.id !== product.id)
-    .slice(0, 8);
+  let similarProducts = products.filter(p => p.id !== product.id && p.category === product.category);
+  if (similarProducts.length < 4) {
+    const additional = products.filter(p => p.id !== product.id && p.category !== product.category);
+    similarProducts = [...similarProducts, ...additional];
+  }
+  similarProducts = similarProducts.slice(0, 8);
 
   const productReviews = reviews.filter(r => r.productId === product.id);
 
