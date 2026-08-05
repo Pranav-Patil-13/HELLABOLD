@@ -1203,6 +1203,28 @@ const CheckoutPage = ({
           </div>
         </div>
       )}
+      {/* Charity Banner Footer */}
+      <div style={{
+        marginTop: '3.5rem',
+        paddingTop: '2rem',
+        borderTop: '1px solid var(--border-color)',
+        textAlign: 'center',
+        width: '100%'
+      }}>
+        <img 
+          src="/assets/charity_banner.png" 
+          alt="HELLABOLD Charity Banner" 
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+            display: 'block',
+            margin: '0 auto'
+          }}
+          loading="lazy"
+        />
+      </div>
     </div>
   );
 };
