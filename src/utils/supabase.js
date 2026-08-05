@@ -513,7 +513,8 @@ export const signUpUser = async (email, password, fullName, phone) => {
       role: email.includes('admin') ? 'admin' : 'customer',
       address: '',
       city: '',
-      zipCode: ''
+      zipCode: '',
+      handle: fullName.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '').slice(0, 20) || 'creator'
     };
     localStorage.setItem('hellabold_mock_user', JSON.stringify(mockUser));
     return { user: { id: mockUser.id, email }, session: { id: 'mock-session-id' }, profile: mockUser };
@@ -574,10 +575,9 @@ export const getCurrentUser = async () => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
-        // Check if a guest has logged in locally
         const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user'));
         if (savedMockUser) {
-          return { user: { id: savedMockUser.id, email: savedMockUser.email }, profile: savedMockUser };
+          return { user: { id: savedMockUser.id, email: savedMockUser.email }, profile: ensureMockUserHandle(savedMockUser) };
         }
         return null;
       }
@@ -587,14 +587,14 @@ export const getCurrentUser = async () => {
       // Fallback if network fails
       const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user'));
       if (savedMockUser) {
-        return { user: { id: savedMockUser.id, email: savedMockUser.email }, profile: savedMockUser };
+        return { user: { id: savedMockUser.id, email: savedMockUser.email }, profile: ensureMockUserHandle(savedMockUser) };
       }
       return null;
     }
   } else {
     const savedMockUser = JSON.parse(localStorage.getItem('hellabold_mock_user'));
     if (savedMockUser) {
-      return { user: { id: savedMockUser.id, email: savedMockUser.email }, profile: savedMockUser };
+      return { user: { id: savedMockUser.id, email: savedMockUser.email }, profile: ensureMockUserHandle(savedMockUser) };
     }
     return null;
   }
@@ -650,6 +650,35 @@ export const updateProfile = async (profileData) => {
   }
 };
 
+// Generates a unique handle from a full name, checking for collisions in profiles table
+const generateUniqueHandle = async (fullName) => {
+  const base = fullName
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 20) || 'creator';
+  if (!isSupabaseConfigured) return base;
+  const { data: existing } = await supabase.from('profiles').select('handle').eq('handle', base).maybeSingle();
+  if (!existing) return base;
+  for (let i = 0; i < 5; i++) {
+    const candidate = `${base.slice(0, 17)}${Math.floor(Math.random() * 900) + 100}`;
+    const { data: taken } = await supabase.from('profiles').select('handle').eq('handle', candidate).maybeSingle();
+    if (!taken) return candidate;
+  }
+  return `${base.slice(0, 16)}${Date.now() % 10000}`;
+};
+
+// Ensures a mock (localStorage) user has a handle — generates one from name if missing
+const ensureMockUserHandle = (user) => {
+  if (!user) return user;
+  if (!user.handle) {
+    const name = user.fullName || user.full_name || (user.email ? user.email.split('@')[0] : 'creator');
+    user.handle = name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '').slice(0, 20) || 'creator';
+    try { localStorage.setItem('hellabold_mock_user', JSON.stringify(user)); } catch (e) {}
+  }
+  return user;
+};
+
 // Internal helper for resolving profiles
 const getProfileById = async (userId) => {
   const { data, error } = await supabase
@@ -663,11 +692,20 @@ const getProfileById = async (userId) => {
     // fallback row to prevent crash
     return { id: userId, full_name: 'Valued Customer', phone: '', role: 'customer', addresses: [] };
   }
+  // Auto-assign a handle on first login if the user doesn't have one yet
+  if (!data.handle && data.full_name) {
+    try {
+      const newHandle = await generateUniqueHandle(data.full_name);
+      await supabase.from('profiles').update({ handle: newHandle }).eq('id', data.id);
+      data.handle = newHandle;
+    } catch (e) {}
+  }
+
   return {
     id: data.id,
     fullName: data.full_name,
     phone: data.phone,
-    email: data.email || null, // may be null if profiles table doesn't store it; caller attaches auth email
+    email: data.email || null,
     address: data.address,
     city: data.city,
     zipCode: data.zip_code,
@@ -687,7 +725,11 @@ export const getProfileByHandle = async (handle) => {
         .select('id, full_name, handle, email')
         .eq('handle', handle.toLowerCase())
         .single();
-      if (!error && data) return {
+      if (error || !data) {
+        return null;
+      }
+
+      return {
         id: data.id,
         fullName: data.full_name,
         handle: data.handle,
@@ -909,6 +951,7 @@ export const getSharedDesigns = async () => {
           title: d.title,
           author: d.author,
           authorEmail: d.author_email || null,
+          authorHandle: d.author_handle || null,
           gender: d.gender,
           color: d.color,
           garmentType: d.garment_type,
@@ -952,6 +995,7 @@ export const saveSharedDesign = async (design) => {
     back_image: design.backImage,
     instruction_text: design.instructionText || '',
     likes: design.likes || 0,
+    author_handle: design.authorHandle || null,
     custom_meta: design.customMeta
   };
 
@@ -994,6 +1038,7 @@ export const saveSharedDesign = async (design) => {
     backImage: payload.back_image,
     instructionText: payload.instruction_text,
     likes: payload.likes,
+    authorHandle: payload.author_handle || null,
     customMeta: payload.custom_meta
   };
 

@@ -50,8 +50,10 @@ export const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, use
     )
   );
 
-  // Show handle for current user's designs; fall back to stored author name
-  const displayHandle = (isAuthor && userProfile?.handle) ? userProfile.handle : author;
+  // Prefer handle stored on the design itself; fall back to profile handle for current user, then raw name
+  const displayHandle = design.authorHandle
+    || (isAuthor && userProfile?.handle)
+    || author;
 
   const handleDelete = async (e) => {
     e.stopPropagation();
@@ -213,7 +215,7 @@ export const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, use
               textDecoration: onCreatorClick ? 'underline' : 'none',
               textUnderlineOffset: '2px'
             }}
-            onClick={(e) => { e.stopPropagation(); if (onCreatorClick) onCreatorClick(author, (isAuthor && userProfile?.handle) ? userProfile.handle : null); }}
+            onClick={(e) => { e.stopPropagation(); if (onCreatorClick) onCreatorClick(author, design.authorHandle || (isAuthor && userProfile?.handle) || null); }}
           >
             by @{displayHandle}
           </span>

@@ -1,39 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { getSharedDesigns, likeSharedDesign, getProfileByHandle } from '../utils/supabase';
+import { getSharedDesigns, likeSharedDesign } from '../utils/supabase';
 import { GalleryCard } from './CommunityGallery';
 
 const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, onToggleLike, onRemix, onBack }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
-  const [resolvedProfile, setResolvedProfile] = useState(null);
+
+  const effectiveHandle = creatorHandle || null;
 
   useEffect(() => {
-    if (!creatorId && !creatorHandle) return;
-    const fetch = async () => {
+    if (!effectiveHandle && !creatorId) return;
+    const load = async () => {
       try {
         setLoading(true);
         const all = await getSharedDesigns();
 
-        if (creatorHandle) {
-          // Look up the profile by handle → get their full name / email for filtering
-          const profile = await getProfileByHandle(creatorHandle);
-          setResolvedProfile(profile);
-          if (profile) {
-            setDesigns(all.filter(d =>
-              d.author === profile.fullName ||
-              (profile.email && d.authorEmail === profile.email) ||
-              (d.customMeta?.authorHandle === creatorHandle)
-            ));
-          } else {
-            // No profile found — try fuzzy match on customMeta or handle as author
-            setDesigns(all.filter(d =>
-              d.customMeta?.authorHandle === creatorHandle ||
-              d.author?.toLowerCase().replace(/\s+/g, '') === creatorHandle
-            ));
-          }
+        if (effectiveHandle) {
+          // Filter purely by handle stored on the design — no name matching needed
+          const filtered = all.filter(d =>
+            d.authorHandle === effectiveHandle ||
+            // Fallback: for designs shared before this system, check if current user matches
+            (d.authorHandle == null && creatorId && d.author === creatorId)
+          );
+          setDesigns(filtered);
         } else {
-          // Direct filter by author name / email
+          // Legacy: filter by author name (old designs without authorHandle)
           setDesigns(all.filter(d => d.author === creatorId || d.authorEmail === creatorId));
         }
       } catch (err) {
@@ -42,8 +34,8 @@ const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, on
         setLoading(false);
       }
     };
-    fetch();
-  }, [creatorId, creatorHandle]);
+    load();
+  }, [effectiveHandle, creatorId]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -75,30 +67,15 @@ const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, on
       .catch(() => showToast('Failed to copy link.'));
   };
 
-  // Determine display name & handle
-  const isCurrentUser = userProfile && (
-    (creatorHandle && userProfile.handle === creatorHandle) ||
-    (creatorId && (userProfile.fullName === creatorId || userProfile.email === creatorId))
-  );
-
-  const displayHandle = creatorHandle
-    || (isCurrentUser && userProfile?.handle)
-    || (resolvedProfile?.handle)
-    || null;
-
-  const displayName = resolvedProfile?.fullName
-    || (isCurrentUser ? userProfile?.fullName : null)
-    || creatorId
-    || creatorHandle;
-
+  // Display: prefer effectiveHandle, then creatorId
+  const displayHandle = effectiveHandle || null;
+  const displayName = creatorId || effectiveHandle;
   const totalLikes = designs.reduce((sum, d) => sum + (d.likes || 0), 0);
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2.5rem 1.5rem' }}>
 
-      {toastMessage && (
-        <div className="gallery-toast">{toastMessage}</div>
-      )}
+      {toastMessage && <div className="gallery-toast">{toastMessage}</div>}
 
       <button
         onClick={onBack}

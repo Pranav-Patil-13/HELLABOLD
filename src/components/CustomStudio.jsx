@@ -556,6 +556,7 @@ const CustomStudio = ({
         title: shareTitle.trim().toUpperCase(),
         author: shareCreator.trim() || 'Bold Creator',
         authorEmail: userProfile?.email || null,
+        authorHandle: userProfile?.handle || null,
         gender,
         color,
         garmentType,
