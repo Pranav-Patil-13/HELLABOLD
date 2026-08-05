@@ -6,7 +6,6 @@ const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, on
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
-  const [resolvedProfile, setResolvedProfile] = useState(null);
 
   const effectiveHandle = creatorHandle || null;
 
@@ -18,28 +17,13 @@ const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, on
         const all = await getSharedDesigns();
 
         if (effectiveHandle) {
-          const profile = await getProfileByHandle(effectiveHandle);
-          setResolvedProfile(profile);
-
-          const filtered = all.filter(d => {
-            // Match by new explicit authorHandle field
-            if (d.authorHandle && d.authorHandle.toLowerCase() === effectiveHandle.toLowerCase()) {
-              return true;
-            }
-            // Fallback for legacy designs without authorHandle column populated:
-            if (profile) {
-              if (d.author === profile.fullName) return true;
-              if (profile.email && d.authorEmail === profile.email) return true;
-            }
-            // Fuzzy match name as last resort fallback
-            if (d.author && d.author.toLowerCase().replace(/\s+/g, '') === effectiveHandle.toLowerCase()) {
-              return true;
-            }
-            return false;
-          });
+          // Filter purely by handle stored on the design
+          const filtered = all.filter(d =>
+            d.authorHandle && d.authorHandle.toLowerCase() === effectiveHandle.toLowerCase()
+          );
           setDesigns(filtered);
         } else {
-          // Legacy: filter by author name/email directly
+          // Legacy direct match
           setDesigns(all.filter(d => d.author === creatorId || d.authorEmail === creatorId));
         }
       } catch (err) {
