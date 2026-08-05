@@ -926,7 +926,6 @@ const CheckoutPage = ({
                     </div>
                     <span className="prepaid-badge-green">SAVE ₹50</span>
                   </div>
-                  <span className="payment-method-card__details">Pay securely with Cards, UPI, Netbanking, or Wallets (via Razorpay). Includes free shipping.</span>
                   
                   {/* Payment option icons */}
                   <div style={{ 
