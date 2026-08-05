@@ -1238,48 +1238,68 @@ const CheckoutPage = ({
       )}
       {/* Charity Banner Footer */}
       <div 
-        onClick={() => setIsImpactOpen(true)}
         style={{
           marginTop: '3.5rem',
           paddingTop: '2rem',
           borderTop: '1px solid var(--border-color)',
-          textAlign: 'center',
           width: '100%',
-          cursor: 'pointer'
+          position: 'relative'
         }}
       >
-        <span style={{ 
-          fontSize: '0.62rem', 
-          fontWeight: 'bold', 
-          textTransform: 'uppercase', 
-          letterSpacing: '1px', 
-          color: 'var(--accent-color)',
-          display: 'block',
-          marginBottom: '0.5rem',
-          textDecoration: 'underline',
-          textUnderlineOffset: '3px'
-        }}>
-          🛡 Verify our donations (₹2,241+ contributed) ➔
-        </span>
-        <img 
-          src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png" 
-          alt="HELLABOLD Charity Banner" 
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-            borderRadius: '8px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-            display: 'block',
-            margin: '0 auto',
-            transition: 'transform 0.2s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.01)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-          loading="lazy"
-        />
+        <div style={{ position: 'relative', width: 'fit-content', margin: '0 auto' }}>
+          <img 
+            src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png" 
+            alt="HELLABOLD Charity Banner" 
+            style={{
+              maxWidth: '100%',
+              height: 'auto',
+              borderRadius: '8px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+              display: 'block'
+            }}
+            loading="lazy"
+          />
+          {/* Absolute Positioned Verification Badge */}
+          <button 
+            type="button"
+            onClick={() => setIsImpactOpen(true)}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              fontSize: '0.62rem',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '100px',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              color: '#000',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              transition: 'all 0.2s',
+              fontFamily: 'inherit'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#000';
+              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.borderColor = '#000';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+              e.currentTarget.style.color = '#000';
+              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+            }}
+          >
+            Verify our donations
+          </button>
+        </div>
       </div>
 
-      {/* Proof of Impact Drawer */}
+      {/* Proof of Impact Centered Popup Modal */}
       {isImpactOpen && (() => {
         const totalDonated = charityReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
         const totalMeals = totalDonated;
@@ -1287,41 +1307,71 @@ const CheckoutPage = ({
         const progressPercent = Math.min(100, Math.round((totalDonated / milestoneTarget) * 100));
 
         return (
-          <div className="cart-drawer-overlay" onClick={() => setIsImpactOpen(false)} style={{ zIndex: 99999 }}>
+          <div 
+            className="otp-overlay" 
+            onClick={() => setIsImpactOpen(false)} 
+            style={{ 
+              zIndex: 99999, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              padding: '1.5rem'
+            }}
+          >
             <div 
-              className="cart-drawer" 
               onClick={e => e.stopPropagation()} 
               style={{ 
-                width: '460px', 
+                width: '650px', 
                 maxWidth: '100%', 
-                padding: '2.5rem 2rem', 
+                maxHeight: '85vh',
+                padding: '2.5rem', 
                 display: 'flex', 
                 flexDirection: 'column', 
-                height: '100%', 
                 overflowY: 'auto',
                 backgroundColor: '#ffffff',
-                boxShadow: '-10px 0 30px rgba(0,0,0,0.1)'
+                borderRadius: '12px',
+                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
+                position: 'relative'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>Social Impact Verification</h2>
-                <button onClick={() => setIsImpactOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', padding: '0.5rem', opacity: 0.5 }}>✕</button>
+              {/* Close Button */}
+              <button 
+                onClick={() => setIsImpactOpen(false)} 
+                style={{ 
+                  position: 'absolute', 
+                  top: '1.25rem', 
+                  right: '1.25rem', 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '1.3rem', 
+                  cursor: 'pointer', 
+                  opacity: 0.5, 
+                  padding: '0.5rem',
+                  lineHeight: 1
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 0.3rem 0', color: '#000' }}>Social Impact Verification</h2>
+                <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.6 }}>Every order contributed supports verified charity programs via Give India platform.</p>
               </div>
 
-              {/* Impact Stats & Milestone Widget */}
+              {/* Stats & Milestone widget */}
               <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', textAlign: 'center', marginBottom: '1.5rem' }}>
                   <div>
                     <span style={{ fontSize: '0.62rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '0.2rem', letterSpacing: '0.5px' }}>Total Donated</span>
-                    <strong style={{ fontSize: '1.3rem', color: '#0f172a', fontFamily: 'monospace' }}>₹{totalDonated.toLocaleString()}</strong>
+                    <strong style={{ fontSize: '1.4rem', color: '#0f172a', fontFamily: 'monospace' }}>₹{totalDonated.toLocaleString()}</strong>
                   </div>
                   <div>
                     <span style={{ fontSize: '0.62rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '0.2rem', letterSpacing: '0.5px' }}>Meals Provided</span>
-                    <strong style={{ fontSize: '1.3rem', color: '#0f172a', fontFamily: 'monospace' }}>{totalMeals.toLocaleString()}</strong>
+                    <strong style={{ fontSize: '1.4rem', color: '#0f172a', fontFamily: 'monospace' }}>{totalMeals.toLocaleString()}</strong>
                   </div>
                 </div>
 
-                {/* Progress Milestones */}
+                {/* Progress bar */}
                 <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.2rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     <span>Community Goal: Feed 5,000 children</span>
@@ -1336,21 +1386,21 @@ const CheckoutPage = ({
                 </div>
               </div>
 
-              {/* NGO Partners */}
-              <h3 style={{ fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem', opacity: 0.8 }}>Our NGO Partners</h3>
+              {/* NGO Partners info */}
+              <h3 style={{ fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem', opacity: 0.8, textAlign: 'left' }}>Supported NGO Programs</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-                <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', textAlign: 'left' }}>
                   <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.78rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Annamrita Foundation</h4>
                   <p style={{ margin: 0, fontSize: '0.72rem', opacity: 0.7, lineHeight: '1.4' }}>Providing clean, nutritious meals to underprivileged children and families across India.</p>
                 </div>
-                <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', textAlign: 'left' }}>
                   <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.78rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SHEOWS Foundation</h4>
                   <p style={{ margin: 0, fontSize: '0.72rem', opacity: 0.7, lineHeight: '1.4' }}>Rescuing and providing free medical care, shelter, and dignified lives to abandoned elderly people.</p>
                 </div>
               </div>
 
-              {/* Receipt Images */}
-              <h3 style={{ fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem', opacity: 0.8 }}>Live Donation Receipts</h3>
+              {/* Receipts images grid */}
+              <h3 style={{ fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', opacity: 0.8, textAlign: 'left' }}>Live Donation Receipts</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 {charityReceipts.map((receipt) => (
                   <div key={receipt.id} style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -1361,11 +1411,11 @@ const CheckoutPage = ({
                       </div>
                       <strong style={{ fontSize: '0.8rem', color: '#10b981', fontFamily: 'monospace' }}>₹{receipt.amount}</strong>
                     </div>
-                    <div style={{ padding: '1rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
+                    <div style={{ padding: '1.5rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
                       <img 
                         src={cloudinaryOptimize(receipt.imageUrl)} 
                         alt={`Receipt ${receipt.receiptNo}`} 
-                        style={{ maxWidth: '100%', maxHeight: '350px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer', display: 'block', margin: '0 auto' }}
+                        style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer', display: 'block', margin: '0 auto' }}
                         onClick={() => window.open(receipt.imageUrl, '_blank')}
                       />
                       <span style={{ display: 'block', fontSize: '0.58rem', opacity: 0.4, marginTop: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Click to view full image</span>
