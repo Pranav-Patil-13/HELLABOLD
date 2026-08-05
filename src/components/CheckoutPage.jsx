@@ -1412,14 +1412,14 @@ const CheckoutPage = ({
                       </div>
                       <strong style={{ fontSize: '0.8rem', color: '#10b981', fontFamily: 'monospace' }}>₹{receipt.amount}</strong>
                     </div>
-                    <div style={{ padding: '1.5rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
+                    <div style={{ padding: '0.5rem', textAlign: 'center', backgroundColor: '#ffffff' }}>
                       <img 
                         src={cloudinaryOptimize(receipt.imageUrl)} 
                         alt={`Receipt ${receipt.receiptNo}`} 
-                        style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '4px', cursor: 'pointer', display: 'block', margin: '0 auto' }}
+                        style={{ width: '100%', height: 'auto', objectFit: 'contain', borderRadius: '4px', cursor: 'zoom-in', display: 'block', margin: '0 auto' }}
                         onClick={() => window.open(receipt.imageUrl, '_blank')}
                       />
-                      <span style={{ display: 'block', fontSize: '0.58rem', opacity: 0.4, marginTop: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Click to view full image</span>
+                      <span style={{ display: 'block', fontSize: '0.58rem', opacity: 0.4, marginTop: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Click statement to view full document ➔</span>
                     </div>
                   </div>
                 ))}
