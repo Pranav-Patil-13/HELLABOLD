@@ -1284,25 +1284,6 @@ const CustomStudio = ({
                 />
               </div>
 
-              <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left' }}>
-                <label htmlFor="creator-name" style={{ fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>Creator Name</label>
-                <input 
-                  id="creator-name"
-                  type="text" 
-                  placeholder="e.g. harajuku_drip" 
-                  value={shareCreator}
-                  onChange={e => setShareCreator(e.target.value)}
-                  maxLength={20}
-                  required
-                  style={{
-                    padding: '0.8rem',
-                    fontSize: '0.85rem',
-                    border: '1px solid var(--border-color)',
-                    backgroundColor: '#fff',
-                    outline: 'none',
-                    fontFamily: 'inherit'
-                  }}
-                />
               </div>
 
               {frontImage && backImage && (
