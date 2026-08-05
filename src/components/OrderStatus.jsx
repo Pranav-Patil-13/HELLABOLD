@@ -188,7 +188,7 @@ const OrderStatus = () => {
       {/* Shiprocket Tracker Header */}
       <div className="order-status__header">
         <div className="order-status__brand-shiprocket">
-          <img src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png')} alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
+          <img src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1785933189/header_img_nwi3z5.png')} alt="HELLABOLD" className="header__logo-img" style={{ height: '24px', marginRight: '1rem' }} />
           <span>×</span>
           <span className="shiprocket-badge">Shiprocket Fulfillment</span>
         </div>

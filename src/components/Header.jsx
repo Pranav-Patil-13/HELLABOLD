@@ -123,7 +123,7 @@ const Header = ({
 
         <div className="header__logo" onClick={handleGoHome} style={{ cursor: 'pointer' }}>
           <img
-            src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/header_logo_v2.png')}
+            src={cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/v1785933189/header_img_nwi3z5.png')}
             alt="HELLABOLD"
             className="header__logo-img"
             fetchPriority="high"
