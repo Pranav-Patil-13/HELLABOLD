@@ -213,7 +213,7 @@ export const GalleryCard = ({ design, likedIds, onLike, onRemix, onCopyLink, use
               textDecoration: onCreatorClick ? 'underline' : 'none',
               textUnderlineOffset: '2px'
             }}
-            onClick={(e) => { e.stopPropagation(); if (onCreatorClick) onCreatorClick(author); }}
+            onClick={(e) => { e.stopPropagation(); if (onCreatorClick) onCreatorClick(author, (isAuthor && userProfile?.handle) ? userProfile.handle : null); }}
           >
             by @{displayHandle}
           </span>

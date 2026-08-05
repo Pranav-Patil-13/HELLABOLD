@@ -678,6 +678,36 @@ const getProfileById = async (userId) => {
   };
 };
 
+export const getProfileByHandle = async (handle) => {
+  if (!handle) return null;
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, handle, email')
+        .eq('handle', handle.toLowerCase())
+        .single();
+      if (!error && data) return {
+        id: data.id,
+        fullName: data.full_name,
+        handle: data.handle,
+        email: data.email || null
+      };
+    } catch (e) {}
+  }
+  // localStorage fallback — check if the current mock user has this handle
+  try {
+    const saved = localStorage.getItem('hellabold_mock_user');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if ((u.handle || '').toLowerCase() === handle.toLowerCase()) {
+        return { fullName: u.full_name || u.fullName, handle: u.handle, email: u.email || null };
+      }
+    }
+  } catch (e) {}
+  return null;
+};
+
 // ── Coupons / Discount Manager ──────────────────────────────────────────────
 export const getCoupons = async () => {
   if (isSupabaseConfigured) {

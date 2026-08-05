@@ -135,6 +135,7 @@ function App() {
   const [isContactPage, setIsContactPage] = useState(false);
   const [isCreatorPage, setIsCreatorPage] = useState(false);
   const [activeCreator, setActiveCreator] = useState(null);
+  const [activeCreatorHandle, setActiveCreatorHandle] = useState(null);
   const [loading, setLoading] = useState(() => {
     const isMainHome = window.location.pathname === '/' && !new URLSearchParams(window.location.search).get('product');
     const passedSession = sessionStorage.getItem('hb_gate_passed') === 'true';
@@ -273,10 +274,16 @@ function App() {
     if (window.location.pathname === '/contact') {
       setIsContactPage(true);
     }
-    if (window.location.pathname === '/creator') {
+    if (window.location.pathname.startsWith('/creator@')) {
+      const handle = window.location.pathname.slice('/creator@'.length);
+      setIsCreatorPage(true);
+      setActiveCreatorHandle(handle);
+      setActiveCreator(null);
+    } else if (window.location.pathname === '/creator') {
       const creatorParam = params.get('name');
       setIsCreatorPage(true);
       setActiveCreator(creatorParam ? decodeURIComponent(creatorParam) : null);
+      setActiveCreatorHandle(null);
     }
 
     // Resolve active Supabase or mock user session
@@ -335,9 +342,19 @@ function App() {
         setIsSizeGuidePage(path === '/size-guide');
         setIsCustomStudioPage(path === '/custom-studio');
         setIsContactPage(path === '/contact');
-        setIsCreatorPage(path === '/creator');
-        const creatorName = params.get('name');
-        setActiveCreator(path === '/creator' && creatorName ? decodeURIComponent(creatorName) : null);
+        const isCreator = path === '/creator' || path.startsWith('/creator@');
+        setIsCreatorPage(isCreator);
+        if (path.startsWith('/creator@')) {
+          setActiveCreatorHandle(path.slice('/creator@'.length));
+          setActiveCreator(null);
+        } else if (path === '/creator') {
+          const nameParam = params.get('name');
+          setActiveCreator(nameParam ? decodeURIComponent(nameParam) : null);
+          setActiveCreatorHandle(null);
+        } else {
+          setActiveCreator(null);
+          setActiveCreatorHandle(null);
+        }
         setPrevActiveProductId(activeProductId);
         setActiveProductId(productId ? parseInt(productId, 10) : null);
         const imageIndexParam = params.get('img');
@@ -917,6 +934,7 @@ function App() {
             setIsContactPage(false);
             setIsCreatorPage(false);
             setActiveCreator(null);
+            setActiveCreatorHandle(null);
             window.scrollTo(0, 0);
           };
           if (document.startViewTransition) {
@@ -992,6 +1010,7 @@ function App() {
         <>
           <CreatorStorefront
             creatorId={activeCreator}
+            creatorHandle={activeCreatorHandle}
             userProfile={userProfile}
             likedIds={likedIds}
             onToggleLike={handleToggleLike}
@@ -1000,6 +1019,7 @@ function App() {
               window.history.pushState({}, '', '/custom-studio');
               setIsCreatorPage(false);
               setActiveCreator(null);
+              setActiveCreatorHandle(null);
               setIsCustomStudioPage(true);
               window.scrollTo(0, 0);
             }}
@@ -1022,10 +1042,12 @@ function App() {
             userProfile={userProfile}
             likedIds={likedIds}
             onToggleLike={handleToggleLike}
-            onCreatorClick={(authorName) => {
-              window.history.pushState({}, '', `/creator?name=${encodeURIComponent(authorName)}`);
+            onCreatorClick={(authorName, handle) => {
+              const url = handle ? `/creator@${handle}` : `/creator?name=${encodeURIComponent(authorName)}`;
+              window.history.pushState({}, '', url);
               setIsCreatorPage(true);
-              setActiveCreator(authorName);
+              setActiveCreator(handle ? null : authorName);
+              setActiveCreatorHandle(handle || null);
               setIsCustomStudioPage(false);
               window.scrollTo(0, 0);
             }}

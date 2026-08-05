@@ -1,19 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { getSharedDesigns, likeSharedDesign } from '../utils/supabase';
+import { getSharedDesigns, likeSharedDesign, getProfileByHandle } from '../utils/supabase';
 import { GalleryCard } from './CommunityGallery';
 
-const CreatorStorefront = ({ creatorId, userProfile, likedIds, onToggleLike, onRemix, onBack }) => {
+const CreatorStorefront = ({ creatorId, creatorHandle, userProfile, likedIds, onToggleLike, onRemix, onBack }) => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  const [resolvedProfile, setResolvedProfile] = useState(null);
 
   useEffect(() => {
-    if (!creatorId) return;
+    if (!creatorId && !creatorHandle) return;
     const fetch = async () => {
       try {
         setLoading(true);
         const all = await getSharedDesigns();
-        setDesigns(all.filter(d => d.author === creatorId || d.authorEmail === creatorId));
+
+        if (creatorHandle) {
+          // Look up the profile by handle → get their full name / email for filtering
+          const profile = await getProfileByHandle(creatorHandle);
+          setResolvedProfile(profile);
+          if (profile) {
+            setDesigns(all.filter(d =>
+              d.author === profile.fullName ||
+              (profile.email && d.authorEmail === profile.email) ||
+              (d.customMeta?.authorHandle === creatorHandle)
+            ));
+          } else {
+            // No profile found — try fuzzy match on customMeta or handle as author
+            setDesigns(all.filter(d =>
+              d.customMeta?.authorHandle === creatorHandle ||
+              d.author?.toLowerCase().replace(/\s+/g, '') === creatorHandle
+            ));
+          }
+        } else {
+          // Direct filter by author name / email
+          setDesigns(all.filter(d => d.author === creatorId || d.authorEmail === creatorId));
+        }
       } catch (err) {
         console.error('Failed to load creator designs:', err);
       } finally {
@@ -21,7 +43,7 @@ const CreatorStorefront = ({ creatorId, userProfile, likedIds, onToggleLike, onR
       }
     };
     fetch();
-  }, [creatorId]);
+  }, [creatorId, creatorHandle]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -53,12 +75,22 @@ const CreatorStorefront = ({ creatorId, userProfile, likedIds, onToggleLike, onR
       .catch(() => showToast('Failed to copy link.'));
   };
 
+  // Determine display name & handle
   const isCurrentUser = userProfile && (
-    userProfile.fullName === creatorId ||
-    userProfile.email === creatorId ||
-    (userProfile.email && userProfile.email.split('@')[0].toLowerCase() === creatorId.toLowerCase())
+    (creatorHandle && userProfile.handle === creatorHandle) ||
+    (creatorId && (userProfile.fullName === creatorId || userProfile.email === creatorId))
   );
-  const displayHandle = (isCurrentUser && userProfile?.handle) ? userProfile.handle : creatorId;
+
+  const displayHandle = creatorHandle
+    || (isCurrentUser && userProfile?.handle)
+    || (resolvedProfile?.handle)
+    || null;
+
+  const displayName = resolvedProfile?.fullName
+    || (isCurrentUser ? userProfile?.fullName : null)
+    || creatorId
+    || creatorHandle;
+
   const totalLikes = designs.reduce((sum, d) => sum + (d.likes || 0), 0);
 
   return (
@@ -83,6 +115,7 @@ const CreatorStorefront = ({ creatorId, userProfile, likedIds, onToggleLike, onR
         ← Community Marketplace
       </button>
 
+      {/* Creator Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '1.5rem',
         marginBottom: '3rem', paddingBottom: '2rem',
@@ -94,7 +127,7 @@ const CreatorStorefront = ({ creatorId, userProfile, likedIds, onToggleLike, onR
           alignItems: 'center', justifyContent: 'center',
           fontSize: '1.4rem', fontWeight: 900, flexShrink: 0, letterSpacing: '-1px'
         }}>
-          {creatorId.slice(0, 2).toUpperCase()}
+          {(displayHandle || displayName || '??').slice(0, 2).toUpperCase()}
         </div>
 
         <div>
@@ -102,11 +135,11 @@ const CreatorStorefront = ({ creatorId, userProfile, likedIds, onToggleLike, onR
             fontSize: '1.6rem', fontWeight: 900, textTransform: 'uppercase',
             letterSpacing: '1px', lineHeight: 1, marginBottom: '0.3rem'
           }}>
-            @{displayHandle}
+            {displayHandle ? `@${displayHandle}` : displayName}
           </div>
-          {displayHandle !== creatorId && (
+          {displayHandle && displayName && displayName !== displayHandle && (
             <div style={{ fontSize: '0.8rem', opacity: 0.45, marginBottom: '0.4rem' }}>
-              {creatorId}
+              {displayName}
             </div>
           )}
           <div style={{
