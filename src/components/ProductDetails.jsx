@@ -264,7 +264,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
                   textAlign: 'left',
                   border: '1px solid #334155'
                 }}>
-                  🌾 Every purchase contributes meals & shelter care (via Annamrita & SHEOWS).
+                  Every purchase contributes meals & shelter care via give india platform
                 </div>
               )}
             </div>
