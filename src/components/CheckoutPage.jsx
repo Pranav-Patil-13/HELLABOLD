@@ -927,6 +927,38 @@ const CheckoutPage = ({
                     <span className="prepaid-badge-green">SAVE ₹50</span>
                   </div>
                   <span className="payment-method-card__details">Pay securely with Cards, UPI, Netbanking, or Wallets (via Razorpay). Includes free shipping.</span>
+                  
+                  {/* Payment option icons */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    flexWrap: 'wrap', 
+                    gap: '0.5rem', 
+                    marginTop: '0.8rem',
+                    paddingTop: '0.6rem',
+                    borderTop: '1px dashed rgba(0,0,0,0.08)'
+                  }}>
+                    {/* Cards */}
+                    <img src="https://cdn.razorpay.com/card-networks/visa.svg" alt="Visa" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    <img src="https://cdn.razorpay.com/card-networks/mastercard.svg" alt="Mastercard" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    <img src="https://cdn.razorpay.com/card-networks/rupay.svg" alt="Rupay" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    <img src="https://cdn.razorpay.com/card-networks/maestro.svg" alt="Maestro" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    
+                    <span style={{ color: '#ccc', fontSize: '0.8rem' }}>|</span>
+
+                    {/* UPI */}
+                    <img src="https://cdn.razorpay.com/app/googlepay.svg" alt="Google Pay" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    <img src="https://checkout-static-next.razorpay.com/build/assets/images/phonepe.e101f376.svg" alt="PhonePe" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    <img src="https://cdn.razorpay.com/app/cred_circle.png" alt="Cred" style={{ height: '12px', objectFit: 'contain', borderRadius: '50%' }} />
+                    <img src="https://cdn.razorpay.com/app/amazonpay.svg" alt="Amazon Pay" style={{ height: '12px', objectFit: 'contain', opacity: 0.8 }} />
+                    <img src="https://cdn.razorpay.com/app/navi.png" alt="Navi" style={{ height: '12px', objectFit: 'contain', borderRadius: '2px' }} />
+
+                    <span style={{ color: '#ccc', fontSize: '0.8rem' }}>|</span>
+
+                    {/* Wallets */}
+                    <img src="https://cdn.razorpay.com/wallet-sq/mobikwik.png" alt="MobiKwik" style={{ height: '12px', objectFit: 'contain', borderRadius: '2px' }} />
+                    <img src="https://cdn.razorpay.com/wallet-sq/airtelmoney.png" alt="Airtel Money" style={{ height: '12px', objectFit: 'contain', borderRadius: '2px' }} />
+                  </div>
                 </div>
                 <div
                   className={`payment-method-card ${paymentMethod === 'cod' ? 'active' : ''}`}
