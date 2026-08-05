@@ -202,6 +202,11 @@ function App() {
 
   const handleRemix = (design) => {
     setRemixedDesign(design);
+    setIsCustomStudioPage(true);
+    setIsCreatorPage(false);
+    setActiveCreator(null);
+    setActiveCreatorHandle(null);
+    window.history.pushState({}, '', '/custom-studio');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
