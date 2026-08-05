@@ -1212,7 +1212,7 @@ const CheckoutPage = ({
         width: '100%'
       }}>
         <img 
-          src="/assets/charity_banner.png" 
+          src="https://res.cloudinary.com/dtx3jvozs/image/upload/v1785906167/charity_banner_cudw1i.png" 
           alt="HELLABOLD Charity Banner" 
           style={{
             maxWidth: '100%',
