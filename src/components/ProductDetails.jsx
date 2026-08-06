@@ -592,8 +592,8 @@ const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated
                         />
                       ))}
                     </div>
-                  )}
                 </div>
+              ))}
               {productReviews.length === 0 && (
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontStyle: 'italic', margin: '2rem 0' }}>No reviews yet. Be the first to share your thoughts!</p>
               )}
