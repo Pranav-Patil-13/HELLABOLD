@@ -1402,19 +1402,29 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               </div>
 
               <div className="form-group">
-                <label>Select Review Image (Optional)</label>
+                <label>Direct Image URL (Cloudinary Link)</label>
+                <input 
+                  type="text" 
+                  value={reviewSelectedImage} 
+                  onChange={e => setReviewSelectedImage(e.target.value)} 
+                  placeholder="https://res.cloudinary.com/..." 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Or Select Review Image from Uploads</label>
                 <div className="admin-image-picker" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.8rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', padding: '0.8rem' }}>
                   {feedbackImages.map(img => {
-                    const imgUrl = (img.startsWith('http') || img.startsWith('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/')) ? cloudinaryOptimize(img) : cloudinaryOptimize(`https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/feedback_images/${img}`);
-                    const isSelected = reviewSelectedImage === imgUrl;
+                    const rawImgUrl = (img.startsWith('http') || img.startsWith('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/')) ? img : `https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/feedback_images/${img}`;
+                    const isSelected = reviewSelectedImage === rawImgUrl;
                     return (
                       <div 
                         key={img} 
                         className={`admin-picker-img-wrapper ${isSelected ? 'selected' : ''}`}
-                        onClick={() => setReviewSelectedImage(isSelected ? '' : imgUrl)}
+                        onClick={() => setReviewSelectedImage(isSelected ? '' : rawImgUrl)}
                         style={{ position: 'relative', aspectRatio: '1', cursor: 'pointer', border: isSelected ? '2px solid var(--accent-color)' : '1px solid var(--border-color)', outline: 'none', transition: 'border-color var(--transition-fast)' }}
                       >
-                        <img src={imgUrl} alt={img} className="admin-picker-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={cloudinaryOptimize(rawImgUrl)} alt={img} className="admin-picker-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <div className="admin-picker-checkbox" style={{ position: 'absolute', top: '4px', right: '4px', background: isSelected ? 'var(--accent-color)' : 'transparent', color: '#fff', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
                           {isSelected ? '✓' : ''}
                         </div>
