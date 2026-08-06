@@ -592,6 +592,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated
                         />
                       ))}
                     </div>
+                  )}
                 </div>
               ))}
               {productReviews.length === 0 && (
