@@ -93,22 +93,6 @@ const Header = ({
 
   return (
     <div className="header-wrapper" ref={headerRef}>
-      {isBannerVisible && (
-        <div className="promo-banner">
-          <div className={`promo-banner__content ${fadeClass}`}>
-            {renderPromoText()}
-          </div>
-          <button 
-            type="button" 
-            className="promo-banner__close" 
-            onClick={handleDismissBanner}
-            aria-label="Dismiss banner"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
       <header className="header">
         <button 
           className={`header__hamburger ${isMobileNavOpen ? 'header__hamburger--active' : ''}`}
