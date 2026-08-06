@@ -3,8 +3,9 @@ import ProductCard from './ProductCard';
 import { cloudinaryOptimize } from '../utils/cloudinary';
 import BargainModal from './BargainModal';
 import { trackViewItem } from '../utils/analytics';
+import { addReview, getReviews } from '../utils/supabase';
 
-const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onAddBargainedToCart, isLiked = false, onToggleLike, initialImageIndex = 0, cartItems = [], onOpenCart }) => {
+const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated, onAddToCart, onAddBargainedToCart, isLiked = false, onToggleLike, initialImageIndex = 0, cartItems = [], onOpenCart }) => {
   useEffect(() => {
     if (product) {
       trackViewItem(product);
@@ -38,6 +39,49 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
   const [showCharityTooltip, setShowCharityTooltip] = useState(false);
   const [isWishlistHovered, setIsWishlistHovered] = useState(false);
   const hoverTimeoutRef = useRef(null);
+
+  // Customer Review Form States
+  const [reviewAuthor, setReviewAuthor] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewImageLink, setReviewImageLink] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleCustomerReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewAuthor.trim() || !reviewComment.trim()) {
+      alert('Please fill out all required fields.');
+      return;
+    }
+    setSubmittingReview(true);
+    const reviewData = {
+      productId: product.id,
+      author: reviewAuthor.trim(),
+      rating: parseInt(reviewRating, 10),
+      verified: false,
+      comment: reviewComment.trim(),
+      images: reviewImageLink.trim() ? [reviewImageLink.trim()] : [],
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    };
+
+    try {
+      await addReview(reviewData);
+      if (onReviewsUpdated) {
+        const allReviews = await getReviews();
+        onReviewsUpdated(allReviews);
+      }
+      setReviewAuthor('');
+      setReviewComment('');
+      setReviewRating(5);
+      setReviewImageLink('');
+      alert('Thank you! Your review has been submitted successfully.');
+    } catch (err) {
+      console.error('Failed to submit customer review:', err);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const displayImages = product.colorImages && selectedColor ? product.colorImages[selectedColor] : product.images;
 
@@ -514,8 +558,77 @@ const ProductDetails = ({ product, products = [], reviews = [], onAddToCart, onA
                     </div>
                   )}
                 </div>
-              ))}
+              {productReviews.length === 0 && (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontStyle: 'italic', margin: '2rem 0' }}>No reviews yet. Be the first to share your thoughts!</p>
+              )}
             </div>
+          </div>
+
+          {/* Write a Review customer form */}
+          <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border-color)', paddingTop: '2.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.5rem', color: '#000' }}>Write A Review</h3>
+            <form onSubmit={handleCustomerReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', maxWidth: '500px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Name *</label>
+                  <input 
+                    type="text" 
+                    value={reviewAuthor} 
+                    onChange={e => setReviewAuthor(e.target.value)} 
+                    placeholder="e.g. Rahul S."
+                    style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                    required 
+                  />
+                </div>
+                <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rating *</label>
+                  <select 
+                    value={reviewRating} 
+                    onChange={e => setReviewRating(e.target.value)} 
+                    style={{ padding: '0.8rem 1.2rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem', backgroundColor: '#fff', cursor: 'pointer' }}
+                    required 
+                  >
+                    <option value={5}>★★★★★ (5/5)</option>
+                    <option value={4}>★★★★☆ (4/5)</option>
+                    <option value={3}>★★★☆☆ (3/5)</option>
+                    <option value={2}>★★☆☆☆ (2/5)</option>
+                    <option value={1}>★☆☆☆☆ (1/5)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Share an Image (Optional Cloudinary Link)</label>
+                <input 
+                  type="text" 
+                  value={reviewImageLink} 
+                  onChange={e => setReviewImageLink(e.target.value)} 
+                  placeholder="https://res.cloudinary.com/..." 
+                  style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Feedback *</label>
+                <textarea 
+                  rows="4" 
+                  value={reviewComment} 
+                  onChange={e => setReviewComment(e.target.value)} 
+                  placeholder="Tell us what you liked or disliked about this product..."
+                  style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem', resize: 'vertical' }}
+                  required 
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn btn--primary" 
+                disabled={submittingReview}
+                style={{ padding: '1rem', alignSelf: 'flex-start', minWidth: '150px' }}
+              >
+                {submittingReview ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </form>
           </div>
         </section>
 
