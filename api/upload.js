@@ -61,7 +61,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { filename, base64 } = req.body;
+    const { filename, base64, folder } = req.body;
     if (!base64) {
       res.status(400).json({ error: 'Missing base64 data' });
       return;
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     const uploadRes = await uploadToCloudinary({
       filename,
       base64,
-      folder: 'hellabold/products',
+      folder: folder || 'hellabold/products',
     });
 
     res.status(200).json({ success: true, url: uploadRes.secure_url });

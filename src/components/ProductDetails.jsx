@@ -5,7 +5,7 @@ import BargainModal from './BargainModal';
 import { trackViewItem } from '../utils/analytics';
 import { addReview, getReviews } from '../utils/supabase';
 
-const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated, onAddToCart, onAddBargainedToCart, isLiked = false, onToggleLike, initialImageIndex = 0, cartItems = [], onOpenCart }) => {
+const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated, onAddToCart, onAddBargainedToCart, isLiked = false, onToggleLike, initialImageIndex = 0, cartItems = [], onOpenCart, userProfile }) => {
   useEffect(() => {
     if (product) {
       trackViewItem(product);
@@ -46,19 +46,55 @@ const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated
   const [reviewComment, setReviewComment] = useState('');
   const [reviewImageLink, setReviewImageLink] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleReviewImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result.split(',')[1];
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: file.name,
+            base64,
+            folder: 'hellabold/products/feedback_images'
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setReviewImageLink(data.url);
+        } else {
+          alert(data.error || 'Image upload failed');
+        }
+      } catch (err) {
+        console.error('Error uploading feedback image:', err);
+        alert('Failed to upload image. Please try again.');
+      } finally {
+        setUploadingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCustomerReviewSubmit = async (e) => {
     e.preventDefault();
-    if (!reviewAuthor.trim() || !reviewComment.trim()) {
+    const finalAuthor = userProfile ? (userProfile.full_name || userProfile.email || 'Verified Customer') : reviewAuthor.trim();
+    if (!finalAuthor || !reviewComment.trim()) {
       alert('Please fill out all required fields.');
       return;
     }
     setSubmittingReview(true);
     const reviewData = {
       productId: product.id,
-      author: reviewAuthor.trim(),
+      author: finalAuthor,
       rating: parseInt(reviewRating, 10),
-      verified: false,
+      verified: !!userProfile,
       comment: reviewComment.trim(),
       images: reviewImageLink.trim() ? [reviewImageLink.trim()] : [],
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -569,17 +605,24 @@ const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated
             <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.5rem', color: '#000' }}>Write A Review</h3>
             <form onSubmit={handleCustomerReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', maxWidth: '500px' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Name *</label>
-                  <input 
-                    type="text" 
-                    value={reviewAuthor} 
-                    onChange={e => setReviewAuthor(e.target.value)} 
-                    placeholder="e.g. Rahul S."
-                    style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem' }}
-                    required 
-                  />
-                </div>
+                {userProfile ? (
+                  <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b' }}>Reviewing As</span>
+                    <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{userProfile.full_name || userProfile.email}</strong>
+                  </div>
+                ) : (
+                  <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Name *</label>
+                    <input 
+                      type="text" 
+                      value={reviewAuthor} 
+                      onChange={e => setReviewAuthor(e.target.value)} 
+                      placeholder="e.g. Rahul S."
+                      style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                      required 
+                    />
+                  </div>
+                )}
                 <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rating *</label>
                   <select 
@@ -598,14 +641,44 @@ const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Share an Image (Optional Cloudinary Link)</label>
-                <input 
-                  type="text" 
-                  value={reviewImageLink} 
-                  onChange={e => setReviewImageLink(e.target.value)} 
-                  placeholder="https://res.cloudinary.com/..." 
-                  style={{ padding: '0.8rem 1rem', border: '1px solid var(--border-color)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem' }}
-                />
+                <label style={{ fontSize: '0.72rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Upload Photo</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleReviewImageUpload}
+                    id="review-image-file"
+                    style={{ display: 'none' }}
+                    disabled={uploadingImage}
+                  />
+                  <label 
+                    htmlFor="review-image-file" 
+                    style={{ 
+                      padding: '0.6rem 1.2rem', 
+                      border: '1px solid var(--border-color)', 
+                      borderRadius: '4px', 
+                      cursor: 'pointer', 
+                      fontSize: '0.8rem', 
+                      fontWeight: 600,
+                      backgroundColor: '#f8fafc',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {uploadingImage ? 'Uploading...' : 'Choose Image'}
+                  </label>
+                  {reviewImageLink && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <img src={reviewImageLink} alt="Upload preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => setReviewImageLink('')} 
+                        style={{ border: 'none', background: 'none', color: '#e53e3e', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -623,7 +696,7 @@ const ProductDetails = ({ product, products = [], reviews = [], onReviewsUpdated
               <button 
                 type="submit" 
                 className="btn btn--primary" 
-                disabled={submittingReview}
+                disabled={submittingReview || uploadingImage}
                 style={{ padding: '1rem', alignSelf: 'flex-start', minWidth: '150px' }}
               >
                 {submittingReview ? 'Submitting...' : 'Submit Review'}

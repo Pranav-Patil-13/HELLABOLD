@@ -1078,6 +1078,7 @@ function App() {
               product={activeProduct}
               products={products}
               reviews={reviews}
+              userProfile={userProfile}
               onReviewsUpdated={setReviews}
               onAddToCart={(size) => handleAddToCart(activeProduct, size)}
               onAddBargainedToCart={(bargainedProduct, size) => handleAddToCart(bargainedProduct, size)}
