@@ -27,12 +27,43 @@ const Hero = () => {
     }
   ];
 
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchEndX, setTouchEndX] = useState(null);
+
+  // Minimum swipe distance in pixels
+  const minSwipeDistance = 50;
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
+    } else if (isRightSwipe) {
+      setCurrentIndex((prevIndex) => (prevIndex - 1 + slides.length) % slides.length);
+    }
+
+    // Reset touch coordinates
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
 
   const handleShopScroll = (e) => {
     e.preventDefault();
@@ -58,7 +89,12 @@ const Hero = () => {
         loading="eager"
       />
       <div className="hero__container">
-        <div className="hero__carousel">
+        <div 
+          className="hero__carousel"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="hero__carousel-window">
             <div 
               className="hero__carousel-track" 
