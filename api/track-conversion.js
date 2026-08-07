@@ -62,42 +62,79 @@ export default async function handler(req, res) {
       }
     }
 
+    // Formulate custom_data, user_data and options based on event requirements
+    let userDataObj = {};
+    let customDataObj = {};
+    let dataProcessingOptionsObj = {};
+
+    const formattedTime = eventTime || Math.floor(Date.now() / 1000);
+    const formattedUrl = eventSourceUrl || req.headers.referer || '';
+
+    if (eventName === 'AddToCart') {
+      userDataObj = {
+        client_ip_address: ip,
+        client_user_agent: userAgent,
+        em: userData.email ? [hashVal(userData.email)] : undefined,
+        ph: userData.phone ? [hashPhone(userData.phone)] : undefined,
+        db: userData.dob || userData.db ? [hashVal(userData.dob || userData.db)] : undefined,
+        fn: fn ? [hashVal(fn)] : undefined,
+        ln: ln ? [hashVal(ln)] : undefined,
+        ct: userData.city ? [hashVal(userData.city)] : undefined,
+        st: userData.state ? [hashVal(userData.state)] : undefined,
+        zp: userData.zipCode ? [hashVal(userData.zipCode)] : undefined,
+        country: userData.country ? [hashVal(userData.country)] : undefined
+      };
+
+      customDataObj = {
+        content_type: customData.content_type || 'product',
+        content_category: customData.content_category || undefined,
+        num_items: customData.num_items || undefined,
+        search_string: customData.search_string || undefined,
+        delivery_category: customData.delivery_category || undefined,
+        order_id: customData.order_id || undefined,
+        currency: customData.currency || 'INR',
+        value: customData.value !== undefined ? parseFloat(customData.value) : undefined,
+        content_name: customData.content_name || undefined,
+        content_ids: customData.content_ids || undefined,
+        status: customData.status || undefined,
+        contents: customData.contents || undefined
+      };
+
+      dataProcessingOptionsObj = {
+        data_processing_options: req.body.dataProcessingOptions || [],
+        data_processing_options_country: req.body.dataProcessingOptionsCountry || 0,
+        data_processing_options_region: req.body.dataProcessingOptionsRegion || 0
+      };
+    } else if (eventName === 'Purchase') {
+      userDataObj = {
+        client_user_agent: userAgent
+      };
+      customDataObj = {
+        currency: customData.currency || 'INR',
+        value: customData.value !== undefined ? parseFloat(customData.value) : undefined
+      };
+    } else {
+      // ViewContent, InitiateCheckout, Search, AddToWishlist (or any other fallback standard events)
+      userDataObj = {
+        client_user_agent: userAgent
+      };
+    }
+
     const payload = {
       data: [
         {
           event_name: eventName,
-          event_time: eventTime || Math.floor(Date.now() / 1000),
+          event_time: formattedTime,
           action_source: 'website',
-          event_source_url: eventSourceUrl || req.headers.referer || '',
+          event_source_url: formattedUrl,
           event_id: eventId,
-          user_data: {
-            client_ip_address: ip,
-            client_user_agent: userAgent,
-            em: userData.email ? [hashVal(userData.email)] : undefined,
-            ph: userData.phone ? [hashPhone(userData.phone)] : undefined,
-            fn: fn ? [hashVal(fn)] : undefined,
-            ln: ln ? [hashVal(ln)] : undefined,
-            ct: userData.city ? [hashVal(userData.city)] : undefined,
-            st: userData.state ? [hashVal(userData.state)] : undefined,
-            zp: userData.zipCode ? [hashVal(userData.zipCode)] : undefined,
-            country: userData.country ? [hashVal(userData.country)] : undefined,
-            fbp: userData.fbp || undefined,
-            fbc: userData.fbc || undefined
-          },
-          custom_data: {
-            currency: customData.currency || 'INR',
-            value: customData.value !== undefined ? parseFloat(customData.value) : undefined,
-            content_ids: customData.content_ids || undefined,
-            content_type: customData.content_type || undefined,
-            contents: customData.contents || undefined,
-            num_items: customData.num_items || undefined,
-            search_string: customData.search_string || undefined,
-            status: customData.status || undefined
-          },
+          user_data: userDataObj,
+          custom_data: Object.keys(customDataObj).length > 0 ? customDataObj : undefined,
           original_event_data: {
             event_name: eventName,
-            event_time: eventTime || Math.floor(Date.now() / 1000)
-          }
+            event_time: formattedTime
+          },
+          ...dataProcessingOptionsObj
         }
       ]
     };
