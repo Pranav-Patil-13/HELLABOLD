@@ -15,8 +15,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Aggregation mode event_total_counts retrieves count metrics for each event type
-    const capiUrl = `https://graph.facebook.com/v20.0/${pixelId}/stats?aggregation=event_total_counts&access_token=${accessToken}`;
+    const startTime = Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60); // 7 days ago in Unix timestamp
+    const capiUrl = `https://graph.facebook.com/v20.0/${pixelId}/stats?aggregation=event_total_counts&start_time=${startTime}&access_token=${accessToken}`;
     
     console.log(`[Pixel Stats] Querying Meta stats for Pixel: ${pixelId}`);
     const fbRes = await fetch(capiUrl, {
