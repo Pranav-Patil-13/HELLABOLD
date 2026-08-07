@@ -79,6 +79,12 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   const [activeAdminTab, setActiveAdminTab] = useState('dashboard');
   const [orders, setOrders] = useState([]);
 
+  // Meta Pixel Metrics states
+  const [metaStatsList, setMetaStatsList] = useState([]);
+  const [metaPixelId, setMetaPixelId] = useState('');
+  const [metaLoading, setMetaLoading] = useState(false);
+  const [metaError, setMetaError] = useState('');
+
   // Reviews Form Fields
   const [reviewProductId, setReviewProductId] = useState('');
   const [reviewAuthor, setReviewAuthor] = useState('');
@@ -231,7 +237,30 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     if (activeAdminTab === 'charity') {
       fetchCharityReceipts();
     }
+    if (activeAdminTab === 'meta') {
+      fetchMetaStats();
+    }
   }, [activeAdminTab]);
+
+  const fetchMetaStats = async () => {
+    setMetaLoading(true);
+    setMetaError('');
+    try {
+      const res = await fetch('/api/pixel-stats');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMetaStatsList(data.stats);
+        setMetaPixelId(data.pixelId);
+      } else {
+        setMetaError(data.error || 'Failed to retrieve Meta event metrics.');
+      }
+    } catch (err) {
+      console.error('Meta stats fetch failed:', err);
+      setMetaError('Network error connecting to stats endpoint.');
+    } finally {
+      setMetaLoading(false);
+    }
+  };
 
   const fetchCoupons = async () => {
     try {
@@ -827,6 +856,13 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'charity' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'charity' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
         >
           Manage Charity
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeAdminTab === 'meta' ? 'active' : ''}`}
+          onClick={() => setActiveAdminTab('meta')}
+          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'meta' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'meta' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
+        >
+          Meta Metrics
         </button>
       </div>
 
@@ -2078,6 +2114,123 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
             </div>
           </div>
 
+        </div>
+      )}
+
+      {activeAdminTab === 'meta' && (
+        <div className="admin-meta-metrics" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', fontFamily: 'var(--font-body)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900, fontFamily: 'var(--font-heading)', fontSize: '1.8rem' }}>Meta Pixel Metrics</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+                Real-time event counts directly from Meta Dataset Graph API
+              </p>
+            </div>
+            <button 
+              className="btn btn--primary" 
+              onClick={fetchMetaStats} 
+              disabled={metaLoading}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.8rem 1.5rem', fontSize: '0.85rem' }}
+            >
+              {metaLoading ? 'Loading...' : 'Refresh Metrics'}
+            </button>
+          </div>
+
+          {metaError ? (
+            <div style={{ padding: '2rem', background: '#fff5f5', border: '1px solid #feb2b2', borderRadius: '4px', color: '#c53030' }}>
+              <h4 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Failed to retrieve data</h4>
+              <p>{metaError}</p>
+            </div>
+          ) : metaLoading ? (
+            <div style={{ textAlign: 'center', padding: '5rem' }}>
+              <p style={{ color: 'var(--text-secondary)' }}>Querying Meta events database...</p>
+            </div>
+          ) : (
+            <>
+              {/* Dataset Info Header */}
+              <div style={{ background: '#fafafa', border: '1px solid var(--border-color)', padding: '1.5rem', borderRadius: '4px', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block' }}>Dataset Name</span>
+                  <strong style={{ fontSize: '1.1rem', marginTop: '0.2rem', display: 'block' }}>HELLABOLD Pixel</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block' }}>Dataset ID</span>
+                  <strong style={{ fontSize: '1.1rem', marginTop: '0.2rem', display: 'block', fontFamily: 'monospace' }}>{metaPixelId || '2310361926167392'}</strong>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block' }}>Connection Status</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#48bb78', display: 'inline-block' }} />
+                    <span style={{ fontWeight: 'bold', color: '#48bb78', fontSize: '0.9rem' }}>Active</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                {metaStatsList.length > 0 ? (
+                  metaStatsList.map((stat, i) => (
+                    <div key={i} style={{ background: '#fff', border: '1px solid var(--border-color)', padding: '1.8rem', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-secondary)', fontWeight: 600 }}>{stat.event}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem' }}>
+                        <span style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1 }}>{stat.value}</span>
+                        <span style={{ fontSize: '0.75rem', color: '#48bb78', fontWeight: 600 }}>Matched</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: '#fafafa', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
+                    <p style={{ color: 'var(--text-secondary)' }}>No active conversion event stats found for this pixel yet.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Conversion rates meter */}
+              {metaStatsList.length > 0 && (
+                <div style={{ background: '#fff', border: '1px solid var(--border-color)', padding: '2rem', borderRadius: '4px' }}>
+                  <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Funnels & Event Ratios</h3>
+                  
+                  {(() => {
+                    const getVal = (name) => {
+                      const found = metaStatsList.find(s => s.event.toLowerCase() === name.toLowerCase());
+                      return found ? found.value : 0;
+                    };
+
+                    const views = getVal('ViewContent') || getVal('View content') || 0;
+                    const carts = getVal('AddToCart') || getVal('Add to cart') || 0;
+                    const buys = getVal('Purchase') || 0;
+
+                    const cartToView = views > 0 ? ((carts / views) * 100).toFixed(1) : '0.0';
+                    const purchaseToCart = carts > 0 ? ((buys / carts) * 100).toFixed(1) : '0.0';
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 600 }}>View Content to Add-to-Cart Ratio</span>
+                            <span style={{ fontWeight: 'bold' }}>{cartToView}% ({carts} / {views})</span>
+                          </div>
+                          <div style={{ width: '100%', height: '8px', background: '#edf2f7', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, parseFloat(cartToView))}%`, height: '100%', background: '#4a5568', borderRadius: '4px' }} />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 600 }}>Cart to Purchase Conversion</span>
+                            <span style={{ fontWeight: 'bold' }}>{purchaseToCart}% ({buys} / {carts})</span>
+                          </div>
+                          <div style={{ width: '100%', height: '8px', background: '#edf2f7', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, parseFloat(purchaseToCart))}%`, height: '100%', background: '#ff3c3c', borderRadius: '4px' }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
