@@ -108,7 +108,10 @@ export default async function handler(req, res) {
       };
     } else if (eventName === 'Purchase') {
       userDataObj = {
-        client_user_agent: userAgent
+        client_ip_address: ip || undefined,
+        client_user_agent: userAgent || undefined,
+        fbp: userData.fbp || undefined,
+        fbc: userData.fbc || undefined
       };
       customDataObj = {
         currency: customData.currency || 'INR',
@@ -117,7 +120,10 @@ export default async function handler(req, res) {
     } else {
       // ViewContent, InitiateCheckout, Search, AddToWishlist (or any other fallback standard events)
       userDataObj = {
-        client_user_agent: userAgent
+        client_ip_address: ip || undefined,
+        client_user_agent: userAgent || undefined,
+        fbp: userData.fbp || undefined,
+        fbc: userData.fbc || undefined
       };
     }
 
