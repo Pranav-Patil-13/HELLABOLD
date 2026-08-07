@@ -252,7 +252,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
         setMetaStatsList(data.stats);
         setMetaPixelId(data.pixelId);
       } else {
-        setMetaError(data.error || 'Failed to retrieve Meta event metrics.');
+        const errMsg = data.error?.message || data.error || 'Failed to retrieve Meta event metrics.';
+        setMetaError(typeof errMsg === 'object' ? JSON.stringify(errMsg) : String(errMsg));
       }
     } catch (err) {
       console.error('Meta stats fetch failed:', err);
