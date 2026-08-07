@@ -93,6 +93,10 @@ export default async function handler(req, res) {
             num_items: customData.num_items || undefined,
             search_string: customData.search_string || undefined,
             status: customData.status || undefined
+          },
+          original_event_data: {
+            event_name: eventName,
+            event_time: eventTime || Math.floor(Date.now() / 1000)
           }
         }
       ]
