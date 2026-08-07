@@ -37,7 +37,8 @@ export default async function handler(req, res) {
       eventTime,
       eventSourceUrl,
       customData = {},
-      userData = {}
+      userData = {},
+      testEventCode
     } = req.body;
 
     if (!eventName || !eventId) {
@@ -138,6 +139,11 @@ export default async function handler(req, res) {
         }
       ]
     };
+    const activeTestCode = testEventCode || process.env.META_TEST_EVENT_CODE || process.env.VITE_META_TEST_EVENT_CODE;
+    if (activeTestCode) {
+      payload.test_event_code = activeTestCode;
+      console.log(`[CAPI] Running in Test Mode with Event Code: ${activeTestCode}`);
+    }
 
     console.log(`[CAPI] Dispatching server event: ${eventName} (ID: ${eventId})`);
 
