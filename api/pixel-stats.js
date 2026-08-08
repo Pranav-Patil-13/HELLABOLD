@@ -40,7 +40,8 @@ export default async function handler(req, res) {
     res.status(200).json({
       success: true,
       pixelId: pixelId,
-      stats: stats
+      stats: stats,
+      rawResponse: resData
     });
   } catch (err) {
     console.error('[Pixel Stats Internal Error]:', err);
