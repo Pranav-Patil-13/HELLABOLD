@@ -2186,8 +2186,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
         <div className="admin-meta-metrics" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', fontFamily: 'var(--font-body)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900, fontFamily: 'var(--font-heading)', fontSize: '1.8rem' }}>Meta Pixel Metrics</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+              <h2 style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 900, fontFamily: 'var(--font-heading)', fontSize: '1.8rem', color: '#ffffff' }}>Meta Pixel Metrics</h2>
+              <p style={{ color: '#a0aec0', fontSize: '0.9rem', marginTop: '0.2rem' }}>
                 Real-time event counts directly from Meta Dataset Graph API
               </p>
             </div>
@@ -2202,28 +2202,28 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           </div>
 
           {metaError ? (
-            <div style={{ padding: '2rem', background: '#fff5f5', border: '1px solid #feb2b2', borderRadius: '4px', color: '#c53030' }}>
+            <div style={{ padding: '2rem', background: '#321c1c', border: '1px solid #742a2a', borderRadius: '6px', color: '#feb2b2' }}>
               <h4 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Failed to retrieve data</h4>
               <p>{metaError}</p>
             </div>
           ) : metaLoading ? (
             <div style={{ textAlign: 'center', padding: '5rem' }}>
-              <p style={{ color: 'var(--text-secondary)' }}>Querying Meta events database...</p>
+              <p style={{ color: '#a0aec0' }}>Querying Meta events database...</p>
             </div>
           ) : (
             <>
               {/* Dataset Info Header */}
-              <div style={{ background: '#fafafa', border: '1px solid var(--border-color)', padding: '1.5rem', borderRadius: '4px', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ background: '#121215', border: '1px solid #232329', padding: '1.5rem', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'center', color: '#ffffff' }}>
                 <div>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block' }}>Dataset Name</span>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#a0aec0', display: 'block' }}>Dataset Name</span>
                   <strong style={{ fontSize: '1.1rem', marginTop: '0.2rem', display: 'block' }}>HELLABOLD Pixel</strong>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block' }}>Dataset ID</span>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#a0aec0', display: 'block' }}>Dataset ID</span>
                   <strong style={{ fontSize: '1.1rem', marginTop: '0.2rem', display: 'block', fontFamily: 'monospace' }}>{metaPixelId || '2310361926167392'}</strong>
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block' }}>Connection Status</span>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#a0aec0', display: 'block' }}>Connection Status</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' }}>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#48bb78', display: 'inline-block' }} />
                     <span style={{ fontWeight: 'bold', color: '#48bb78', fontSize: '0.9rem' }}>Active</span>
@@ -2235,8 +2235,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
                 {metaStatsList.length > 0 ? (
                   metaStatsList.map((stat, i) => (
-                    <div key={i} style={{ background: '#fff', border: '1px solid var(--border-color)', padding: '1.8rem', borderRadius: '4px' }}>
-                      <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-secondary)', fontWeight: 600 }}>{stat.event}</span>
+                    <div key={i} style={{ background: '#161619', border: '1px solid #232329', padding: '1.8rem', borderRadius: '12px', color: '#ffffff' }}>
+                      <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: '#a0aec0', fontWeight: 600 }}>{stat.event}</span>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem' }}>
                         <span style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1 }}>{stat.value}</span>
                         <span style={{ fontSize: '0.75rem', color: '#48bb78', fontWeight: 600 }}>Matched</span>
@@ -2244,15 +2244,15 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                     </div>
                   ))
                 ) : (
-                  <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: '#fafafa', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
-                    <p style={{ color: 'var(--text-secondary)' }}>No active conversion event stats found for this pixel yet.</p>
+                  <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: '#121215', border: '1px solid #232329', borderRadius: '12px' }}>
+                    <p style={{ color: '#a0aec0' }}>No active conversion event stats found for this pixel yet.</p>
                   </div>
                 )}
               </div>
 
               {/* Conversion rates meter */}
               {metaStatsList.length > 0 && (
-                <div style={{ background: '#fff', border: '1px solid var(--border-color)', padding: '2rem', borderRadius: '4px' }}>
+                <div style={{ background: '#161619', border: '1px solid #232329', padding: '2rem', borderRadius: '12px', color: '#ffffff' }}>
                   <h3 style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, marginBottom: '1.5rem', fontSize: '1.1rem' }}>Funnels & Event Ratios</h3>
                   
                   {(() => {
@@ -2275,8 +2275,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                             <span style={{ fontWeight: 600 }}>View Content to Add-to-Cart Ratio</span>
                             <span style={{ fontWeight: 'bold' }}>{cartToView}% ({carts} / {views})</span>
                           </div>
-                          <div style={{ width: '100%', height: '8px', background: '#edf2f7', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${Math.min(100, parseFloat(cartToView))}%`, height: '100%', background: '#4a5568', borderRadius: '4px' }} />
+                          <div style={{ width: '100%', height: '8px', background: '#2d3748', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, parseFloat(cartToView))}%`, height: '100%', background: '#a0aec0', borderRadius: '4px' }} />
                           </div>
                         </div>
 
@@ -2285,8 +2285,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                             <span style={{ fontWeight: 600 }}>Cart to Purchase Conversion</span>
                             <span style={{ fontWeight: 'bold' }}>{purchaseToCart}% ({buys} / {carts})</span>
                           </div>
-                          <div style={{ width: '100%', height: '8px', background: '#edf2f7', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${Math.min(100, parseFloat(purchaseToCart))}%`, height: '100%', background: '#ff3c3c', borderRadius: '4px' }} />
+                          <div style={{ width: '100%', height: '8px', background: '#2d3748', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, parseFloat(purchaseToCart))}%`, height: '100%', background: '#e53e3e', borderRadius: '4px' }} />
                           </div>
                         </div>
                       </div>

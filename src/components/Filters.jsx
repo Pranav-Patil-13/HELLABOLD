@@ -81,7 +81,7 @@ const Filters = ({
             <input
               type="range"
               min="499"
-              max="2000"
+              max="1000"
               step="100"
               value={priceRange[1]}
               onChange={handlePriceSliderChange}
@@ -89,7 +89,7 @@ const Filters = ({
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
               <span>Up to {formatCurrency(priceRange[1])}</span>
-              <span>Max {formatCurrency(2000)}</span>
+              <span>Max {formatCurrency(1000)}</span>
             </div>
           </div>
         </div>
