@@ -31,10 +31,14 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Extract stats data
+    // Extract stats data from resData.data[0].data and map to client-side expected keys
     let stats = [];
     if (resData.data && resData.data.length > 0) {
-      stats = resData.data[0].stats || [];
+      const rawStats = resData.data[0].data || [];
+      stats = rawStats.map(item => ({
+        event: item.value,
+        value: parseInt(item.count, 10) || 0
+      }));
     }
 
     res.status(200).json({
