@@ -51,7 +51,7 @@ const PincodeResolver = ({ pin }) => {
     return () => { isMounted = false; };
   }, [pin]);
 
-  return <span style={{ color: 'var(--accent-color)', fontWeight: 600, fontSize: '0.8rem' }}> ({location})</span>;
+  return <span style={{ color: '#e53e3e', fontWeight: 600, fontSize: '0.8rem' }}> ({location})</span>;
 };
 
 const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userProfile }) => {
@@ -691,11 +691,16 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
     if (order.items) {
       order.items.forEach(item => {
         if (!productSalesMap[item.id]) {
+          const isCustom = item.customDesignLocalUrl || item.customDesignBackLocalUrl || item.customDesign || item.customDesignBack || item.frontImage || item.backImage;
+          const customPlaceholder = 'https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png';
+          
           productSalesMap[item.id] = {
             title: item.title,
             qty: 0,
             revenue: 0,
-            image: item.images?.[0] || cloudinaryOptimize('https://res.cloudinary.com/dtx3jvozs/image/upload/hellabold/products/favicon.png')
+            image: isCustom 
+              ? (item.customDesignLocalUrl || item.customDesign || item.frontImage || item.customDesignBackLocalUrl || item.customDesignBack || item.backImage || cloudinaryOptimize(customPlaceholder)) 
+              : (item.images?.[0] || cloudinaryOptimize(customPlaceholder))
           };
         }
         productSalesMap[item.id].qty += (item.quantity || 0);
@@ -802,70 +807,129 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
   }
 
   return (
-    <div className="admin-container">
-      <div className="admin-header">
-        <h1>HELLABOLD Administrative Panel</h1>
-        <a href="/" className="btn btn--outline">View Storefront</a>
-      </div>
+    <div className="admin-layout">
+      {/* Sidebar Navigation */}
+      <aside className="admin-sidebar">
+        <div className="sidebar-brand">
+          <h2>HELLABOLD</h2>
+        </div>
+        
+        <nav className="sidebar-menu">
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('dashboard')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>Dashboard</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'products' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('products')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span>Products</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('reviews')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Reviews</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'orders' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('orders')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+            <span>Shipments</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'coupons' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('coupons')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+            <span>Coupons</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'hellamoney' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('hellamoney')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>Hella Money</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'charity' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('charity')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span>Charity</span>
+          </button>
+          
+          <button 
+            className={`sidebar-link ${activeAdminTab === 'meta' ? 'active' : ''}`}
+            onClick={() => setActiveAdminTab('meta')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span>Meta Metrics</span>
+          </button>
+        </nav>
+        
+        <div className="sidebar-footer">
+          <a href="/" className="sidebar-action-btn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Storefront</span>
+          </a>
+        </div>
+      </aside>
 
-      <div className="admin-tabs-nav" style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', borderBottom: '1px solid var(--border-color)' }}>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('dashboard')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'dashboard' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'dashboard' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Dashboard
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'products' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('products')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'products' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'products' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Manage Products
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'reviews' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('reviews')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'reviews' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'reviews' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Manage Reviews
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'orders' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('orders')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'orders' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Manage Shipments
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'coupons' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('coupons')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'coupons' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'coupons' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Manage Coupons
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'hellamoney' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('hellamoney')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'hellamoney' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'hellamoney' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Hella Money Ledger
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'charity' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('charity')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'charity' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'charity' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Manage Charity
-        </button>
-        <button 
-          className={`admin-tab-btn ${activeAdminTab === 'meta' ? 'active' : ''}`}
-          onClick={() => setActiveAdminTab('meta')}
-          style={{ paddingBottom: '1rem', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: activeAdminTab === 'meta' ? '2px solid var(--accent-color)' : '2px solid transparent', color: activeAdminTab === 'meta' ? 'var(--accent-color)' : 'var(--text-secondary)', cursor: 'pointer' }}
-        >
-          Meta Metrics
-        </button>
-      </div>
+      {/* Main Workspace Area */}
+      <main className="admin-main">
+        <header className="admin-main-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="header-meta">
+            <h1>{activeAdminTab.toUpperCase()} OVERVIEW</h1>
+            <p>Welcome back, Administrator</p>
+          </div>
+          <span className="brand-badge" style={{ backgroundColor: '#910020', color: '#ffffff', fontSize: '0.7rem', padding: '0.3rem 0.7rem', borderRadius: '4px', fontWeight: 800, letterSpacing: '1px' }}>ADMIN</span>
+        </header>
+        
+        <div className="admin-workspace-content">
 
       {activeAdminTab === 'dashboard' && (
         <div className="admin-dashboard">
@@ -920,13 +984,13 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                       const y = 170 - height;
                       return (
                         <g key={idx} className="chart-bar-group">
-                          <rect x={x} y={y} width="24" height={height} fill="var(--accent-color)" rx="2" />
+                          <rect x={x} y={y} width="24" height={height} fill="#e53e3e" rx="2" />
                           <text x={x + 12} y="192" textAnchor="middle" className="chart-label-text">{item[0]}</text>
                           <text x={x + 12} y={y - 8} textAnchor="middle" className="chart-val-text">{new Intl.NumberFormat('en-IN', { notation: 'compact' }).format(item[1])}</text>
                         </g>
                       );
                     })}
-                    <line x1="40" y1="170" x2="480" y2="170" stroke="var(--accent-color)" strokeWidth="1.5" />
+                    <line x1="40" y1="170" x2="480" y2="170" stroke="#e53e3e" strokeWidth="1.5" />
                   </svg>
                 )}
               </div>
@@ -1520,40 +1584,40 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
 
       {activeAdminTab === 'orders' && (
         <div className="admin-orders-tab" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div className="admin-card" style={{ padding: '2.5rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)' }}>
+          <div className="admin-card">
             <h2>Active Logistics & Shipments ({orders.length})</h2>
             <div className="admin-orders-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               {orders.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', padding: '2rem 0', textAlign: 'center' }}>No orders placed yet.</p>
+                <p style={{ color: '#a0aec0', padding: '2rem 0', textAlign: 'center' }}>No orders placed yet.</p>
               ) : (
                 orders.map(order => {
                   const customer = order.shippingDetails || {};
                   return (
-                    <div key={order.id} className="admin-order-item-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1.5rem', border: '1px solid var(--border-color)', backgroundColor: '#fafafa', borderRadius: '6px' }}>
+                    <div key={order.id} className="admin-order-item-row" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1.5rem', border: '1px solid #232329', backgroundColor: '#121215', borderRadius: '6px' }}>
                       {/* Top Header Row of the Order */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid var(--border-color)', paddingBottom: '1rem' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #232329', paddingBottom: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                          <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Order ID: {order.id}</span>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#ffffff' }}>Order ID: {order.id}</span>
+                          <span style={{ fontSize: '0.8rem', color: '#a0aec0' }}>
                             AWB: <strong>{order.awb || '—'}</strong>{order.courier ? ` (${order.courier})` : ''}
                           </span>
                           {order.shiprocketOrderId && (
-                            <span style={{ fontSize: '0.75rem', color: '#6b46c1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#b7791f', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                               🚀 Shiprocket ID: <strong>{order.shiprocketOrderId}</strong>
                               {order.shiprocketSynced
-                                ? <span style={{ color: '#38a169', fontWeight: 700 }}>✓ Synced</span>
-                                : <span style={{ color: '#e53e3e', fontWeight: 700 }}>⚠ Pending</span>
+                                ? <span style={{ color: '#48bb78', fontWeight: 700 }}>✓ Synced</span>
+                                : <span style={{ color: '#f56565', fontWeight: 700 }}>⚠ Pending</span>
                               }
                             </span>
                           )}
                           {order.shiprocketSynced === false && !order.shiprocketOrderId && (
-                            <span style={{ fontSize: '0.75rem', color: '#e53e3e', fontWeight: 600 }}>⚠ Not yet synced to Shiprocket</span>
+                            <span style={{ fontSize: '0.75rem', color: '#f56565', fontWeight: 600 }}>⚠ Not yet synced to Shiprocket</span>
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block' }}>Total Paid</span>
-                            <strong style={{ fontSize: '1.1rem', color: 'var(--accent-color)' }}>
+                            <span style={{ fontSize: '0.8rem', color: '#a0aec0', display: 'block' }}>Total Paid</span>
+                            <strong style={{ fontSize: '1.1rem', color: '#ffffff' }}>
                               {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(order.total)}
                             </strong>
                           </div>
@@ -1580,30 +1644,30 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                           {order.items?.map((item, idx) => {
                             const isCustom = item.customDesignLocalUrl || item.customDesignBackLocalUrl || item.customDesign || item.customDesignBack || item.frontImage || item.backImage;
                             return (
-                              <div key={idx} style={{ padding: '1rem 1.2rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)', borderRadius: '4px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.6rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '0.4rem' }}>
+                              <div key={idx} style={{ padding: '1rem 1.2rem', backgroundColor: '#1a1a1f', border: '1px solid #2d3748', borderRadius: '4px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.6rem', borderBottom: '1px dashed #2d3748', paddingBottom: '0.4rem', color: '#ffffff' }}>
                                   <span>{item.title}</span>
-                                  <span style={{ color: 'var(--text-secondary)' }}>Size {item.size} × {item.quantity}</span>
+                                  <span style={{ color: '#a0aec0' }}>Size {item.size} × {item.quantity}</span>
                                 </div>
                                 
                                 {isCustom && (
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginTop: '0.5rem' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                      <span style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', color: '#38a169', padding: '0.25rem 0.5rem', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.5px' }}>CUSTOM DESIGNED</span>
+                                      <span style={{ backgroundColor: 'rgba(72, 187, 120, 0.1)', color: '#48bb78', padding: '0.25rem 0.5rem', borderRadius: '3px', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.5px' }}>CUSTOM DESIGNED</span>
                                       {(item.customDesignLocalUrl || item.customDesign || item.frontImage) && (
-                                        <a href={item.customDesignLocalUrl || item.customDesign || item.frontImage} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Front Artwork</a>
+                                        <a href={item.customDesignLocalUrl || item.customDesign || item.frontImage} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Front Artwork</a>
                                       )}
                                       {(item.customDesignBackLocalUrl || item.customDesignBack || item.backImage) && (
-                                        <a href={item.customDesignBackLocalUrl || item.customDesignBack || item.backImage} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'var(--accent-color)', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Back Artwork</a>
+                                        <a href={item.customDesignBackLocalUrl || item.customDesignBack || item.backImage} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', padding: '0.25rem 0.5rem', borderRadius: '3px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>👁 View Back Artwork</a>
                                       )}
                                     </div>
 
                                     {/* Placements Details Table */}
                                     {item.customMeta?.placement && (
-                                      <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '4px', marginTop: '0.2rem' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left', minWidth: '350px' }}>
+                                      <div style={{ overflowX: 'auto', border: '1px solid #2d3748', borderRadius: '4px', marginTop: '0.2rem' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left', minWidth: '350px', color: '#ffffff' }}>
                                           <thead>
-                                            <tr style={{ backgroundColor: '#fcfcfc', borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                                            <tr style={{ backgroundColor: '#121215', borderBottom: '1px solid #2d3748', color: '#a0aec0' }}>
                                               <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Side</th>
                                               <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>Scale</th>
                                               <th style={{ padding: '0.5rem 0.8rem', fontWeight: 600 }}>X Pos</th>
@@ -1614,7 +1678,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                                           </thead>
                                           <tbody>
                                             {(item.customDesignLocalUrl || item.customDesign || item.frontImage) && item.customMeta.placement.front && (
-                                              <tr style={{ borderBottom: '1px solid #f2f2f2' }}>
+                                              <tr style={{ borderBottom: '1px solid #2d3748' }}>
                                                 <td style={{ padding: '0.5rem 0.8rem', fontWeight: 700 }}>Front</td>
                                                 <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.scale}%</td>
                                                 <td style={{ padding: '0.5rem 0.8rem' }}>{item.customMeta.placement.front.x}%</td>
@@ -1640,9 +1704,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
 
                                     {/* Printing Instructions Box */}
                                     {item.customMeta?.instructions && (
-                                      <div style={{ backgroundColor: 'rgba(255, 69, 0, 0.04)', borderLeft: '3.5px solid var(--accent-red)', padding: '0.6rem 0.8rem', fontSize: '0.8rem', borderRadius: '0 4px 4px 0' }}>
-                                        <strong style={{ color: 'var(--accent-red)', display: 'block', marginBottom: '0.15rem', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.5px' }}>Print Instructions:</strong>
-                                        <span style={{ fontStyle: 'italic', color: 'var(--text-primary)', fontWeight: 500 }}>"{item.customMeta.instructions}"</span>
+                                      <div style={{ backgroundColor: 'rgba(229, 62, 62, 0.05)', borderLeft: '3.5px solid #e53e3e', padding: '0.6rem 0.8rem', fontSize: '0.8rem', borderRadius: '0 4px 4px 0' }}>
+                                        <strong style={{ color: '#e53e3e', display: 'block', marginBottom: '0.15rem', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.5px' }}>Print Instructions:</strong>
+                                        <span style={{ fontStyle: 'italic', color: '#ffffff', fontWeight: 500 }}>"{item.customMeta.instructions}"</span>
                                       </div>
                                     )}
                                   </div>
@@ -1653,20 +1717,20 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                         </div>
 
                         {/* Column 2: Customer Shipping Profile (1/3 width) */}
-                        <div style={{ flex: '1 1 280px', padding: '1rem 1.2rem', backgroundColor: 'var(--white)', border: '1px solid var(--border-color)', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem', color: 'var(--text-primary)' }}>Customer Profile</h4>
-                          <div style={{ fontSize: '0.8rem', display: 'grid', gridTemplateColumns: '70px 1fr', gap: '0.4rem 0.5rem', lineHeight: '1.4' }}>
-                            <strong style={{ color: 'var(--text-secondary)' }}>Name:</strong>
+                        <div style={{ flex: '1 1 280px', padding: '1rem 1.2rem', backgroundColor: '#1a1a1f', border: '1px solid #2d3748', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid #2d3748', paddingBottom: '0.4rem', color: '#ffffff' }}>Customer Profile</h4>
+                          <div style={{ fontSize: '0.8rem', display: 'grid', gridTemplateColumns: '70px 1fr', gap: '0.4rem 0.5rem', lineHeight: '1.4', color: '#ffffff' }}>
+                            <strong style={{ color: '#a0aec0' }}>Name:</strong>
                             <span style={{ fontWeight: 600 }}>{customer.name || '—'}</span>
-                            <strong style={{ color: 'var(--text-secondary)' }}>Email:</strong>
+                            <strong style={{ color: '#a0aec0' }}>Email:</strong>
                             <span style={{ wordBreak: 'break-all' }}>{customer.email || '—'}</span>
-                            <strong style={{ color: 'var(--text-secondary)' }}>Phone:</strong>
+                            <strong style={{ color: '#a0aec0' }}>Phone:</strong>
                             <span>{customer.phone || '—'}</span>
-                            <strong style={{ color: 'var(--text-secondary)' }}>Address:</strong>
+                            <strong style={{ color: '#a0aec0' }}>Address:</strong>
                             <span>{customer.address || '—'}</span>
-                            <strong style={{ color: 'var(--text-secondary)' }}>City/State:</strong>
+                            <strong style={{ color: '#a0aec0' }}>City/State:</strong>
                             <span>{customer.city ? `${customer.city}, ${customer.state || ''}` : '—'}</span>
-                            <strong style={{ color: 'var(--text-secondary)' }}>PIN Code:</strong>
+                            <strong style={{ color: '#a0aec0' }}>PIN Code:</strong>
                             <span>
                               <span style={{ fontWeight: 600 }}>{customer.zipCode || '—'}</span>
                               {customer.zipCode && <PincodeResolver pin={customer.zipCode} />}
@@ -1677,9 +1741,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                       </div>
 
                       {/* Bottom Order Status Switcher */}
-                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.8rem', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Status: <strong style={{ color: 'var(--text-primary)' }}>{order.status}</strong>
+                      <div style={{ borderTop: '1px solid #232329', paddingTop: '0.8rem', display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#a0aec0' }}>
+                          Status: <strong style={{ color: '#ffffff' }}>{order.status}</strong>
                         </span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
                           {['Order Received', 'Manifested & Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'].map(status => (
@@ -1692,9 +1756,9 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                                 padding: '0.35rem 0.7rem',
                                 fontSize: '0.7rem',
                                 textTransform: 'uppercase',
-                                backgroundColor: order.status === status ? 'var(--accent-color)' : 'transparent',
-                                color: order.status === status ? 'var(--white)' : 'var(--text-primary)',
-                                borderColor: order.status === status ? 'var(--accent-color)' : 'var(--border-color)'
+                                backgroundColor: order.status === status ? '#e53e3e' : 'transparent',
+                                color: order.status === status ? '#ffffff' : '#a0aec0',
+                                borderColor: order.status === status ? '#e53e3e' : '#2d3748'
                               }}
                             >
                               {status}
@@ -2094,7 +2158,7 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                           <button 
                             className="btn btn--outline" 
-                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem' }}
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', color: '#ffffff', borderColor: '#2d3748' }}
                             onClick={() => handleEditReceipt(receipt)}
                           >
                             Edit
@@ -2234,6 +2298,8 @@ const AdminPanel = ({ onProductsUpdated, reviews = [], onReviewsUpdated, userPro
           )}
         </div>
       )}
+        </div>
+      </main>
     </div>
   );
 };
